@@ -56,6 +56,8 @@ Copied, not shared, as Notav did from Todav; the copies may diverge.
 | Piece | From | Notes |
 | --- | --- | --- |
 | Login Flow v2, app password sign-in, minimal JSON | Todav, Notav (`login.rs`, `json.rs`) | As is |
+| HTTPS trusting the system's certificate authorities, so a self-hosted server with its own CA connects (ureq's `platform-verifier`) | Notav `core/src/net.rs` | Every agent built with `tls_config(net::tls())`; without it ureq trusts only its built-in list and fails with `UnknownIssuer` (AperteDev/todav#3) |
+| HTTP errors showing an error page's text, not its HTML | Notav `core/src/lib.rs` (`Error`'s `Display`, `html_text`) | As is |
 | WebDAV XML, multistatus, percent-encoding, requests with retries | Notav `core/src/dav.rs` | Plus `COPY`, `MOVE`, `SEARCH`, chunked and bulk uploads |
 | Accounts, synced settings, `Error`, `Client::open`, store migrations, `kv` | Notav `core/src/account.rs`, `settings.rs`, `lib.rs`, `store.rs` | Nextcloud accounts only (no local one) |
 | Favorites, trash bin, versions, server features | Notav `core/src/files.rs` | For any file, not only notes |
