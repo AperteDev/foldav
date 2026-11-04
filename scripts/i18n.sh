@@ -13,7 +13,7 @@ x() {
     --msgid-bugs-address=https://github.com/AperteDev/foldav/issues --output="$pot" "$@"
 }
 
-x -L Rust -k -kgettext -kngettext:1,2 -kpgettext:1c,2 -kgettext_noop foldav/linux/app/src/*.rs
+x -L Rust -k -kgettext -kngettext:1,2 -kpgettext:1c,2 -kgettext_noop foldav/linux/app/src/*.rs foldav/linux/app/src/*/*.rs
 # Blueprint's _("…") and C_("context", "…") read like C.
 x --join-existing -L C -k -k_ -kC_:1c,2 foldav/linux/app/ui/*.blp
 x --join-existing foldav/linux/data/dev.aperte.Foldav.desktop \

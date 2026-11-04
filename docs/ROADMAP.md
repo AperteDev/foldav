@@ -73,10 +73,12 @@ Once a third app copies the same code, a shared crate in its own repository beco
    shared), sorted and filtered; a path bar; the sidebar as the web app's (All files, Recent,
    Favorites, Shared with me, Shared by me, Tags, Trash) and one entry per account. Thumbnails
    from the server's previews (`/core/preview`, for files with `has-preview`), cached by ETag.
-2. **Operations on the server**: new folder, rename, copy, move and delete with one WebDAV
-   request each, whatever the folder's size; a deletion goes to the trash bin when the server
-   has it. Progress and errors in a toast or a panel; Ctrl+Z undoes a rename, move or deletion
-   (Notav's `undo.rs`).
+2. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete
+   and Ctrl+Z are done): dragging files inside the window to a folder or the sidebar; a
+   deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
+   server's capabilities (`Features`, as in Notav) and ask first where it has none; progress
+   for long operations (a toast or a panel); a choice between replacing and keeping both when
+   a name is taken (now a move refuses and a copy takes a free name); copies between accounts.
 3. **Transfers**: uploads (chunked for big files, Nextcloud's bulk upload for many small ones)
    and downloads, dragged to and from Nautilus or the desktop; a folder downloaded as one ZIP
    where the server offers it. Transfers queue, resume after a dropped connection, and finish

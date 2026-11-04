@@ -69,5 +69,6 @@
   `target/sandbox`). To see and drive it, use the `waydriver` MCP server with
   `scripts/waydriver-app.sh` and `app_name` `foldav-waydriver` (build first); keyboard
   navigation works where OCR-based clicking does not (it needs a model download).
-- Against the server: not set up yet (Notav's `integration` feature and gitignored `.env` are
-  the model).
+- Against the server: `cargo test -p foldav-core --features integration`, with the Test
+  account from the gitignored `.env` (`FOLDAV_URL`, `FOLDAV_USER`, `FOLDAV_PASS`); each test
+  works in its own `it-foldav/<name>/` folder.

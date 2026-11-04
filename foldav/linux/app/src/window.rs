@@ -9,6 +9,8 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+mod ops;
+
 /// Where to support development, listed in About (and in the README), as in Todav.
 const DONATIONS: [(&str, &str); 3] = [
     (
@@ -44,6 +46,12 @@ struct Ui {
     at: RefCell<Option<(i64, String)>>,
     /// Bumped with every load; a load only shows while its number is current.
     load: Cell<u64>,
+    /// What the list shows, in the order of its rows.
+    listing: RefCell<Vec<File>>,
+    /// Cut or copied files, to paste (`ops`).
+    clipboard: RefCell<Option<ops::Clipboard>>,
+    /// The menu of a right click on the list.
+    file_menu: gio::MenuModel,
 }
 
 thread_local! {
@@ -119,6 +127,7 @@ pub fn setup_actions(app: &adw::Application) {
     app.set_accels_for_action("win.up", &["<Alt>Up"]);
     app.set_accels_for_action("win.reload", &["F5", "<Control>r"]);
     app.set_accels_for_action("win.toggle-sidebar", &["F9"]);
+    ops::accels(app);
 }
 
 /// Turns About's Details page into Support: a note and the donation links instead of the
@@ -301,9 +310,13 @@ fn build(app: &adw::Application) -> Rc<Ui> {
         update_banner: get(&b, "update_banner"),
         at: RefCell::new(None),
         load: Cell::new(0),
+        listing: RefCell::new(Vec::new()),
+        clipboard: RefCell::new(None),
+        file_menu: get(&b, "file_menu"),
     });
     ui.update_banner.set_revealed(crate::update::updated());
     connect(&ui, get(&b, "split"));
+    ops::connect(&ui);
     ui
 }
 
@@ -358,10 +371,15 @@ fn connect(ui: &Rc<Ui>, split: adw::OverlaySplitView) {
     let weak = Rc::downgrade(ui);
     ui.files.connect_row_activated(move |_, row| {
         let Some(ui) = weak.upgrade() else { return };
-        // A folder's row is named by its path (`file_row`); a file's does nothing yet.
-        let (name, at) = (row.widget_name(), ui.at.borrow().clone());
-        if let (Some((id, _)), Some(path)) = (at, name.strip_prefix("folder:")) {
-            open(&ui, id, path.into());
+        // A folder opens; a file does nothing yet.
+        let (file, at) = (
+            ui.listing.borrow().get(row.index() as usize).cloned(),
+            ui.at.borrow().clone(),
+        );
+        if let (Some(f), Some((id, _))) = (file, at)
+            && f.folder
+        {
+            open(&ui, id, f.path);
         }
     });
 }
@@ -427,6 +445,7 @@ fn open(ui: &Rc<Ui>, id: i64, path: String) {
         return;
     };
     *ui.at.borrow_mut() = Some((id, path.clone()));
+    ops::update_actions(ui);
     select_place(ui, id);
     ui.window
         .lookup_action("up")
@@ -471,17 +490,16 @@ fn show_error(ui: &Ui, text: &str) {
 }
 
 fn show(ui: &Ui, files: &[File]) {
-    while let Some(row) = ui.files.row_at_index(0) {
-        ui.files.remove(&row);
-    }
+    ui.files.remove_all();
     for f in files {
         ui.files.append(&file_row(f));
     }
+    *ui.listing.borrow_mut() = files.to_vec();
     ui.files_stack
         .set_visible_child_name(if files.is_empty() { "empty" } else { "files" });
 }
 
-/// A folder's row opens it; its name is `folder:` and the path (`connect`).
+/// A folder's row opens it (`connect`).
 fn file_row(f: &File) -> adw::ActionRow {
     let row = adw::ActionRow::builder()
         .title(glib::markup_escape_text(&f.name))
@@ -509,7 +527,6 @@ fn file_row(f: &File) -> adw::ActionRow {
     }
     if f.folder {
         row.set_activatable(true);
-        row.set_widget_name(&format!("folder:{}", f.path));
         row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
     }
     row

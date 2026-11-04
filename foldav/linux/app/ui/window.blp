@@ -71,6 +71,13 @@ Adw.ApplicationWindow window {
                 action-name: "win.up";
               }
 
+              [start]
+              Gtk.Button {
+                icon-name: "folder-new-symbolic";
+                tooltip-text: _("New Folder (Ctrl+Shift+N)");
+                action-name: "win.new-folder";
+              }
+
               [end]
               Gtk.Button {
                 icon-name: "view-refresh-symbolic";
@@ -106,8 +113,11 @@ Adw.ApplicationWindow window {
                   Adw.ClampScrollable {
                     maximum-size: 1100;
 
+                    // Rows are selected by a click and opened by a double click or Enter
+                    // (src/window/ops.rs, `connect`).
                     Gtk.ListBox files {
-                      selection-mode: none;
+                      selection-mode: multiple;
+                      activate-on-single-click: false;
                       margin-top: 12;
                       margin-bottom: 12;
                       margin-start: 12;
@@ -147,6 +157,24 @@ Adw.ApplicationWindow window {
       }
     }
   };
+}
+
+// A right click on the files (src/window/ops.rs, `context_menu`).
+menu file_menu {
+  section {
+    item (_("New Folder"), "win.new-folder")
+  }
+
+  section {
+    item (_("Cut"), "win.cut")
+    item (_("Copy"), "win.copy")
+    item (_("Paste"), "win.paste")
+  }
+
+  section {
+    item (_("Rename…"), "win.rename")
+    item (_("Move to Trash"), "win.delete")
+  }
 }
 
 menu main_menu {
