@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 SelfRef -->
+<component type="desktop-application">
+  <id>dev.aperte.Foldav</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Foldav</name>
+  <summary>The files in your Nextcloud</summary>
+  <description>
+    <p>
+      Foldav is a file manager for the files in your Nextcloud: folders are copied, moved and
+      deleted on the server in one request, not file by file.
+    </p>
+    <ul>
+      <li>Connects through GNOME Online Accounts or a browser sign-in, to more than one account</li>
+    </ul>
+  </description>
+  <developer id="dev.aperte">
+    <name translate="no">Aperte</name>
+  </developer>
+  <launchable type="desktop-id">dev.aperte.Foldav.desktop</launchable>
+  <translation type="gettext">foldav</translation>
+  <url type="homepage">https://github.com/AperteDev/foldav</url>
+  <url type="bugtracker">https://github.com/AperteDev/foldav/issues</url>
+  <url type="vcs-browser">https://github.com/AperteDev/foldav</url>
+  <url type="donation">https://github.com/sponsors/SelfRef</url>
+  <branding>
+    <color type="primary" scheme_preference="light">#f6d99a</color>
+    <color type="primary" scheme_preference="dark">#5a4310</color>
+  </branding>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  <releases>
+    <release version="0.1.0" date="2026-11-04"/>
+  </releases>
+</component>

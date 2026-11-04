@@ -1,0 +1,504 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Foldav package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Foldav\n"
+"Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
+"POT-Creation-Date: 2026-11-04 23:53+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: foldav/linux/app/src/add_account.rs:62
+msgid "Its Nextcloud accounts are all added"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:64
+msgid "No Nextcloud account in Settings → Online Accounts"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:72
+#: foldav/linux/app/src/add_account.rs:74 foldav/linux/app/ui/settings.blp:52
+msgid "Add Account"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:73
+msgid "Files of another Nextcloud account"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:89 foldav/linux/app/src/settings.rs:294
+#: foldav/linux/app/src/settings.rs:408 foldav/linux/app/ui/add-account.blp:37
+msgid "GNOME Online Accounts"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:92
+msgid "Connect with a Nextcloud account from GNOME Settings"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:95
+#: foldav/linux/app/ui/add-account.blp:52
+msgid "Nextcloud Server"
+msgstr ""
+
+#: foldav/linux/app/src/add_account.rs:98
+msgid "Sign in to your Nextcloud; Foldav gets an app password of its own"
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:104
+msgid "This account is already added"
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:105 foldav/linux/app/src/main.rs:171
+#: foldav/linux/app/src/main.rs:183
+msgid "Connecting failed"
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:107
+#, rust-format
+msgid "Cannot save password: {error}"
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:161
+msgid "Online Accounts has no password for this account"
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:199
+msgid "Removing the account failed"
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:214
+msgid ""
+"It was saved by a newer version of Foldav. Update Foldav to open it; this "
+"version leaves it as it is."
+msgstr ""
+
+#: foldav/linux/app/src/main.rs:222
+msgid "Foldav Cannot Open Its Data"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:85
+msgid "Checking…"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:97
+#, rust-format
+msgid "{server}, in maintenance mode"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:107
+#, rust-format
+msgid "Cannot reach the server: {error}"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:169
+#, rust-format
+msgid "{name} added"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:179
+msgid "Drag to Move"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:290
+msgctxt "account"
+msgid "Off"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:292 foldav/linux/app/src/settings.rs:397
+msgid "Not connected"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:296 foldav/linux/app/ui/account.blp:51
+#: foldav/linux/app/ui/add-account.blp:109
+msgid "Nextcloud server"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:318
+msgctxt "settings sync"
+msgid "Off"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:399
+msgid "Sign in again to show its files"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:401
+msgid "Check the account in Settings → Online Accounts"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:404 foldav/linux/app/src/settings.rs:442
+#, rust-format
+msgid "Signed in as {name}"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:407
+#, rust-format
+msgid "Connected as {name}"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:438
+#, rust-format
+msgid "Signed in as {name}: add that as another account"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:479
+msgid "Waiting for Sign-In…"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:481
+msgid "Waiting for Browser…"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:529
+msgid "No saved password: sign in again first"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:531
+msgid "Nextcloud server changed"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:558
+#, rust-format
+msgid "Remove {name}?"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:560
+msgid ""
+"It leaves this device; its files stay on the server. Switch it off instead "
+"to only hide them."
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:565 foldav/linux/app/ui/account.blp:34
+#: foldav/linux/app/ui/add-account.blp:167
+#: foldav/linux/app/ui/password-login.blp:19
+msgid "Cancel"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:566
+msgid "Remove"
+msgstr ""
+
+#: foldav/linux/app/src/settings.rs:581
+#, rust-format
+msgid "{name} removed"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:15
+msgid "Support on Ko-fi"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:19
+msgid "Sponsor on GitHub"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:23
+msgid "Donate on Liberapay"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:130
+msgid ""
+"Foldav is developed in my free time. If it helps you with your files, you "
+"can support its development."
+msgstr ""
+
+#. Translators: the About row that opens the page with the donation links.
+#: foldav/linux/app/src/window.rs:160
+msgid "_Support"
+msgstr ""
+
+#. Translators: title of About's page with the donation links.
+#: foldav/linux/app/src/window.rs:162
+msgid "Support"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:447
+msgid "Not connected. Sign in again in Preferences → Accounts."
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:463
+msgid "Loading failed"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:522
+msgid "Enter the Nextcloud server first"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:557
+msgid "Cannot start login"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:558
+#, rust-format
+msgid "Cannot start login: {error}"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:566
+msgid "Login link copied to clipboard"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:586
+#, rust-format
+msgid "Login failed: {error}"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:588
+msgid "Login failed"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:591
+msgid "Login timed out"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:640
+msgid "Wrong login name or password"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:641
+#, rust-format
+msgid "Sign-in failed: {error}"
+msgstr ""
+
+#: foldav/linux/app/src/window.rs:642
+msgid "Sign-in failed"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:13
+msgid "Use This Account"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:14
+msgid "Off hides its files; nothing is deleted"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:18
+msgid "Name"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:26
+msgid "Connection"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:42
+msgid "Sign In Again"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:44
+msgid "More Sign-In Options"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:65
+msgid "Server Status"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:68
+msgid "Server"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:77
+msgid "Remove Account"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:87 foldav/linux/app/ui/add-account.blp:154
+msgid "Copy Login Link"
+msgstr ""
+
+#: foldav/linux/app/ui/account.blp:88 foldav/linux/app/ui/add-account.blp:160
+msgid "Sign In with Password…"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:21
+msgid "The files in your Nextcloud, managed on the server"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:53
+msgid "Sign in with the browser or an app password"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:70
+msgid "You can add more accounts later in Preferences"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:104
+msgid "Account"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:125
+msgid "Sync settings with this account"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:126
+msgid "Use the same settings on all devices"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:136
+msgid "Connect"
+msgstr ""
+
+#: foldav/linux/app/ui/add-account.blp:149
+msgid "Sign In with Browser"
+msgstr ""
+
+#: foldav/linux/app/ui/password-login.blp:6
+msgid "Sign In with Password"
+msgstr ""
+
+#: foldav/linux/app/ui/password-login.blp:24
+msgid "Sign In"
+msgstr ""
+
+#: foldav/linux/app/ui/password-login.blp:38
+msgid "Create an app password in Nextcloud under Settings → Security"
+msgstr ""
+
+#: foldav/linux/app/ui/password-login.blp:45
+msgid "Login name"
+msgstr ""
+
+#: foldav/linux/app/ui/password-login.blp:50
+msgid "App password"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:8 foldav/linux/app/ui/shortcuts.blp:7
+msgid "General"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:12
+msgid "Appearance"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:16
+msgid "Style"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:24
+msgctxt "style"
+msgid "System"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:29
+msgctxt "style"
+msgid "Light"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:34
+msgctxt "style"
+msgid "Dark"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:42 foldav/linux/app/ui/settings.blp:48
+msgid "Accounts"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:57
+msgid "Add"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:63
+msgid "Sync"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:67
+msgid "Sync settings with"
+msgstr ""
+
+#: foldav/linux/app/ui/settings.blp:68
+msgid "Accounts and servers always stay on this device"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:10
+msgid "Parent Folder"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:15
+msgid "Reload"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:20
+msgid "Toggle Sidebar"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:25 foldav/linux/app/ui/window.blp:153
+msgid "Preferences"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:30 foldav/linux/app/ui/window.blp:154
+msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:35 foldav/linux/app/ui/window.blp:156
+msgid "Quit"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:40
+msgid "Main Menu"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:63
+msgid "Toggle Sidebar (F9)"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:70
+msgid "Parent Folder (Alt+Up)"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:77
+msgid "Reload (F5)"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:85
+msgid "Foldav was updated: restart it to use the new version"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:86
+msgid "Restart"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:126
+msgid "Empty Folder"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:134
+msgid "Cannot Load the Folder"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:137
+msgid "Try Again"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:155
+msgid "About Foldav"
+msgstr ""
+
+#: foldav/linux/data/dev.aperte.Foldav.desktop:2
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:7
+msgid "Foldav"
+msgstr ""
+
+#: foldav/linux/data/dev.aperte.Foldav.desktop:3
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:8
+msgid "The files in your Nextcloud"
+msgstr ""
+
+#: foldav/linux/data/dev.aperte.Foldav.desktop:9
+msgid "files;folders;nextcloud;webdav;"
+msgstr ""
+
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:10
+msgid ""
+"Foldav is a file manager for the files in your Nextcloud: folders are "
+"copied, moved and deleted on the server in one request, not file by file."
+msgstr ""
+
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:15
+msgid ""
+"Connects through GNOME Online Accounts or a browser sign-in, to more than "
+"one account"
+msgstr ""

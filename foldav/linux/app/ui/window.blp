@@ -1,0 +1,157 @@
+using Gtk 4.0;
+using Adw 1;
+
+Adw.ApplicationWindow window {
+  title: "Foldav";
+  default-width: 1000;
+  default-height: 700;
+
+  content: Adw.ToastOverlay toasts {
+    Gtk.Stack stack {
+      Gtk.StackPage {
+        name: "welcome";
+
+        // The first account to add (ui/add-account.blp, set in src/window.rs `welcome`).
+        child: Adw.Bin welcome {};
+      }
+
+      Gtk.StackPage {
+        name: "main";
+
+        // As Todav's and Notav's: the sidebar hidden with its button (F9), and by itself on a
+        // narrow window, where it then shows over the files.
+        child: Adw.OverlaySplitView split {
+          min-sidebar-width: 220;
+          max-sidebar-width: 300;
+
+          // One row per account (src/window.rs `refresh_places`); the web app's other places
+          // (Recent, Favorites, Shared, Tags, Trash) come here too.
+          sidebar: Adw.ToolbarView {
+            [top]
+            Adw.HeaderBar {
+              title-widget: Adw.WindowTitle {
+                title: "Foldav";
+              };
+
+              [end]
+              Gtk.MenuButton {
+                icon-name: "open-menu-symbolic";
+                menu-model: main_menu;
+                tooltip-text: _("Main Menu");
+                primary: true;
+              }
+            }
+
+            content: Gtk.ScrolledWindow {
+              vexpand: true;
+              hscrollbar-policy: never;
+
+              Gtk.ListBox places {
+                styles ["navigation-sidebar"]
+              }
+            };
+          };
+
+          content: Adw.ToolbarView {
+            [top]
+            Adw.HeaderBar {
+              title-widget: Adw.WindowTitle folder_title {};
+
+              [start]
+              Gtk.ToggleButton {
+                icon-name: "sidebar-show-symbolic";
+                tooltip-text: _("Toggle Sidebar (F9)");
+                active: bind split.show-sidebar bidirectional;
+              }
+
+              [start]
+              Gtk.Button up_button {
+                icon-name: "go-up-symbolic";
+                tooltip-text: _("Parent Folder (Alt+Up)");
+                action-name: "win.up";
+              }
+
+              [end]
+              Gtk.Button {
+                icon-name: "view-refresh-symbolic";
+                tooltip-text: _("Reload (F5)");
+                action-name: "win.reload";
+              }
+            }
+
+            // A newer version installed (src/update.rs, src/window.rs `update_banner`).
+            [top]
+            Adw.Banner update_banner {
+              title: _("Foldav was updated: restart it to use the new version");
+              button-label: _("Restart");
+              action-name: "app.restart";
+            }
+
+            content: Gtk.Stack files_stack {
+              Gtk.StackPage {
+                name: "loading";
+                child: Adw.Spinner {
+                  halign: center;
+                  valign: center;
+                  width-request: 32;
+                  height-request: 32;
+                };
+              }
+
+              Gtk.StackPage {
+                name: "files";
+                child: Gtk.ScrolledWindow {
+                  vexpand: true;
+
+                  Adw.ClampScrollable {
+                    maximum-size: 1100;
+
+                    Gtk.ListBox files {
+                      selection-mode: none;
+                      margin-top: 12;
+                      margin-bottom: 12;
+                      margin-start: 12;
+                      margin-end: 12;
+                      valign: start;
+                      styles ["boxed-list"]
+                    }
+                  }
+                };
+              }
+
+              Gtk.StackPage {
+                name: "empty";
+                child: Adw.StatusPage {
+                  icon-name: "folder-symbolic";
+                  title: _("Empty Folder");
+                };
+              }
+
+              Gtk.StackPage {
+                name: "error";
+                child: Adw.StatusPage error {
+                  icon-name: "dialog-error-symbolic";
+                  title: _("Cannot Load the Folder");
+
+                  Gtk.Button {
+                    label: _("Try Again");
+                    action-name: "win.reload";
+                    halign: center;
+                    styles ["pill"]
+                  }
+                };
+              }
+            };
+          };
+        };
+      }
+    }
+  };
+}
+
+menu main_menu {
+  item (_("Preferences"), "win.preferences")
+  item (_("Keyboard Shortcuts"), "app.shortcuts")
+  item (_("About Foldav"), "app.about")
+  item (_("Quit"), "app.quit")
+}

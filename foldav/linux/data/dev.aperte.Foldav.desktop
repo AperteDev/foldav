@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Foldav
+Comment=The files in your Nextcloud
+Exec=foldav-linux
+Icon=dev.aperte.Foldav
+Terminal=false
+Type=Application
+Categories=Utility;FileManager;
+Keywords=files;folders;nextcloud;webdav;
+StartupNotify=true

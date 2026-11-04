@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <!-- The app's own icon, for the About dialog when it is not installed (a build run). -->
+  <gresource prefix="/dev/aperte/Foldav/icons/scalable/apps">
+    <file alias="dev.aperte.Foldav.svg">../../data/dev.aperte.Foldav.svg</file>
+  </gresource>
+  <!-- What the About dialog shows (Adw.AboutDialog.new_from_appdata): the metainfo with its
+       translations, as build.rs writes it to OUT_DIR. -->
+  <gresource prefix="/dev/aperte/Foldav">
+    <file alias="metainfo.xml">dev.aperte.Foldav.metainfo.xml</file>
+  </gresource>
+</gresources>
