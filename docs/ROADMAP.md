@@ -1,6 +1,6 @@
 # Foldav — Roadmap
 
-Planned work, not yet done; the order is not fixed. Nothing is built yet: this is the plan.
+Planned work, not yet done; the order is not fixed. Built so far: the scaffold (accounts, settings, a folder listing); the rest is the plan.
 
 ## Overview
 
