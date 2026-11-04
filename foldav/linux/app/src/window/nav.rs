@@ -85,6 +85,9 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
     let cached = ui.dirs.borrow().get(&(id, path.clone())).cloned();
     if cached.is_some() {
         show(ui);
+    } else if ui.views.mode() == views::Mode::Columns {
+        // The columns stay as they are, the new one filling when it is loaded.
+        views::refresh_columns(ui);
     } else {
         ui.files_stack.set_visible_child_name("loading");
     }
@@ -99,10 +102,15 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
         };
         match r {
             Ok(Ok((found, files))) => {
-                let changed = cached.as_deref() != Some(&files);
-                ui.dirs
-                    .borrow_mut()
-                    .insert((id, found.clone()), Rc::new(files));
+                // What was loaded before stays when it is the same: what is made from it
+                // (the columns) is not made again.
+                let old = ui.dirs.borrow().get(&(id, found.clone())).cloned();
+                let changed = old.as_deref() != Some(&files);
+                if changed {
+                    ui.dirs
+                        .borrow_mut()
+                        .insert((id, found.clone()), Rc::new(files));
+                }
                 if found != path {
                     // A folder above it: that is where it is now.
                     replace_top(&ui, id, &found);

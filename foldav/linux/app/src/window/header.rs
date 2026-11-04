@@ -82,6 +82,7 @@ pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.view-list", &["<Control>2"]);
     app.set_accels_for_action("win.view-columns", &["<Control>3"]);
     app.set_accels_for_action("win.show-hidden", &["<Control>h"]);
+    app.set_accels_for_action("win.bookmark-add", &["<Control>d"]);
 }
 
 /// Bookmark (or stop bookmarking) the folder shown.

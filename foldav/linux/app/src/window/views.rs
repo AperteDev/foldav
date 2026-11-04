@@ -102,11 +102,16 @@ fn sorter(by: impl Fn(&File, &File) -> Ordering + 'static) -> gtk::CustomSorter 
 impl Views {
     pub fn new(b: &gtk::Builder) -> Views {
         let store = gio::ListStore::new::<glib::BoxedAnyObject>();
-        let list = gtk::ColumnView::builder().build();
+        let list = gtk::ColumnView::builder()
+            .css_classes(["files-view"])
+            .build();
         // The list's header sorts the model icons and list share.
         let sorted = gtk::SortListModel::new(Some(store.clone()), list.sorter());
         let selection = gtk::MultiSelection::new(Some(sorted));
-        let grid = gtk::GridView::builder().max_columns(100).build();
+        let grid = gtk::GridView::builder()
+            .max_columns(100)
+            .css_classes(["files-view"])
+            .build();
         grid.set_model(Some(&selection));
         list.set_model(Some(&selection));
 
@@ -190,12 +195,12 @@ pub fn connect(ui: &Rc<Ui>) {
         let b = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .spacing(6)
-            .margin_top(10)
-            .margin_bottom(10)
-            .margin_start(8)
-            .margin_end(8)
+            .margin_top(8)
+            .margin_bottom(8)
+            .margin_start(6)
+            .margin_end(6)
             .halign(gtk::Align::Center)
-            .width_request(104)
+            .width_request(108)
             .build();
         b.append(&gtk::Image::builder().pixel_size(64).build());
         b.append(
@@ -422,7 +427,7 @@ pub fn refresh_columns(ui: &Rc<Ui>) {
         let data = ui.dirs.borrow().get(&(id, levels[i].clone())).cloned();
         let hidden = ui.hidden.get();
         let same = match (&data, &column.filled) {
-            (Some(d), Some((f, h))) => Rc::ptr_eq(d, f) && *h == hidden,
+            (Some(d), Some((f, h))) => (Rc::ptr_eq(d, f) || **d == **f) && *h == hidden,
             (None, None) => true,
             _ => false,
         };
@@ -506,6 +511,7 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
     view.add_css_class("navigation-sidebar");
     // The sidebar style draws icons symbolic; these are the files' own.
     view.add_css_class("miller-list");
+    view.add_css_class("files-view");
     let scroll = gtk::ScrolledWindow::builder()
         .child(&view)
         .hscrollbar_policy(gtk::PolicyType::Never)

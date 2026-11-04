@@ -26,7 +26,9 @@
   about it is not decided, do as Nautilus does. Its code is in `foldav/linux/app/src/window/`:
   `nav` (the folder shown, history, the folders loaded), `sidebar` (accounts, bookmarks, tree),
   `header` (path bar, view switcher), `views` (icons, list, columns) and `ops` (what is done to
-  files).
+  files). The content header is a plain toolbar row, not an `AdwHeaderBar` (which keeps its
+  title centered, so the path bar could not fill the room between the buttons). Only the
+  sandbox copy has the striped development header; a normal debug run looks as the release.
 - Not built yet, planned as in Notav: the CLI, the Android app and bindings (`ffi/`), the
   packaging (Flatpak, RPM, AUR), CI and the Release workflow.
 

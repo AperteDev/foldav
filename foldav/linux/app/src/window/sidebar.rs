@@ -189,9 +189,10 @@ fn bookmarks(ui: &Rc<Ui>) {
         s.bookmarks.append(&r);
         rows.push(Some(b.clone()));
     }
-    // As Nautilus: a row to bookmark the folder shown, while it is not.
+    // With none yet: a row to bookmark the folder shown (the path bar's menu, and Ctrl+D, do
+    // it later).
     let here = list.iter().position(|b| b.path == path);
-    if here.is_none() {
+    if list.is_empty() {
         let r = row("bookmark-new-symbolic", &gettext("New Bookmark"));
         r.add_css_class("new-bookmark");
         s.bookmarks.append(&r);

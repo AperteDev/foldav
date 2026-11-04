@@ -22,8 +22,10 @@ mod views;
 /// The path bar and its segments, as Nautilus'; the dense tree (`.dense`, as Notav's); the row
 /// that bookmarks the folder; the columns' dividers.
 const CSS: &str = "
-.pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; padding: 2px 2px 2px 4px; }
-.pathbar button.path-segment { min-height: 0; padding: 3px 8px; border-radius: 6px; }
+.pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; padding: 0 2px 0 4px; }
+.pathbar button { min-height: 26px; }
+.pathbar button.path-segment { padding: 0 8px; border-radius: 6px; }
+.pathbar menubutton > button { min-width: 26px; padding: 0; }
 .pathbar button.path-segment.current { font-weight: bold; }
 .pathbar .path-separator { opacity: 0.5; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
@@ -32,6 +34,10 @@ const CSS: &str = "
   box-shadow: inset 0 0 0 1px alpha(var(--accent-color), 0.6); }
 scrolledwindow.miller { border-right: 1px solid alpha(currentColor, 0.12); }
 .miller-list image { -gtk-icon-style: regular; }
+/* The files on the window's own background, as in Files, not the view's darker one; the icons'
+   tiles rounded and close, as there. */
+.files-view, .files-view listview { background: none; }
+gridview.files-view > child { border-radius: 12px; margin: 2px; padding: 0; }
 ";
 
 /// Where to support development, listed in About (and in the README), as in Todav.
@@ -345,12 +351,10 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     let b = view!("window");
     let window: adw::ApplicationWindow = get(&b, "window");
     window.set_application(Some(app));
-    // A development build (debug: `cargo run`, `make sandbox`; packages are release builds) has
-    // GNOME's striped header bars, so it is not taken for the installed app.
-    if cfg!(debug_assertions) {
-        window.add_css_class("devel");
-    }
+    // The sandbox copy has GNOME's striped header bars, so it is not taken for the normal app
+    // (a development build looks as Files does: the header is meant to match it).
     if crate::sandbox() {
+        window.add_css_class("devel");
         window.set_title(Some("Foldav (sandbox)"));
     }
     restore_size(&window);
