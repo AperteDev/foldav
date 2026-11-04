@@ -24,10 +24,17 @@ pub struct File {
     pub fileid: String,
 }
 
+impl File {
+    /// Hidden (a dot first), as in the web app and Files.
+    pub fn hidden(&self) -> bool {
+        self.name.starts_with('.')
+    }
+}
+
 impl Client {
     /// What is directly in folder `path` of account `id` (empty: the Files root): folders first,
-    /// then by name, case ignored; hidden files (".config") left out, as in the web app.
-    /// Blocking: a request to the server.
+    /// then by name, case ignored; hidden files (`File::hidden`) included, the front-end
+    /// decides. Blocking: a request to the server.
     // ponytail: no cache, a PROPFIND at every call; cache listings by folder ETag (roadmap, "Browsing").
     pub fn list(&self, id: i64, path: &str) -> Result<Vec<File>> {
         let home = self.files_home(id)?;
@@ -58,7 +65,6 @@ impl Client {
                     fileid: e.fileid,
                 })
             })
-            .filter(|f| !f.name.starts_with('.'))
             .collect();
         files.sort_by_cached_key(|f| (!f.folder, f.name.to_lowercase()));
         Ok(files)

@@ -1,5 +1,6 @@
 mod account;
 pub mod accounts;
+mod bookmarks;
 pub mod dav;
 mod files;
 pub mod json;
@@ -16,6 +17,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 pub use account::Account;
+pub use bookmarks::Bookmark;
 pub use files::File;
 pub use login::{Credentials, LoginFlow, login_flow_poll, login_flow_start, password_login};
 pub use ops::valid_name;
