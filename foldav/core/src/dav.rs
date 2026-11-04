@@ -439,9 +439,19 @@ impl Dav {
     /// MOVE `from` to `to` without overwriting: `Conflict` when `to` exists, `NotFound` when
     /// `from` is gone or `to`'s folder does not exist.
     pub fn mv(&self, from: &str, to: &str) -> Result<()> {
+        self.copy_or_move("MOVE", from, to)
+    }
+
+    /// COPY `from` to `to` (a folder with all it holds, in one request) without overwriting;
+    /// errors as `mv`.
+    pub fn copy(&self, from: &str, to: &str) -> Result<()> {
+        self.copy_or_move("COPY", from, to)
+    }
+
+    fn copy_or_move(&self, method: &str, from: &str, to: &str) -> Result<()> {
         let dest = self.url(to);
         let r = self.request(
-            "MOVE",
+            method,
             from,
             &[("Destination", &dest), ("Overwrite", "F")],
             "",
@@ -451,6 +461,19 @@ impl Dav {
             412 => Err(Error::Conflict),
             404 | 409 => Err(Error::NotFound(from.into())),
             423 => Err(Error::Locked(from.into())),
+            s => Err(Error::Http(s, r.body)),
+        }
+    }
+
+    /// Create the folder `href`; `Conflict` when something has that name, `NotFound` when its
+    /// parent does not exist.
+    pub fn mkcol(&self, href: &str) -> Result<()> {
+        let r = self.request("MKCOL", href, &[], "")?;
+        match r.status {
+            200..=299 => Ok(()),
+            405 => Err(Error::Conflict),
+            409 => Err(Error::NotFound(href.into())),
+            423 => Err(Error::Locked(href.into())),
             s => Err(Error::Http(s, r.body)),
         }
     }

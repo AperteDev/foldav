@@ -5,8 +5,10 @@ mod files;
 pub mod json;
 mod login;
 mod net;
+mod ops;
 mod settings;
 pub mod store;
+mod undo;
 
 use dav::Dav;
 use rusqlite::Connection;
@@ -16,6 +18,7 @@ use std::sync::{Arc, Mutex};
 pub use account::Account;
 pub use files::File;
 pub use login::{Credentials, LoginFlow, login_flow_poll, login_flow_start, password_login};
+pub use ops::valid_name;
 pub use settings::DEVICE_ONLY;
 
 pub trait ChangeListener: Send + Sync {
@@ -28,6 +31,7 @@ pub struct Client {
     /// The connections of the accounts connected in this run, by account id.
     dav: Mutex<HashMap<i64, Arc<Dav>>>,
     listeners: Mutex<Vec<Box<dyn ChangeListener>>>,
+    journal: Mutex<undo::Journal>,
 }
 
 pub fn now() -> i64 {
@@ -45,6 +49,7 @@ impl Client {
             db: Mutex::new(db),
             dav: Mutex::default(),
             listeners: Mutex::new(Vec::new()),
+            journal: Mutex::default(),
         })
     }
 
@@ -61,6 +66,8 @@ pub enum Error {
     NotFound(String),
     /// Something has that name already.
     Exists(String),
+    /// Not a name a file or folder can have.
+    Invalid(String),
     /// Locked on the server (HTTP 423), by an editor that has it open.
     Locked(String),
     Http(u16, String),
@@ -79,6 +86,7 @@ impl std::fmt::Display for Error {
             Error::NoAccount => write!(f, "no account configured"),
             Error::NotFound(s) => write!(f, "not found: {s}"),
             Error::Exists(s) => write!(f, "exists already: {s}"),
+            Error::Invalid(s) => write!(f, "invalid name: {s}"),
             Error::Locked(s) => write!(f, "locked on the server: {s}"),
             // A WebDAV error body is XML: its <s:message> is the part worth reading, else (it
             // can be empty) the exception's name. A web server's or proxy's error page is

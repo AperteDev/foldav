@@ -155,6 +155,7 @@ impl Client {
             self.set_settings_account(None)?;
         }
         self.dav.lock().unwrap().remove(&id);
+        self.journal.lock().unwrap().clear();
         Ok(())
     }
 
