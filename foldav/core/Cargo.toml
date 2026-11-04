@@ -1,0 +1,15 @@
+[package]
+name = "foldav-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+quick-xml = "0.42.0"
+# 0.38 is what Fedora packages; the system SQLite, as distributions want.
+rusqlite = ">=0.38, <0.41"
+# With the system's certificate authorities (net.rs).
+ureq = { version = "3.4.2", features = ["platform-verifier"] }
+
+[features]
+integration = []
