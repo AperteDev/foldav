@@ -1,15 +1,38 @@
-//! Main window: the welcome page (sign-in), the places sidebar and a folder's files.
+//! Main window: the welcome page (sign-in), and the files as Nautilus shows them: the sidebar
+//! (accounts, bookmarks, tree), the header and the views of a folder. Its parts are in
+//! `window/`: `nav` (where the window is, the history, what was loaded), `sidebar`, `header`,
+//! `views` and `ops` (what is done to files).
 
 use crate::core;
 use crate::i18n::{gettext, gettext_noop};
 use adw::prelude::*;
 use foldav_core::File;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 use std::cell::{Cell, RefCell};
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+mod header;
+mod nav;
 mod ops;
+mod sidebar;
+mod views;
+
+/// The path bar and its segments, as Nautilus'; the dense tree (`.dense`, as Notav's); the row
+/// that bookmarks the folder; the columns' dividers.
+const CSS: &str = "
+.pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; padding: 2px 2px 2px 4px; }
+.pathbar button.path-segment { min-height: 0; padding: 3px 8px; border-radius: 6px; }
+.pathbar button.path-segment.current { font-weight: bold; }
+.pathbar .path-separator { opacity: 0.5; }
+.navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
+.tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
+.navigation-sidebar > row.new-bookmark { color: var(--accent-color);
+  box-shadow: inset 0 0 0 1px alpha(var(--accent-color), 0.6); }
+scrolledwindow.miller { border-right: 1px solid alpha(currentColor, 0.12); }
+.miller-list image { -gtk-icon-style: regular; }
+";
 
 /// Where to support development, listed in About (and in the README), as in Todav.
 const DONATIONS: [(&str, &str); 3] = [
@@ -27,30 +50,37 @@ const DONATIONS: [(&str, &str); 3] = [
     ),
 ];
 
+/// The files of folders, by account and path.
+type Dirs = HashMap<(i64, String), Rc<Vec<File>>>;
+
 struct Ui {
     window: adw::ApplicationWindow,
     toasts: adw::ToastOverlay,
     stack: gtk::Stack,
+    split: adw::OverlaySplitView,
     /// Welcome page: the steps adding the first account (`add_account`).
     welcome: adw::Bin,
     add_account: RefCell<Option<Rc<crate::add_account::AddAccount>>>,
-    places: gtk::ListBox,
-    /// The account of each row of `places`.
-    place_accounts: RefCell<Vec<i64>>,
-    folder_title: adw::WindowTitle,
+    sidebar: sidebar::Sidebar,
+    header: header::Header,
+    views: views::Views,
     files_stack: gtk::Stack,
-    files: gtk::ListBox,
     error: adw::StatusPage,
     update_banner: adw::Banner,
     /// The folder shown: its account and path (relative to the Files root).
     at: RefCell<Option<(i64, String)>>,
     /// Bumped with every load; a load only shows while its number is current.
     load: Cell<u64>,
-    /// What the list shows, in the order of its rows.
-    listing: RefCell<Vec<File>>,
+    /// The folders loaded, by account and path: for the views, the columns and the tree.
+    dirs: RefCell<Dirs>,
+    /// The folders open in the sidebar's tree.
+    expanded: RefCell<HashSet<(i64, String)>>,
+    history: RefCell<nav::History>,
+    /// Hidden files show (the device-only `show_hidden` setting).
+    hidden: Cell<bool>,
     /// Cut or copied files, to paste (`ops`).
     clipboard: RefCell<Option<ops::Clipboard>>,
-    /// The menu of a right click on the list.
+    /// The menu of a right click on the files.
     file_menu: gio::MenuModel,
 }
 
@@ -84,6 +114,36 @@ pub fn toast(msg: &str) {
     if let Some(ui) = ui() {
         ui.toasts.add_toast(note(msg));
     }
+}
+
+/// A window action running `f`. The keys are the text field's while one has the focus (a name
+/// being typed).
+fn action(ui: &Rc<Ui>, name: &str, f: fn(&Rc<Ui>)) -> gio::SimpleAction {
+    let a = gio::SimpleAction::new(name, None);
+    let weak = Rc::downgrade(ui);
+    a.connect_activate(move |_, _| {
+        if let Some(ui) = weak.upgrade()
+            && !GtkWindowExt::focus(&ui.window).is_some_and(|w| w.is::<gtk::Editable>())
+        {
+            f(&ui);
+        }
+    });
+    ui.window.add_action(&a);
+    a
+}
+
+/// A menu at `x`, `y` of `widget`.
+fn popup_menu(widget: &gtk::Widget, model: &impl IsA<gio::MenuModel>, x: f64, y: f64) {
+    let popover = gtk::PopoverMenu::from_model(Some(model));
+    popover.set_parent(widget);
+    popover.set_has_arrow(false);
+    popover.set_halign(gtk::Align::Start);
+    popover.set_pointing_to(Some(&gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
+    popover.connect_closed(|p| {
+        let p = p.clone();
+        glib::idle_add_local_once(move || p.unparent());
+    });
+    popover.popup();
 }
 
 pub fn setup_actions(app: &adw::Application) {
@@ -124,9 +184,8 @@ pub fn setup_actions(app: &adw::Application) {
     app.set_accels_for_action("app.quit", &["<Control>q"]);
     app.set_accels_for_action("app.shortcuts", &["<Control>question"]);
     app.set_accels_for_action("win.preferences", &["<Control>comma"]);
-    app.set_accels_for_action("win.up", &["<Alt>Up"]);
-    app.set_accels_for_action("win.reload", &["F5", "<Control>r"]);
     app.set_accels_for_action("win.toggle-sidebar", &["F9"]);
+    header::accels(app);
     ops::accels(app);
 }
 
@@ -208,7 +267,9 @@ pub fn present(app: &adw::Application) {
         }
     } else {
         ui.stack.set_visible_child_name("main");
-        refresh_places(&ui);
+        if ui.at.borrow().is_none() {
+            nav::accounts_changed(&ui);
+        }
     }
     ui.window.present();
 }
@@ -222,8 +283,7 @@ fn welcome(ui: &Rc<Ui>) {
         ui.add_account.take();
         ui.welcome.set_child(gtk::Widget::NONE);
         ui.stack.set_visible_child_name("main");
-        refresh_places(&ui);
-        open(&ui, id, String::new());
+        nav::open(&ui, id, String::new());
     });
     ui.welcome.set_child(Some(&add.root));
     *ui.add_account.borrow_mut() = Some(add);
@@ -233,8 +293,9 @@ fn welcome(ui: &Rc<Ui>) {
 /// No account left: back to the welcome page.
 pub fn show_welcome() {
     if let Some(ui) = ui() {
-        ui.at.take();
-        refresh_places(&ui);
+        ui.dirs.borrow_mut().clear();
+        ui.expanded.borrow_mut().clear();
+        nav::accounts_changed(&ui);
         welcome(&ui);
     }
 }
@@ -243,15 +304,14 @@ pub fn show_welcome() {
 /// them as they are now.
 pub fn account_changed() {
     if let Some(ui) = ui() {
-        refresh_places(&ui);
+        nav::accounts_changed(&ui);
     }
 }
 
 /// Account `id` was added in Preferences: its files show.
 pub fn account_added(id: i64) {
     if let Some(ui) = ui() {
-        refresh_places(&ui);
-        open(&ui, id, String::new());
+        nav::open(&ui, id, String::new());
     }
 }
 
@@ -295,241 +355,48 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     }
     restore_size(&window);
 
+    let css = gtk::CssProvider::new();
+    css.load_from_string(CSS);
+    gtk::style_context_add_provider_for_display(
+        &WidgetExt::display(&window),
+        &css,
+        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+
     let ui = Rc::new(Ui {
         window,
         toasts: get(&b, "toasts"),
         stack: get(&b, "stack"),
+        split: get(&b, "split"),
         welcome: get(&b, "welcome"),
         add_account: RefCell::new(None),
-        places: get(&b, "places"),
-        place_accounts: RefCell::new(Vec::new()),
-        folder_title: get(&b, "folder_title"),
+        sidebar: sidebar::Sidebar::new(&b),
+        header: header::Header::new(&b),
+        views: views::Views::new(&b),
         files_stack: get(&b, "files_stack"),
-        files: get(&b, "files"),
         error: get(&b, "error"),
         update_banner: get(&b, "update_banner"),
         at: RefCell::new(None),
         load: Cell::new(0),
-        listing: RefCell::new(Vec::new()),
+        dirs: RefCell::default(),
+        expanded: RefCell::default(),
+        history: RefCell::default(),
+        hidden: Cell::new(false),
         clipboard: RefCell::new(None),
         file_menu: get(&b, "file_menu"),
     });
     ui.update_banner.set_revealed(crate::update::updated());
-    connect(&ui, get(&b, "split"));
+    action(&ui, "preferences", |ui| {
+        crate::settings::present(&ui.window)
+    });
+    action(&ui, "toggle-sidebar", |ui| {
+        ui.split.set_show_sidebar(!ui.split.shows_sidebar())
+    });
+    views::connect(&ui);
+    sidebar::connect(&ui);
     ops::connect(&ui);
+    header::connect(&ui);
     ui
-}
-
-type Handler = Box<dyn Fn(&Rc<Ui>)>;
-
-/// The window's actions and the sidebar's selection.
-fn connect(ui: &Rc<Ui>, split: adw::OverlaySplitView) {
-    let action = |name: &str, f: Handler| {
-        let a = gio::SimpleAction::new(name, None);
-        let weak = Rc::downgrade(ui);
-        a.connect_activate(move |_, _| {
-            if let Some(ui) = weak.upgrade() {
-                f(&ui);
-            }
-        });
-        ui.window.add_action(&a);
-        a
-    };
-    action(
-        "preferences",
-        Box::new(|ui| crate::settings::present(&ui.window)),
-    );
-    action(
-        "toggle-sidebar",
-        Box::new(move |_| split.set_show_sidebar(!split.shows_sidebar())),
-    );
-    action("reload", Box::new(reload));
-    let up = action(
-        "up",
-        Box::new(|ui| {
-            let at = ui.at.borrow().clone();
-            if let Some((id, path)) = at {
-                open(ui, id, parent(&path).into());
-            }
-        }),
-    );
-    // Only below the Files root (`open`).
-    up.set_enabled(false);
-
-    let weak = Rc::downgrade(ui);
-    ui.places.connect_row_activated(move |_, row| {
-        let Some(ui) = weak.upgrade() else { return };
-        let id = ui
-            .place_accounts
-            .borrow()
-            .get(row.index() as usize)
-            .copied();
-        if let Some(id) = id {
-            open(&ui, id, String::new());
-        }
-    });
-    let weak = Rc::downgrade(ui);
-    ui.files.connect_row_activated(move |_, row| {
-        let Some(ui) = weak.upgrade() else { return };
-        // A folder opens; a file does nothing yet.
-        let (file, at) = (
-            ui.listing.borrow().get(row.index() as usize).cloned(),
-            ui.at.borrow().clone(),
-        );
-        if let (Some(f), Some((id, _))) = (file, at)
-            && f.folder
-        {
-            open(&ui, id, f.path);
-        }
-    });
-}
-
-/// The folder above `path` ("" above a top-level one).
-fn parent(path: &str) -> &str {
-    path.rsplit_once('/').map_or("", |(p, _)| p)
-}
-
-/// The sidebar's rows: the accounts that are switched on. An account switched off or removed
-/// while its folder is shown takes the folder with it.
-fn refresh_places(ui: &Rc<Ui>) {
-    while let Some(row) = ui.places.row_at_index(0) {
-        ui.places.remove(&row);
-    }
-    let accounts: Vec<_> = core()
-        .accounts()
-        .into_iter()
-        .filter(|a| a.enabled)
-        .collect();
-    for a in &accounts {
-        let row = adw::ActionRow::builder()
-            .title(glib::markup_escape_text(&crate::account_name(a)))
-            .activatable(true)
-            .build();
-        row.add_prefix(&gtk::Image::from_icon_name(crate::settings::account_icon(
-            a,
-        )));
-        ui.places.append(&row);
-    }
-    *ui.place_accounts.borrow_mut() = accounts.iter().map(|a| a.id).collect();
-    let current = ui.at.borrow().as_ref().map(|(id, _)| *id);
-    match current {
-        Some(id) if accounts.iter().any(|a| a.id == id) => select_place(ui, id),
-        _ => match accounts.first() {
-            Some(a) => open(ui, a.id, String::new()),
-            None => {
-                ui.at.take();
-                ui.files_stack.set_visible_child_name("empty");
-                ui.folder_title.set_title("Foldav");
-                ui.folder_title.set_subtitle("");
-            }
-        },
-    }
-}
-
-fn select_place(ui: &Ui, id: i64) {
-    let at = ui.place_accounts.borrow().iter().position(|a| *a == id);
-    ui.places
-        .select_row(at.and_then(|i| ui.places.row_at_index(i as i32)).as_ref());
-}
-
-fn reload(ui: &Rc<Ui>) {
-    let at = ui.at.borrow().clone();
-    if let Some((id, path)) = at {
-        open(ui, id, path);
-    }
-}
-
-/// Show folder `path` of account `id`.
-fn open(ui: &Rc<Ui>, id: i64, path: String) {
-    let Some(account) = core().account(id) else {
-        return;
-    };
-    *ui.at.borrow_mut() = Some((id, path.clone()));
-    ops::update_actions(ui);
-    select_place(ui, id);
-    ui.window
-        .lookup_action("up")
-        .and_downcast::<gio::SimpleAction>()
-        .inspect(|a| a.set_enabled(!path.is_empty()));
-    ui.folder_title.set_title(&match path.rsplit('/').next() {
-        Some(name) if !name.is_empty() => name.to_string(),
-        _ => crate::account_name(&account),
-    });
-    ui.folder_title.set_subtitle(&if path.is_empty() {
-        String::new()
-    } else {
-        format!("{}/{path}", crate::account_name(&account))
-    });
-    if !core().connected(id) {
-        return show_error(
-            ui,
-            &gettext("Not connected. Sign in again in Preferences → Accounts."),
-        );
-    }
-    let load = ui.load.get() + 1;
-    ui.load.set(load);
-    ui.files_stack.set_visible_child_name("loading");
-    let weak = Rc::downgrade(ui);
-    glib::spawn_future_local(async move {
-        let p = path.clone();
-        let r = gio::spawn_blocking(move || core().list(id, &p)).await;
-        let Some(ui) = weak.upgrade().filter(|u| u.load.get() == load) else {
-            return;
-        };
-        match r {
-            Ok(Ok(files)) => show(&ui, &files),
-            Ok(Err(e)) => show_error(&ui, &e.to_string()),
-            Err(_) => show_error(&ui, &gettext("Loading failed")),
-        }
-    });
-}
-
-fn show_error(ui: &Ui, text: &str) {
-    ui.error.set_description(Some(text));
-    ui.files_stack.set_visible_child_name("error");
-}
-
-fn show(ui: &Ui, files: &[File]) {
-    ui.files.remove_all();
-    for f in files {
-        ui.files.append(&file_row(f));
-    }
-    *ui.listing.borrow_mut() = files.to_vec();
-    ui.files_stack
-        .set_visible_child_name(if files.is_empty() { "empty" } else { "files" });
-}
-
-/// A folder's row opens it (`connect`).
-fn file_row(f: &File) -> adw::ActionRow {
-    let row = adw::ActionRow::builder()
-        .title(glib::markup_escape_text(&f.name))
-        .build();
-    let when = glib::DateTime::from_unix_local(f.modified)
-        .and_then(|d| d.format("%x"))
-        .map(|d| d.to_string())
-        .unwrap_or_default();
-    row.set_subtitle(&match f.size {
-        Some(size) => format!("{} · {when}", glib::format_size(size)),
-        None => when,
-    });
-    let icon = if f.folder {
-        gio::ThemedIcon::new("folder-symbolic").upcast()
-    } else {
-        gio::content_type_get_symbolic_icon(if f.mime.is_empty() {
-            "application/octet-stream"
-        } else {
-            &f.mime
-        })
-    };
-    row.add_prefix(&gtk::Image::from_gicon(&icon));
-    if f.favorite {
-        row.add_suffix(&gtk::Image::from_icon_name("starred-symbolic"));
-    }
-    if f.folder {
-        row.set_activatable(true);
-        row.add_suffix(&gtk::Image::from_icon_name("go-next-symbolic"));
-    }
-    row
 }
 
 // --- signing in --------------------------------------------------------------
@@ -664,16 +531,4 @@ pub fn password_login(
         });
     });
     dialog.present(Some(parent));
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_parent_of_a_path() {
-        assert_eq!(parent("Photos/2026"), "Photos");
-        assert_eq!(parent("Photos"), "");
-        assert_eq!(parent(""), "");
-    }
 }

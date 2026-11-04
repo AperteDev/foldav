@@ -2,12 +2,13 @@
 //! Each is one request to the server (`foldav_core` `ops.rs`), run in the background; the list
 //! is loaded again after it. A right click on the files opens the same actions as a menu.
 
-use super::{Ui, note, reload, ui};
+use super::nav::reload;
+use super::{Ui, action, note, popup_menu, ui};
 use crate::core;
 use crate::i18n::gettext;
 use adw::prelude::*;
 use foldav_core::{Client, Error, File};
-use gtk::{gdk, gio, glib};
+use gtk::{gio, glib};
 use std::rc::Rc;
 
 /// Files cut or copied, to paste into a folder of the same account.
@@ -17,14 +18,9 @@ pub struct Clipboard {
     cut: bool,
 }
 
-/// The selected files, in the order of the list.
+/// The selected files, in the order of the view.
 fn selected(ui: &Ui) -> Vec<File> {
-    let listing = ui.listing.borrow();
-    let mut rows: Vec<i32> = ui.files.selected_rows().iter().map(|r| r.index()).collect();
-    rows.sort_unstable();
-    rows.iter()
-        .filter_map(|&i| listing.get(i as usize).cloned())
-        .collect()
+    ui.views.selected()
 }
 
 /// What went wrong, as the user reads it.
@@ -38,48 +34,16 @@ fn error_text(e: &Error) -> String {
     }
 }
 
-type Action = fn(&Rc<Ui>);
-
-/// The actions (keys in `accels`) and the list's selection and right click.
+/// The actions (keys in `accels`).
 pub fn connect(ui: &Rc<Ui>) {
-    let actions: [(&str, Action); 7] = [
-        ("new-folder", new_folder),
-        ("rename", rename),
-        ("cut", |ui| copy(ui, true)),
-        ("copy", |ui| copy(ui, false)),
-        ("paste", paste),
-        ("delete", delete),
-        ("undo", |_| undo(None)),
-    ];
-    for (name, f) in actions {
-        let a = gio::SimpleAction::new(name, None);
-        let weak = Rc::downgrade(ui);
-        a.connect_activate(move |_, _| {
-            // The keys are the text field's while one has the focus (a name being typed).
-            if let Some(ui) = weak.upgrade()
-                && !GtkWindowExt::focus(&ui.window).is_some_and(|w| w.is::<gtk::Editable>())
-            {
-                f(&ui);
-            }
-        });
-        ui.window.add_action(&a);
-    }
+    action(ui, "new-folder", new_folder);
+    action(ui, "rename", rename);
+    action(ui, "cut", |ui| copy(ui, true));
+    action(ui, "copy", |ui| copy(ui, false));
+    action(ui, "paste", paste);
+    action(ui, "delete", delete);
+    action(ui, "undo", |_| undo(None));
     update_actions(ui);
-
-    let weak = Rc::downgrade(ui);
-    ui.files.connect_selected_rows_changed(move |_| {
-        if let Some(ui) = weak.upgrade() {
-            update_actions(&ui);
-        }
-    });
-    let weak = Rc::downgrade(ui);
-    let click = gtk::GestureClick::builder().button(3).build();
-    click.connect_pressed(move |_, _, x, y| {
-        if let Some(ui) = weak.upgrade() {
-            context_menu(&ui, x, y);
-        }
-    });
-    ui.files.add_controller(click);
 }
 
 pub fn accels(app: &adw::Application) {
@@ -116,26 +80,10 @@ pub fn update_actions(ui: &Ui) {
     }
 }
 
-/// The menu at the pointer; the row under it is selected unless it is already.
-fn context_menu(ui: &Rc<Ui>, x: f64, y: f64) {
-    match ui.files.row_at_y(y as i32) {
-        Some(row) if !row.is_selected() => {
-            ui.files.unselect_all();
-            ui.files.select_row(Some(&row));
-        }
-        Some(_) => {}
-        None => ui.files.unselect_all(),
-    }
-    let popover = gtk::PopoverMenu::from_model(Some(&ui.file_menu));
-    popover.set_parent(&ui.files);
-    popover.set_has_arrow(false);
-    popover.set_halign(gtk::Align::Start);
-    popover.set_pointing_to(Some(&gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
-    popover.connect_closed(|p| {
-        let p = p.clone();
-        glib::idle_add_local_once(move || p.unparent());
-    });
-    popover.popup();
+/// The menu of a right click at `x`, `y` of `widget`; what is clicked is selected already.
+pub fn context_menu(ui: &Ui, widget: &gtk::Widget, x: f64, y: f64) {
+    update_actions(ui);
+    popup_menu(widget, &ui.file_menu, x, y);
 }
 
 /// Ask for a name in a dialog; `select` characters of `initial` from its start are selected

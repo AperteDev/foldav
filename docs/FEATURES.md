@@ -7,7 +7,9 @@ What Foldav can do, in short. The details of each release are in the
 
 - Sign in with GNOME Online Accounts, the browser, or a login name and app password; more than
   one account.
-- Browse the folders of your Nextcloud Files (hidden files left out, as in the web app).
+- Browse the folders of your Nextcloud Files as in Files: icons, list or columns, a path bar,
+  back and forward, a sidebar with the accounts, bookmarks and a folder tree; hidden files
+  shown on request.
 - New folder, rename, cut, copy, paste and delete on the server, one request each whatever the
   folder's size; deletions go to the trash bin; undo for renames, moves and deletions.
 - Settings synced between your devices, through the account you choose.

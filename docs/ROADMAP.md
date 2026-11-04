@@ -69,10 +69,14 @@ Once a third app copies the same code, a shared crate in its own repository beco
 
 ## Planned features
 
-1. **Browsing**: a folder's files as a grid of thumbnails or a list (name, size, modified,
-   shared), sorted and filtered; a path bar; the sidebar as the web app's (All files, Recent,
-   Favorites, Shared with me, Shared by me, Tags, Trash) and one entry per account. Thumbnails
-   from the server's previews (`/core/preview`, for files with `has-preview`), cached by ETag.
+1. **Browsing**, what is left of it (the Nautilus-like window with icons, list and columns,
+   path bar, history, bookmarks, folder tree and accounts is done): thumbnails from the server's
+   previews (`/core/preview`, for files with `has-preview`), cached by ETag; listings cached on
+   disk by folder ETag (now only in memory, asked again at every visit); the web app's other
+   places in the sidebar (Recent, Favorites, Shared with me, Shared by me, Tags, Trash); the
+   header's search; a zoom for the icons; sorting also in the icons and columns; bookmarks
+   renamed and reordered, and synced between devices; the last folder and account restored at
+   start.
 2. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete
    and Ctrl+Z are done): dragging files inside the window to a folder or the sidebar; a
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the

@@ -4,6 +4,10 @@
   <gresource prefix="/dev/aperte/Foldav/icons/scalable/apps">
     <file alias="dev.aperte.Foldav.svg">../../data/dev.aperte.Foldav.svg</file>
   </gresource>
+  <!-- Icons of the app's own, found by name: GTK looks under the app's resource path. -->
+  <gresource prefix="/dev/aperte/Foldav/icons/scalable/actions">
+    <file>foldav-view-columns-symbolic.svg</file>
+  </gresource>
   <!-- What the About dialog shows (Adw.AboutDialog.new_from_appdata): the metainfo with its
        translations, as build.rs writes it to OUT_DIR. -->
   <gresource prefix="/dev/aperte/Foldav">
