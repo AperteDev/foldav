@@ -84,12 +84,13 @@ Once a third app copies the same code, a shared crate in its own repository beco
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
    server's capabilities (`Features`, as in Notav) and ask first where it has none; a
    choice between replacing and keeping both when
-   a name is taken in a move or copy (now a move refuses and a copy takes a free name); copies
-   between accounts (a drag from one account to another is refused now).
-4. **Transfers**, what is left of them (downloads, uploads in one request or in chunks, drag
-   and drop inside the window and to and from other apps, and the sidebar's rows for running
-   actions and their cancel, are done): Nextcloud's bulk upload for many small files; a folder
-   downloaded as one ZIP where the server offers it (now file by file). Transfers queue,
+   a name is taken in a move or copy (now a move refuses and a copy takes a free name); moving
+   (not only copying) between accounts, and pasting between them.
+4. **Transfers**, what is left of them (downloads, a folder or several files as one ZIP,
+   uploads in one request or in chunks, drag and drop inside the window and to and from other
+   apps, copies between accounts, and the sidebar's rows for running actions and their cancel,
+   are done): Nextcloud's bulk upload for many small files; extracting a ZIP downloaded as
+   folders (a folder dragged out of the window is still fetched file by file). Transfers queue,
    resume after a dropped connection (a chunk is sent again, a download starts over), and
    finish before the app quits (now closing the window stops them). A stalled connection is
    not given up on until the system does (`ureq` has no idle timeout). Dragging to and from
@@ -111,8 +112,9 @@ Once a third app copies the same code, a shared crate in its own repository beco
    - Tags: removing a tag (the server lets only an administrator), tags in the columns' preview.
    - Search by content (the unified search).
    - "Open in the browser" for what Foldav does not do (comments, activity, apps' own views).
-7. **Change notifications**: Nextcloud's Client Push (`notify_push`) refreshes an open folder
-   when its files change elsewhere; polling of folder ETags otherwise (as Notav plans).
+7. **Change notifications**, what is left (the folder shown is polled by its ETag every 30
+   seconds and when the window comes to the front): Nextcloud's Client Push (`notify_push`,
+   which this server has) for an instant refresh, and for the places and the sidebar's tree.
 
 Later (v2):
 

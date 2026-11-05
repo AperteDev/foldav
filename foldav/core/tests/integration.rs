@@ -543,3 +543,43 @@ fn files_are_shared_by_link_tagged_and_keep_versions() {
     c.restore_version(A, &f, oldest).unwrap();
     assert_eq!(dav.request("GET", &url, &[], "").unwrap().body, "one");
 }
+
+#[test]
+fn folders_come_as_one_zip_and_files_are_copied_through_this_device() {
+    use foldav_core::{Progress, Taken};
+    let (c, dav, root) = fixture("zip");
+    let home = c.files_home(A).unwrap();
+    c.new_folder(A, &root, "dir").unwrap();
+    for (p, body) in [("a.txt", "hello"), ("dir/b.txt", "inside")] {
+        let r = dav
+            .request("PUT", &format!("{home}{root}/{p}"), &[], body)
+            .unwrap();
+        assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    }
+    let files = c.list(A, &root).unwrap();
+    let dest = std::env::temp_dir().join(format!("foldav-it-zip-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dest);
+    std::fs::create_dir_all(&dest).unwrap();
+
+    // One folder: named after it; several: after the folder they are in. A ZIP starts "PK".
+    let one = c
+        .download_zip(A, &root, &files[..1], &dest, &Progress::default())
+        .unwrap();
+    assert_eq!(one.file_name().unwrap(), "dir.zip");
+    let all = c
+        .download_zip(A, &root, &files, &dest, &Progress::default())
+        .unwrap();
+    assert_eq!(all.file_name().unwrap(), "zip.zip");
+    for z in [one, all] {
+        assert_eq!(&std::fs::read(z).unwrap()[..2], b"PK");
+    }
+
+    // Copied to another folder of the account the way it goes to another account.
+    c.new_folder(A, &root, "to").unwrap();
+    let to = format!("{root}/to");
+    c.copy_across(A, &files, A, &to, Taken::KeepBoth, &Progress::default())
+        .unwrap();
+    assert_eq!(names(&c, &to), ["dir", "a.txt"]);
+    assert_eq!(names(&c, &format!("{to}/dir")), ["b.txt"]);
+    let _ = std::fs::remove_dir_all(&dest);
+}

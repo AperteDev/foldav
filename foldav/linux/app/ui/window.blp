@@ -323,6 +323,12 @@ menu file_menu {
       action: "win.download";
       hidden-when: "action-disabled";
     }
+
+    item {
+      label: _("Download as ZIP…");
+      action: "win.download-zip";
+      hidden-when: "action-disabled";
+    }
   }
 
   section {

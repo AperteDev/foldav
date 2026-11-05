@@ -21,6 +21,8 @@ What Foldav can do, in short. The details of each release are in the
   of the sidebar with their progress and time left, transfers cancellable.
 - Upload files and folders, big files in chunks that survive a dropped connection; choose
   Replace, Keep Both or Skip when a name is taken.
+- Download a folder or several files as one ZIP; copy files to another account by dragging
+  them onto it; the folder shown follows changes made on other devices.
 - Share files and folders by public link (password, expiry) or with users and groups; see
   and restore a file's versions; tag files.
 - Thumbnails of images, documents and videos, from the server's previews, kept on the device.

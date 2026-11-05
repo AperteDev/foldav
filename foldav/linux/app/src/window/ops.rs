@@ -45,7 +45,8 @@ pub fn connect(ui: &Rc<Ui>) {
             open(ui, file.clone());
         }
     });
-    action(ui, "download", download);
+    action(ui, "download", |ui| download(ui, false));
+    action(ui, "download-zip", |ui| download(ui, true));
     action(ui, "upload-files", |ui| pick(ui, false));
     action(ui, "upload-folder", |ui| pick(ui, true));
     action(ui, "new-folder", new_folder);
@@ -105,6 +106,7 @@ pub fn update_actions(ui: &Ui) {
     for (name, on) in [
         ("open", n == 1 && !trash),
         ("download", n > 0 && !trash),
+        ("download-zip", n > 0 && !place),
         ("upload-files", at.is_some() && !place),
         ("upload-folder", at.is_some() && !place),
         ("new-folder", at.is_some() && !place),
@@ -280,10 +282,11 @@ pub(super) fn launch(ui: &Ui, path: &Path) {
     );
 }
 
-/// Save the selected files and folders into a folder the user picks.
-fn download(ui: &Rc<Ui>) {
+/// Save the selected files and folders into a folder the user picks; with `zip`, as one ZIP
+/// the server makes of them.
+fn download(ui: &Rc<Ui>, zip: bool) {
     let (at, files) = (ui.at.borrow().clone(), selected(ui));
-    let (Some((id, _)), false) = (at, files.is_empty()) else {
+    let (Some((id, parent)), false) = (at, files.is_empty()) else {
         return;
     };
     let ui = ui.clone();
@@ -307,7 +310,11 @@ fn download(ui: &Rc<Ui>) {
             _ => gettext("Downloading the selected files"),
         };
         let r = transfers::run(&ui, &title, true, move |c, p| {
-            c.download(id, &files, &dest, p)
+            if zip {
+                c.download_zip(id, &parent, &files, &dest, p).map(|_| ())
+            } else {
+                c.download(id, &files, &dest, p)
+            }
         })
         .await;
         match r {
@@ -583,8 +590,22 @@ pub fn drop_files(
     cut: bool,
 ) -> bool {
     if from != id {
-        toast(&gettext("Files cannot be moved between accounts yet"));
-        return false;
+        // To another account: copied, by way of this device.
+        let (ui, files) = (ui.clone(), files.to_vec());
+        glib::spawn_future_local(async move {
+            let title = gettext("Copying to another account");
+            let r = transfers::run(&ui, &title, true, move |c, p| {
+                c.copy_across(from, &files, id, &dest, Taken::KeepBoth, p)
+            })
+            .await;
+            match r {
+                Some(Ok(())) => toast(&gettext("Copied to the other account")),
+                Some(Err(Error::Cancelled)) => {}
+                Some(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
+                None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
+            }
+        });
+        return true;
     }
     // What is there already, or would go into itself, is left as it is.
     let paths: Vec<String> = files

@@ -447,7 +447,16 @@ impl Dav {
             .map(|e| ("If-None-Match", e))
             .into_iter()
             .collect();
-        let mut resp = self.send(&self.stream, "GET", href, &h, false, || Ok(String::new()))?;
+        self.get_with(href, &h)
+    }
+
+    /// GET `href` as the content type `accept` (a folder as "application/zip").
+    pub fn get_as(&self, href: &str, accept: &str) -> Result<Option<Download>> {
+        self.get_with(href, &[("Accept", accept)])
+    }
+
+    fn get_with(&self, href: &str, h: &[(&str, &str)]) -> Result<Option<Download>> {
+        let mut resp = self.send(&self.stream, "GET", href, h, false, || Ok(String::new()))?;
         let etag = resp
             .headers()
             .get("etag")

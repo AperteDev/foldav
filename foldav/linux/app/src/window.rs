@@ -72,6 +72,9 @@ listview.miller-list:not(.miller-active) > row:selected > .miller-row { backgrou
 gridview.files-view > child { border-radius: 12px; margin: 2px; padding: 0; }
 ";
 
+/// How often (seconds) the folder shown is looked at for changes made elsewhere.
+const POLL: u32 = 30;
+
 /// Where to support development, listed in About (and in the README), as in Todav.
 const DONATIONS: [(&str, &str); 3] = [
     (
@@ -440,6 +443,24 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     });
     action(&ui, "toggle-sidebar", |ui| {
         ui.split.set_show_sidebar(!ui.split.shows_sidebar())
+    });
+    // The folder shown is looked at now and then, and when the window comes to the front, for
+    // what changed on the server meanwhile.
+    let weak = Rc::downgrade(&ui);
+    glib::timeout_add_seconds_local(POLL, move || {
+        let Some(ui) = weak.upgrade() else {
+            return glib::ControlFlow::Break;
+        };
+        if ui.window.is_active() {
+            nav::poll(&ui);
+        }
+        glib::ControlFlow::Continue
+    });
+    let weak = Rc::downgrade(&ui);
+    ui.window.connect_is_active_notify(move |w| {
+        if let (true, Some(ui)) = (w.is_active(), weak.upgrade()) {
+            nav::poll(&ui);
+        }
     });
     views::connect(&ui);
     sidebar::connect(&ui);

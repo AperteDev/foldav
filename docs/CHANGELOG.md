@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server has it): Recent, Starred (all that is starred, files too), Shared with You, Shared
   with Others, Shared by Link, Tags (each tag opens the files that have it) and Deleted
   Files, and the storage used at the foot
+- Download as ZIP… (right-click menu): a folder or several files as one ZIP the server makes,
+  in one request however many files
+- Files dragged onto another account in the sidebar are copied to its root (by way of this
+  device)
+- The folder shown is checked for changes made elsewhere every 30 seconds and when the window
+  comes to the front (one small request), and shows them without losing your place
 - Share… in the right-click menu (where the server has sharing): the file's public links to
   copy or take down, made with an optional password, an expiry date and editing allowed (a new
   link is copied at once), and the users and groups it is shared with, found by name, who

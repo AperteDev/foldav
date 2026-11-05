@@ -194,11 +194,77 @@ impl Client {
     /// Save `files` (and what folders hold) of account `id` into folder `dest` of this device,
     /// each under a name that is free there, so nothing is overwritten. A folder that is not
     /// whole when it fails or is cancelled is removed.
-    // ponytail: a folder is fetched file by file, one request each; a ZIP from the server is
-    // faster where there is one.
+    // ponytail: a folder is fetched file by file, one request each; `download_zip` is the
+    // server's way of doing it in one.
     pub fn download(&self, id: i64, files: &[File], dest: &Path, p: &Progress) -> Result<()> {
         p.set_total(files.iter().filter_map(|f| f.size).sum());
         files.iter().try_for_each(|f| self.save_to(id, f, dest, p))
+    }
+
+    /// Save `files`, all in folder `parent` of account `id`, as one ZIP the server makes of them
+    /// (one request, however many files), in folder `dest` of this device; where it is. Named
+    /// after the file or folder, or after `parent` when there are several, and not taking the
+    /// name of anything there.
+    pub fn download_zip(
+        &self,
+        id: i64,
+        parent: &str,
+        files: &[File],
+        dest: &Path,
+        p: &Progress,
+    ) -> Result<PathBuf> {
+        let dav = self.dav(id)?;
+        let home = self.files_home(id)?;
+        let folder = format!("{}/", format!("{home}{parent}").trim_end_matches('/'));
+        let names = crate::json::Json::Arr(
+            files
+                .iter()
+                .map(|f| crate::json::Json::Str(f.name.clone()))
+                .collect(),
+        );
+        let url = format!(
+            "{}?files={}&accept=zip",
+            dav.url(&folder),
+            crate::dav::form_encode(&names.to_string())
+        );
+        p.set_total(files.iter().filter_map(|f| f.size).sum());
+        let dl = dav
+            .get_as(&url, "application/zip")?
+            .ok_or_else(|| Error::NotFound(parent.into()))?;
+        let name = match files {
+            [f] => f.name.clone(),
+            _ => parent
+                .rsplit('/')
+                .next()
+                .filter(|n| !n.is_empty())
+                .unwrap_or("Files")
+                .to_string(),
+        };
+        let target = free_path(dest, &format!("{name}.zip"), false);
+        save(dl, &target, p)?;
+        Ok(target)
+    }
+
+    /// Copy `files` of account `from` into folder `dest` of account `to`, by way of this device
+    /// (a download, then an upload: the progress goes through twice). `taken` is as for
+    /// `upload`.
+    pub fn copy_across(
+        &self,
+        from: i64,
+        files: &[File],
+        to: i64,
+        dest: &str,
+        taken: crate::Taken,
+        p: &Progress,
+    ) -> Result<()> {
+        let dir = self.scratch()?;
+        let r = self.download(from, files, &dir, p).and_then(|()| {
+            p.set_done(0);
+            let items: Vec<PathBuf> = dirs(&dir);
+            self.upload(to, dest, &items, taken, p)
+        });
+        let _ = std::fs::remove_dir_all(&dir);
+        r
     }
 
     fn save_to(&self, id: i64, file: &File, dir: &Path, p: &Progress) -> Result<()> {

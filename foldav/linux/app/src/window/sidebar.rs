@@ -298,10 +298,13 @@ fn accounts(ui: &Rc<Ui>) {
         .filter(|a| a.enabled)
         .collect();
     for a in &enabled {
-        s.accounts.append(&row(
-            crate::settings::account_icon(a),
-            &crate::account_name(a),
-        ));
+        let r = row(crate::settings::account_icon(a), &crate::account_name(a));
+        // Files dropped on an account are copied to its root.
+        let id = a.id;
+        r.add_controller(super::dnd::target(&Rc::downgrade(ui), true, move |_| {
+            Some((id, String::new()))
+        }));
+        s.accounts.append(&r);
     }
     // With one there is nothing to choose.
     let many = enabled.len() > 1;

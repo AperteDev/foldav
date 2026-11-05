@@ -276,6 +276,39 @@ pub fn toggle_expanded(ui: &Rc<Ui>, id: i64, path: &str) {
     sidebar::refresh_tree(ui);
 }
 
+/// Look whether the folder shown changed on the server (one small request, its ETag), and show
+/// it as it is now if it did. For a folder, not a place; what is on screen stays when nothing
+/// changed.
+pub fn poll(ui: &Rc<Ui>) {
+    let Some((id, path)) = ui.at.borrow().clone() else {
+        return;
+    };
+    if foldav_core::places::is_place(&path) || !core().connected(id) {
+        return;
+    }
+    let load = ui.load.get();
+    let weak = Rc::downgrade(ui);
+    glib::spawn_future_local(async move {
+        let p = path.clone();
+        let r = gio::spawn_blocking(move || core().list(id, &p)).await;
+        // Another folder was gone to meanwhile: not this one's news.
+        let Some(ui) = weak
+            .upgrade()
+            .filter(|u| u.load.get() == load && *u.at.borrow() == Some((id, path.clone())))
+        else {
+            return;
+        };
+        if let Ok(Ok(files)) = r {
+            let old = ui.dirs.borrow().get(&(id, path.clone())).cloned();
+            if old.as_deref() != Some(&files) {
+                ui.dirs.borrow_mut().insert((id, path), Rc::new(files));
+                show(&ui);
+                refresh_around(&ui);
+            }
+        }
+    });
+}
+
 /// Load the shown folder again, and what was loaded of the account with it.
 pub fn reload(ui: &Rc<Ui>) {
     let at = ui.at.borrow().clone();
