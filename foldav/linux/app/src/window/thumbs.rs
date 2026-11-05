@@ -47,11 +47,15 @@ fn texture(path: &PathBuf) -> Option<gdk::Texture> {
     Some(t)
 }
 
+/// The account whose folder shows.
+pub fn account() -> Option<i64> {
+    ui().and_then(|ui| ui.at.borrow().as_ref().map(|(id, _)| *id))
+}
+
 /// Show the preview of `f`, up to `size` pixels, in `image`, as soon as there is one; the icon
 /// that is there stays until then, and when there is none.
 pub fn apply(image: &gtk::Image, f: &File, size: u32) {
-    let at = ui().and_then(|ui| ui.at.borrow().as_ref().map(|(id, _)| *id));
-    let Some(account) = at else { return };
+    let Some(account) = account() else { return };
     let Some(path) = core().thumbnail_path(account, f, size) else {
         image.set_widget_name("");
         return;

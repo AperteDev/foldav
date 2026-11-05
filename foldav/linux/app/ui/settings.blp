@@ -36,6 +36,16 @@ Adw.PreferencesDialog dialog {
         }
       }
     }
+
+    Adw.PreferencesGroup {
+      title: _("Files");
+
+      // The `show_previews` setting, on unless set off (src/settings.rs `present`).
+      Adw.SwitchRow preview_files {
+        title: _("Preview Files");
+        subtitle: _("Show images and the start of text files in the columns view");
+      }
+    }
   }
 
   Adw.PreferencesPage {

@@ -78,6 +78,33 @@ impl Client {
         Ok(Some(path))
     }
 
+    /// The start of the text file `file` (at most `max` bytes), for a preview. None when it is
+    /// no text (not UTF-8, or it has a NUL), whatever its type says.
+    pub fn text_head(&self, id: i64, file: &File, max: usize) -> Result<Option<String>> {
+        if !file.is_text() || file.size == Some(0) {
+            return Ok(None);
+        }
+        let href = format!("{}{}", self.files_home(id)?, file.path);
+        let Some(mut dl) = self.dav(id)?.get_head(&href, max as u64)? else {
+            return Ok(None);
+        };
+        let mut bytes = Vec::new();
+        dl.reader()
+            .take(max as u64)
+            .read_to_end(&mut bytes)
+            .map_err(|e| Error::Net(e.to_string()))?;
+        // The cut may be inside a character: that end is not an error.
+        let text = match String::from_utf8(bytes) {
+            Ok(t) => t,
+            Err(e) if e.utf8_error().error_len().is_none() => {
+                let valid = e.utf8_error().valid_up_to();
+                String::from_utf8_lossy(&e.into_bytes()[..valid]).into_owned()
+            }
+            Err(_) => return Ok(None),
+        };
+        Ok((!text.contains('\0')).then_some(text))
+    }
+
     /// Delete the previews kept longer than `max_age`.
     pub fn prune_thumbnails(&self, max_age: Duration) {
         for account in dirs(&self.cache_dir.join("thumbs")) {

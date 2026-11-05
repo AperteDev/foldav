@@ -71,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
+- A bigger preview of the file selected in the columns view: an image (or a document or
+  video, from the server's preview) shown large and the start of a text file, as in Files;
+  "Preview Files" in Preferences, on to begin with, turns it off
 - The trash bin: Deleted Files lists what was deleted; Restore, Delete Permanently and
   Empty Trash, each asking first where it cannot be taken back
 - Search by name in the folder shown and below it (Ctrl+F or the magnifier in the header),

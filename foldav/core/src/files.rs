@@ -36,6 +36,24 @@ impl File {
         digits.trim_start_matches('0')
     }
 
+    /// Its type says it is text a preview can show.
+    pub fn is_text(&self) -> bool {
+        let m = self.mime.as_str();
+        !self.folder
+            && (m.starts_with("text/")
+                || matches!(
+                    m,
+                    "application/json"
+                        | "application/xml"
+                        | "application/javascript"
+                        | "application/x-yaml"
+                        | "application/yaml"
+                        | "application/toml"
+                        | "application/x-sh"
+                        | "application/x-shellscript"
+                ))
+    }
+
     /// Hidden (a dot first), as in the web app and Files.
     pub fn hidden(&self) -> bool {
         self.name.starts_with('.')

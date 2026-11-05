@@ -142,6 +142,11 @@ fn ui() -> Option<Rc<Ui>> {
     UI.with(|u| u.borrow().clone())
 }
 
+/// The columns' preview shows images and text (the `show_previews` setting, on unless off).
+pub fn previews_on() -> bool {
+    core().setting("show_previews".into()).as_deref() != Some("false")
+}
+
 /// A view compiled by `build.rs` from `ui/<name>.blp`.
 macro_rules! view {
     ($name:literal) => {

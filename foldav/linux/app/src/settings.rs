@@ -39,6 +39,11 @@ pub fn present(parent: &impl IsA<gtk::Widget>) {
         let _ = core().set_setting("color_scheme".into(), name);
         apply_color_scheme();
     });
+    let previews: adw::SwitchRow = get(&b, "preview_files");
+    previews.set_active(crate::window::previews_on());
+    previews.connect_active_notify(|r| {
+        let _ = core().set_setting("show_previews".into(), r.is_active().to_string());
+    });
     // What was changed goes to the server, and what other devices changed comes.
     dialog.connect_closed(|_| crate::sync_settings());
     dialog.present(Some(parent));

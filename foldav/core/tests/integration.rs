@@ -491,6 +491,16 @@ fn previews_are_fetched_once_and_kept_by_etag() {
     assert_eq!(c.thumbnail(A, file("dot.png"), 64).unwrap(), Some(path));
     // A file the server has no preview for.
     assert_eq!(c.thumbnail(A, file("plain.bin"), 64).unwrap(), None);
+
+    // A text file's start, cut inside a character without an error; a binary one has none.
+    dav.request("PUT", &format!("{home}{root}/t.txt"), &[], &"aé".repeat(10))
+        .unwrap();
+    let files = c.list(A, &root).unwrap();
+    let text = files.iter().find(|f| f.name == "t.txt").unwrap();
+    assert!(text.is_text());
+    assert_eq!(c.text_head(A, text, 2).unwrap().as_deref(), Some("a"));
+    assert_eq!(c.text_head(A, text, 4).unwrap().as_deref(), Some("aéa"));
+    assert_eq!(c.text_head(A, file("plain.bin"), 4).unwrap(), None);
 }
 
 #[test]

@@ -455,6 +455,14 @@ impl Dav {
         self.get_with(href, &[("Accept", accept)])
     }
 
+    /// GET the first `n` bytes of the file `href` (all of it, where the server ignores ranges).
+    pub fn get_head(&self, href: &str, n: u64) -> Result<Option<Download>> {
+        self.get_with(
+            href,
+            &[("Range", &format!("bytes=0-{}", n.saturating_sub(1)))],
+        )
+    }
+
     fn get_with(&self, href: &str, h: &[(&str, &str)]) -> Result<Option<Download>> {
         let mut resp = self.send(&self.stream, "GET", href, h, false, || Ok(String::new()))?;
         let etag = resp
@@ -463,7 +471,7 @@ impl Dav {
             .and_then(|v| v.to_str().ok())
             .map(|e| strong(e).to_string());
         match resp.status().as_u16() {
-            200 => Ok(Some(Download {
+            200 | 206 => Ok(Some(Download {
                 etag,
                 length: resp.body().content_length(),
                 body: resp.into_body(),

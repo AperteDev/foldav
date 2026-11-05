@@ -23,6 +23,10 @@ const COLUMN_MAX_WIDTH: i32 = 580;
 /// The preview column at least; it takes the room that is left.
 const PREVIEW_WIDTH: i32 = 400;
 const PREVIEW_ICON_SIZE: i32 = 256;
+/// The image's preview is asked of the server this big (pixels, each way at most).
+const PREVIEW_IMAGE: u32 = 1024;
+/// How much of a text file's start the preview shows.
+const TEXT_BYTES: usize = 8192;
 /// How long (ms) the preview takes to slide in and out.
 const PREVIEW_SLIDE_MS: u32 = 250;
 /// And a column.
@@ -45,7 +49,13 @@ struct Column {
 struct Preview {
     /// Slides in and out at the end of the columns, with the preview in it.
     revealer: gtk::Revealer,
+    /// What shows above the name: the icon, the image or the text.
+    stack: gtk::Stack,
     icon: gtk::Image,
+    picture: gtk::Picture,
+    text: gtk::Label,
+    /// The file (its ID and ETag) the preview is of: what comes late for another is dropped.
+    key: Rc<RefCell<String>>,
     name: gtk::Label,
     detail: gtk::Label,
     modified: gtk::Label,
@@ -128,6 +138,31 @@ impl Preview {
             .halign(gtk::Align::Center)
             .valign(gtk::Align::Center)
             .build();
+        let picture = gtk::Picture::builder()
+            .halign(gtk::Align::Center)
+            .valign(gtk::Align::Center)
+            .build();
+        let text = gtk::Label::builder()
+            .xalign(0.0)
+            .yalign(0.0)
+            .margin_top(12)
+            .margin_bottom(12)
+            .margin_start(12)
+            .margin_end(12)
+            .selectable(true)
+            .wrap(true)
+            .wrap_mode(gtk::pango::WrapMode::WordChar)
+            .css_classes(["monospace", "caption"])
+            .build();
+        let text_box = gtk::ScrolledWindow::builder()
+            .hscrollbar_policy(gtk::PolicyType::Never)
+            .child(&text)
+            .css_classes(["card"])
+            .build();
+        let stack = gtk::Stack::builder().vexpand(true).build();
+        stack.add_named(&icon, Some("icon"));
+        stack.add_named(&picture, Some("image"));
+        stack.add_named(&text_box, Some("text"));
         let name = gtk::Label::builder()
             .wrap(true)
             .wrap_mode(gtk::pango::WrapMode::WordChar)
@@ -152,7 +187,7 @@ impl Preview {
         );
         row.append(&modified);
         for w in [
-            icon.upcast_ref::<gtk::Widget>(),
+            stack.upcast_ref::<gtk::Widget>(),
             name.upcast_ref(),
             detail.upcast_ref(),
             row.upcast_ref(),
@@ -176,16 +211,68 @@ impl Preview {
         });
         Preview {
             revealer,
+            stack,
             icon,
+            picture,
+            text,
+            key: Rc::default(),
             name,
             detail,
             modified,
         }
     }
 
-    fn show(&self, f: &File) {
+    /// The image or text of `f`, once it is there (the icon shows meanwhile and when there is
+    /// none, or the preview is off).
+    fn load(&self, f: &File) {
+        let key = format!("{}-{}", f.fileid, f.etag);
+        if *self.key.borrow() == key {
+            return;
+        }
+        *self.key.borrow_mut() = key.clone();
         set_icon(&self.icon, f);
-        super::thumbs::apply(&self.icon, f, PREVIEW_ICON_SIZE as u32);
+        self.stack.set_visible_child_name("icon");
+        let Some(account) = super::thumbs::account().filter(|_| super::previews_on()) else {
+            return;
+        };
+        let (stack, current, f) = (self.stack.clone(), self.key.clone(), f.clone());
+        if f.is_text() {
+            let text = self.text.clone();
+            glib::spawn_future_local(async move {
+                let head =
+                    gio::spawn_blocking(move || core().text_head(account, &f, TEXT_BYTES)).await;
+                if let Ok(Ok(Some(t))) = head
+                    && *current.borrow() == key
+                {
+                    text.set_label(&t);
+                    stack.set_visible_child_name("text");
+                }
+            });
+        } else if let Some(path) = core().thumbnail_path(account, &f, PREVIEW_IMAGE) {
+            let picture = self.picture.clone();
+            glib::spawn_future_local(async move {
+                let path = if path.exists() {
+                    Some(path)
+                } else {
+                    gio::spawn_blocking(move || core().thumbnail(account, &f, PREVIEW_IMAGE))
+                        .await
+                        .ok()
+                        .and_then(Result::ok)
+                        .flatten()
+                };
+                // Not kept decoded: these are big.
+                if let Some(t) = path.and_then(|p| gdk::Texture::from_filename(p).ok())
+                    && *current.borrow() == key
+                {
+                    picture.set_paintable(Some(&t));
+                    stack.set_visible_child_name("image");
+                }
+            });
+        }
+    }
+
+    fn show(&self, f: &File) {
+        self.load(f);
         self.name.set_label(&f.name);
         let kind = gio::content_type_get_description(&f.mime);
         let size = f

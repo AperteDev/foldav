@@ -25,7 +25,9 @@ What Foldav can do, in short. The details of each release are in the
   them onto it; the folder shown follows changes made on other devices.
 - Share files and folders by public link (password, expiry) or with users and groups; see
   and restore a file's versions; tag files.
-- Thumbnails of images, documents and videos, from the server's previews, kept on the device.
+- Thumbnails of images, documents and videos, from the server's previews, kept on the device;
+  the columns view's preview shows an image large and a text file's start (Preferences can
+  turn it off).
 - The web app's places: Recent, Starred, Shared with You and Others, Shared by Link, Tags;
   the trash bin with restore, delete for good and empty; the storage used.
 - Search by name (Ctrl+F), done by the server.
