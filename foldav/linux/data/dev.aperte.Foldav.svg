@@ -1,5 +1,43 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <path d="M12 36a8 8 0 0 1 8-8h28l10 12h50a8 8 0 0 1 8 8v52a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8z" fill="#e5a50a"/>
-  <path d="M12 52a8 8 0 0 1 8-8h88a8 8 0 0 1 8 8v52a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8z" fill="#f6d32d"/>
+  <defs>
+    <linearGradient id="back" x1="14" y1="0" x2="114" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a5fb4"/>
+      <stop offset="1" stop-color="#0f7f8c"/>
+    </linearGradient>
+    <linearGradient id="front" x1="14" y1="0" x2="114" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b8fe8"/>
+      <stop offset="1" stop-color="#2cc0bd"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="72" x2="0" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="disc" x1="68" y1="38" x2="108" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f6f5f4"/>
+      <stop offset="1" stop-color="#b5b3ae"/>
+    </linearGradient>
+  </defs>
+  <path d="M14 28a8 8 0 0 1 8-8h27a8 8 0 0 1 6.2 3L62 32h44a8 8 0 0 1 8 8v64a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z" fill="url(#back)"/>
+  <g transform="rotate(-8 43 96)">
+    <rect x="24" y="36" width="38" height="60" rx="3" fill="#f6f5f4"/>
+    <g fill="none" stroke-width="3.5" stroke-linecap="round">
+      <path d="M30 47h26" stroke="#f5a623"/>
+      <path d="M30 55h26" stroke="#57c778"/>
+      <path d="M30 63h15" stroke="#8ec4ee"/>
+    </g>
+  </g>
+  <g transform="rotate(4 69 90)">
+    <rect x="50" y="34" width="38" height="56" rx="3" fill="#f6f5f4" stroke="#d5d3cf" stroke-width="1"/>
+    <rect x="54" y="38" width="30" height="28" rx="1.5" fill="#99c1f1"/>
+    <circle cx="61" cy="46" r="3.5" fill="#f9f06b"/>
+    <path d="M54 66v-5l9-9 8 8 4-4 9 8v2z" fill="#57c778"/>
+  </g>
+  <circle cx="88" cy="60" r="22" fill="url(#disc)"/>
+  <path d="M88 60l17.3-10a20 20 0 0 1 2.7 10z" fill="#62a0ea" fill-opacity="0.45"/>
+  <path d="M88 60l-17.3 10A20 20 0 0 1 68 60z" fill="#2cc0bd" fill-opacity="0.45"/>
+  <circle cx="88" cy="60" r="8" fill="#f6f5f4"/>
+  <circle cx="88" cy="60" r="3" fill="#3d3846"/>
+  <path d="M14 80a8 8 0 0 1 8-8h84a8 8 0 0 1 8 8v24a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z" fill="url(#back)"/>
+  <path d="M14 80a8 8 0 0 1 8-8h84a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z" fill="url(#front)"/>
+  <path d="M14 80a8 8 0 0 1 8-8h84a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8H22a8 8 0 0 1-8-8z" fill="url(#sheen)"/>
 </svg>
