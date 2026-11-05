@@ -25,6 +25,8 @@ const PREVIEW_WIDTH: i32 = 400;
 const PREVIEW_ICON_SIZE: i32 = 256;
 /// The image's preview is asked of the server this big (pixels, each way at most).
 const PREVIEW_IMAGE: u32 = 1024;
+/// How long (ms) an image or text takes to fade in.
+const PREVIEW_FADE_MS: u32 = 150;
 /// How long (ms) the preview waits before it shows a spinner for what is on its way.
 const SPINNER_DELAY_MS: u64 = 300;
 /// How much of a text file's start the preview shows.
@@ -163,7 +165,12 @@ impl Preview {
             .child(&text)
             .css_classes(["card"])
             .build();
-        let stack = gtk::Stack::builder().vexpand(true).build();
+        // What arrives fades in (the blank before it and the icon are set without a
+        // transition), so changing files is not a flash.
+        let stack = gtk::Stack::builder()
+            .vexpand(true)
+            .transition_duration(PREVIEW_FADE_MS)
+            .build();
         stack.add_named(&icon, Some("icon"));
         stack.add_named(&picture, Some("image"));
         stack.add_named(&text_box, Some("text"));
@@ -249,13 +256,15 @@ impl Preview {
         let image = account.and_then(|a| core().thumbnail_path(a, f, PREVIEW_IMAGE));
         let text = f.is_text() && f.size != Some(0);
         let Some(account) = account.filter(|_| text || image.is_some()) else {
-            self.stack.set_visible_child_name("icon");
+            self.stack
+                .set_visible_child_full("icon", gtk::StackTransitionType::None);
             return;
         };
         // Not the icon meanwhile, which would flash by: a blank, and a spinner if it takes
         // longer than a moment.
         self.spinner.set_opacity(0.0);
-        self.stack.set_visible_child_name("loading");
+        self.stack
+            .set_visible_child_full("loading", gtk::StackTransitionType::None);
         let (stack, current, f) = (self.stack.clone(), self.key.clone(), f.clone());
         let (spinner, k) = (self.spinner.clone(), key.clone());
         let c = current.clone();
@@ -302,7 +311,7 @@ impl Preview {
             };
             // What is on the way for another file is no business of this one's.
             if *current.borrow() == key {
-                stack.set_visible_child_name(page);
+                stack.set_visible_child_full(page, gtk::StackTransitionType::Crossfade);
             }
         });
     }
