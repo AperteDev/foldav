@@ -650,6 +650,15 @@ pub fn show(ui: &Ui, files: &[File]) {
         .collect();
     v.store.splice(0, v.store.n_items(), &items);
     select_paths(&v.selection, &kept);
+    // No date column where none of the files has a date (the Tags place).
+    if !files.is_empty() {
+        let dated = files.iter().any(|f| f.modified > 0);
+        for column in v.list.columns().iter::<gtk::ColumnViewColumn>().flatten() {
+            if column.id().as_deref() == Some("modified") {
+                column.set_visible(dated);
+            }
+        }
+    }
 }
 
 /// Select the files of `paths` in `selection`.
