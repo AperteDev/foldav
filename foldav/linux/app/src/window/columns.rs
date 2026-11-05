@@ -646,6 +646,7 @@ fn new_column(ui: &Rc<Ui>, path: &str, slide: bool) -> Column {
     let view = gtk::ListView::new(Some(selection.clone()), Some(factory));
     view.add_css_class("miller-list");
     view.add_css_class("files-view");
+    view.set_enable_rubberband(true);
     let scroll = gtk::ScrolledWindow::builder()
         .child(&view)
         .hscrollbar_policy(gtk::PolicyType::Never)

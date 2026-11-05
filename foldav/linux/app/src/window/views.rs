@@ -126,8 +126,10 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
 impl Views {
     pub fn new(b: &gtk::Builder) -> Views {
         let store = gio::ListStore::new::<glib::BoxedAnyObject>();
+        // Dragging a rectangle on the room between the files selects the ones it touches.
         let list = gtk::ColumnView::builder()
             .css_classes(["files-view"])
+            .enable_rubberband(true)
             .build();
         // The files come sorted (`options`): a click on the list's header only tells the sort,
         // which is the menu's too, so the sorter of its columns sorts nothing (it is for
@@ -136,6 +138,7 @@ impl Views {
         let grid = gtk::GridView::builder()
             .max_columns(100)
             .css_classes(["files-view"])
+            .enable_rubberband(true)
             .build();
         grid.set_model(Some(&selection));
         list.set_model(Some(&selection));

@@ -72,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
+- Select by dragging a rectangle on the room between the files, in the icons, the list and each
+  column of the columns view
 - Tabs, as in Files: Ctrl+T opens one at the folder shown, Ctrl+W closes it (the last one
   closes the window), Ctrl+Page Down and Ctrl+Page Up (or Ctrl+Tab) switch, Ctrl+Shift+Page
   Up and Down move a tab, Alt+1 to 9 pick one; a folder opens in a new tab from "Open in New
