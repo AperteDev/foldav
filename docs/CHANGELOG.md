@@ -105,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The trash bin: Deleted Files lists what was deleted; Restore, Delete Permanently and
   Empty Trash, each asking first where it cannot be taken back
 - Search by name in the folder shown and below it, as in Files (Ctrl+F or the button with the
-  loupe and folder in the header): the field takes the path bar's place, the server is asked a
+  loupe in the header): the field takes the path bar's place, the server is asked a
   moment after each key (the results stay on screen with a "Searching…" pill meanwhile), each
   result says under its name the folder it is in (so do Recent, Starred and the other places),
   back, forward and up are off while the results show, and Escape or the button leaves it
