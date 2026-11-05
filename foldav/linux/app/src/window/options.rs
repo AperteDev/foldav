@@ -138,7 +138,7 @@ impl Caption {
 const GRID_PX: [i32; 5] = [48, 64, 96, 168, 256];
 const GRID_DEFAULT: usize = 2;
 /// How many captions show at each of them: more as the icons grow.
-const GRID_CAPTIONS: [usize; 5] = [0, 0, 1, 2, 3];
+const GRID_CAPTIONS: [usize; 5] = [0, 1, 2, 3, 3];
 /// The list's.
 const LIST_PX: [i32; 3] = [16, 32, 64];
 const LIST_DEFAULT: usize = 0;
