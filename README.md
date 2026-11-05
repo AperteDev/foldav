@@ -14,11 +14,18 @@
   <a href="https://copr.fedorainfracloud.org/coprs/selfref/foldav/"><img src="https://copr.fedorainfracloud.org/coprs/selfref/foldav/package/foldav/status_image/last_build.png" alt="COPR build status"></a>
 </p>
 
-Foldav (*folder* + DAV) is the sibling of [Todav](https://github.com/AperteDev/todav) and
-[Notav](https://github.com/AperteDev/notav). It is at a very early stage: you can sign in
-(GNOME Online Accounts, the browser or an app password), with more than one account, and browse
-the folders of your Nextcloud Files. Everything else is planned: see the
-[roadmap](docs/ROADMAP.md) and [features](docs/FEATURES.md).
+Foldav (*folder* + DAV) is a file manager for the GNOME desktop that talks to your Nextcloud
+directly. Nautilus reaches Nextcloud through GVfs's generic WebDAV backend, which knows nothing
+of Nextcloud: copying or deleting a folder of many small files goes file by file and takes
+minutes, files show no previews, and a deletion skips the trash bin. Foldav asks the server to
+do what it can do in one request, and uses what Nextcloud's web Files offers: the trash bin,
+versions, sharing, favorites. It looks and behaves like Files, and is the sibling of
+[Todav](https://github.com/AperteDev/todav), the tasks and calendar app, and
+[Notav](https://github.com/AperteDev/notav), the notes app.
+
+Foldav is at an early stage: browsing, favorites and the basic operations on the server work;
+transfers, thumbnails, the trash bin, versions, sharing and search are next (see the
+[roadmap](docs/ROADMAP.md)).
 
 Foldav is developed in my free time. If it helps you with your files, you can support its
 development:
@@ -29,11 +36,34 @@ development:
   <a href="https://liberapay.com/SelfRef/donate"><img src="https://liberapay.com/assets/widgets/donate.svg" alt="Donate using Liberapay"></a>
 </p>
 
+## Features
+
+- The folders of your Nextcloud Files as in Files: icons, list or columns (one per folder, as in
+  the Files extension "My Computer"), a path bar, back and forward, hidden files on request.
+- A sidebar with your accounts, favorite folders and a folder tree.
+- Favorites shared with Nextcloud Files: star files and folders, and they show on all your
+  devices and in the web app.
+- Quick to open: a folder shows at once from what was listed before, kept on this device, then
+  is checked against the server by its ETag, so a folder that did not change costs one small
+  request.
+- New folder, rename, cut, copy, paste and delete, each one request to the server whatever the
+  size of the folder; deletions go to the trash bin, and Ctrl+Z takes back a rename, move or
+  deletion.
+- Sign-in through GNOME Online Accounts, the browser, or a login name and app password; more
+  than one account.
+- Settings synced between your devices.
+
+All of what Foldav does, and what it will, is listed in [FEATURES.md](docs/FEATURES.md).
+
 ## Getting started
 
 Foldav needs GNOME 49 or newer. Download a package from the
 [latest release](https://github.com/AperteDev/foldav/releases/latest), or install it from the
 AUR (`foldav`, `foldav-bin` or `foldav-git`) or COPR (`dnf copr enable selfref/foldav`):
+
+<p align="center">
+  <a href="https://github.com/AperteDev/foldav/releases/latest"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" alt="Get it on GitHub" height="60"></a>
+</p>
 
 ```sh
 # Flatpak, on any distribution (the GNOME runtime comes from Flathub)
@@ -54,15 +84,48 @@ Foldav speaks English and Polish, and follows your GNOME language. Missing your 
 it in an [issue](https://github.com/AperteDev/foldav/issues), or translate it yourself (see
 [CONTRIBUTING.md](docs/CONTRIBUTING.md#translations)).
 
-## Building
+## Development
 
-Needs Rust, GTK 4.14+, libadwaita 1.8+, libsecret, SQLite, `blueprint-compiler` and gettext.
+### Building and installing
+
+**Dependencies:** Rust (stable), GTK 4.14+, libadwaita 1.8+, libsecret, SQLite,
+`blueprint-compiler`, `glib-compile-resources` (GLib) and gettext's `msgfmt`.
 
 ```sh
-cargo run -p foldav-linux      # or: make -C foldav/linux sandbox
+# The app: binary, desktop file and icons in ~/.local
+make -C foldav/linux install
+
+# Or run it from the source tree
+cargo run -p foldav-linux
+
+# A separate copy with its own data, for trying other accounts (see AGENTS.md)
+make -C foldav/linux sandbox
+```
+
+A Flatpak manifest is included too: `make -C foldav/linux flatpak` (needs `flatpak-builder`). For
+Fedora, `foldav/linux/rpm/foldav.spec` builds an RPM; COPR builds it with `.copr/Makefile`, which
+also works locally:
+
+```sh
+make -f .copr/Makefile srpm outdir=$PWD/target/rpm spec=$PWD/foldav/linux/rpm/foldav.spec
+```
+
+### Tests
+
+```sh
 cargo test --workspace
 ```
 
+The tests against a server need a Nextcloud account: put its `FOLDAV_URL`, `FOLDAV_USER` and
+`FOLDAV_PASS` in a `.env` file and run
+`cargo test -p foldav-core --features integration`. Each test works in its own
+`it-foldav/<name>/` folder.
+
+Every push is checked and packaged by [CI](.github/workflows/ci.yml); releases are made by the
+manual [Release](.github/workflows/release.yml) workflow and listed in the
+[changelog](docs/CHANGELOG.md). See [CONTRIBUTING.md](docs/CONTRIBUTING.md) before sending a
+pull request.
+
 ## License
 
-GPL-3.0-or-later, see [LICENSE](LICENSE).
+[GPL-3.0-or-later](LICENSE)
