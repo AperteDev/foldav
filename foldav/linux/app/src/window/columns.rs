@@ -25,6 +25,8 @@ const PREVIEW_WIDTH: i32 = 400;
 const PREVIEW_ICON_SIZE: i32 = 256;
 /// The image's preview is asked of the server this big (pixels, each way at most).
 const PREVIEW_IMAGE: u32 = 1024;
+/// How long (ms) the preview waits before it shows a spinner for what is on its way.
+const SPINNER_DELAY_MS: u64 = 300;
 /// How much of a text file's start the preview shows.
 const TEXT_BYTES: usize = 8192;
 /// How long (ms) the preview takes to slide in and out.
@@ -54,6 +56,8 @@ struct Preview {
     icon: gtk::Image,
     picture: gtk::Picture,
     text: gtk::Label,
+    /// Shown, after a moment, while the image or text is on its way.
+    spinner: gtk::Spinner,
     /// The file (its ID and ETag) the preview is of: what comes late for another is dropped.
     key: Rc<RefCell<String>>,
     name: gtk::Label,
@@ -163,6 +167,15 @@ impl Preview {
         stack.add_named(&icon, Some("icon"));
         stack.add_named(&picture, Some("image"));
         stack.add_named(&text_box, Some("text"));
+        let spinner = gtk::Spinner::builder()
+            .spinning(true)
+            .width_request(32)
+            .height_request(32)
+            .halign(gtk::Align::Center)
+            .valign(gtk::Align::Center)
+            .opacity(0.0)
+            .build();
+        stack.add_named(&spinner, Some("loading"));
         let name = gtk::Label::builder()
             .wrap(true)
             .wrap_mode(gtk::pango::WrapMode::WordChar)
@@ -215,6 +228,7 @@ impl Preview {
             icon,
             picture,
             text,
+            spinner,
             key: Rc::default(),
             name,
             detail,
@@ -231,44 +245,66 @@ impl Preview {
         }
         *self.key.borrow_mut() = key.clone();
         set_icon(&self.icon, f);
-        self.stack.set_visible_child_name("icon");
-        let Some(account) = super::thumbs::account().filter(|_| super::previews_on()) else {
+        let account = super::thumbs::account().filter(|_| super::previews_on());
+        let image = account.and_then(|a| core().thumbnail_path(a, f, PREVIEW_IMAGE));
+        let text = f.is_text() && f.size != Some(0);
+        let Some(account) = account.filter(|_| text || image.is_some()) else {
+            self.stack.set_visible_child_name("icon");
             return;
         };
+        // Not the icon meanwhile, which would flash by: a blank, and a spinner if it takes
+        // longer than a moment.
+        self.spinner.set_opacity(0.0);
+        self.stack.set_visible_child_name("loading");
         let (stack, current, f) = (self.stack.clone(), self.key.clone(), f.clone());
-        if f.is_text() {
-            let text = self.text.clone();
-            glib::spawn_future_local(async move {
+        let (spinner, k) = (self.spinner.clone(), key.clone());
+        let c = current.clone();
+        glib::timeout_add_local_once(
+            std::time::Duration::from_millis(SPINNER_DELAY_MS),
+            move || {
+                if *c.borrow() == k {
+                    spinner.set_opacity(1.0);
+                }
+            },
+        );
+        let (picture, label) = (self.picture.clone(), self.text.clone());
+        glib::spawn_future_local(async move {
+            let page = if text {
                 let head =
                     gio::spawn_blocking(move || core().text_head(account, &f, TEXT_BYTES)).await;
-                if let Ok(Ok(Some(t))) = head
-                    && *current.borrow() == key
-                {
-                    text.set_label(&t);
-                    stack.set_visible_child_name("text");
+                match head {
+                    Ok(Ok(Some(t))) if *current.borrow() == key => {
+                        label.set_label(&t);
+                        "text"
+                    }
+                    _ => "icon",
                 }
-            });
-        } else if let Some(path) = core().thumbnail_path(account, &f, PREVIEW_IMAGE) {
-            let picture = self.picture.clone();
-            glib::spawn_future_local(async move {
-                let path = if path.exists() {
-                    Some(path)
-                } else {
-                    gio::spawn_blocking(move || core().thumbnail(account, &f, PREVIEW_IMAGE))
-                        .await
-                        .ok()
-                        .and_then(Result::ok)
-                        .flatten()
+            } else {
+                let path = image.filter(|p| p.exists());
+                let path = match path {
+                    Some(p) => Some(p),
+                    None => {
+                        gio::spawn_blocking(move || core().thumbnail(account, &f, PREVIEW_IMAGE))
+                            .await
+                            .ok()
+                            .and_then(Result::ok)
+                            .flatten()
+                    }
                 };
                 // Not kept decoded: these are big.
-                if let Some(t) = path.and_then(|p| gdk::Texture::from_filename(p).ok())
-                    && *current.borrow() == key
-                {
-                    picture.set_paintable(Some(&t));
-                    stack.set_visible_child_name("image");
+                match path.and_then(|p| gdk::Texture::from_filename(p).ok()) {
+                    Some(t) if *current.borrow() == key => {
+                        picture.set_paintable(Some(&t));
+                        "image"
+                    }
+                    _ => "icon",
                 }
-            });
-        }
+            };
+            // What is on the way for another file is no business of this one's.
+            if *current.borrow() == key {
+                stack.set_visible_child_name(page);
+            }
+        });
     }
 
     fn show(&self, f: &File) {
