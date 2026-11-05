@@ -8,7 +8,7 @@ use crate::core;
 use crate::i18n::gettext;
 use adw::prelude::*;
 use foldav_core::places;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -98,6 +98,25 @@ pub fn connect(ui: &Rc<Ui>) {
     action(ui, "view-columns", |ui| {
         ui.header.toggle.set_active_name(Some("columns"))
     });
+
+    // The columns' icon: the theme's own where it has one, else ours (the Files extension
+    // "My Computer" does the same, and ours is its icon), looked at again when the theme changes.
+    if let Some(display) = gdk::Display::default() {
+        let theme = gtk::IconTheme::for_display(&display);
+        let toggle = ui.header.toggle.downgrade();
+        let set = move |theme: &gtk::IconTheme| {
+            let Some(columns) = toggle.upgrade().and_then(|t| t.toggle_by_name("columns")) else {
+                return;
+            };
+            columns.set_icon_name(Some(if theme.has_icon("view-column-symbolic") {
+                "view-column-symbolic"
+            } else {
+                "foldav-view-columns-symbolic"
+            }));
+        };
+        set(&theme);
+        theme.connect_changed(set);
+    }
 
     let weak = Rc::downgrade(ui);
     ui.header.toggle.connect_active_name_notify(move |g| {
