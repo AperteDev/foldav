@@ -94,6 +94,13 @@ listview.miller-list > row:hover > .miller-row { background-color: alpha(current
 listview.miller-list:not(.miller-active) > row:selected { background: none; }
 listview.miller-list:not(.miller-active) > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
 .miller-list image { -gtk-icon-style: regular; }
+/* What is selected, a pill over the foot of the files. */
+.selection-status {
+  background-color: mix(@window_bg_color, @window_fg_color, 0.1);
+  border-radius: 12px;
+  padding: 6px 12px;
+  box-shadow: 0 1px 3px alpha(black, 0.2);
+}
 /* The storage used, a thin bar, red when little is left. */
 progressbar.quota-bar trough, progressbar.quota-bar progress { min-height: 4px; }
 progressbar.quota-bar trough { background-color: alpha(@sidebar_fg_color, 0.1); }

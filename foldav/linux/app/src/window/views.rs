@@ -5,10 +5,10 @@
 use super::columns::Columns;
 use super::{Ui, columns, nav, ops, options};
 use crate::core;
-use crate::i18n::gettext;
+use crate::i18n::{gettext, ngettext};
 use adw::prelude::*;
 use foldav_core::File;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 use std::cell::Cell;
 use std::cmp::Ordering;
 use std::rc::{Rc, Weak};
@@ -47,6 +47,8 @@ pub struct Views {
     stack: gtk::Stack,
     icons_scroll: gtk::ScrolledWindow,
     list_scroll: gtk::ScrolledWindow,
+    /// What is selected, at the foot of the files.
+    status: gtk::Label,
     pub columns: Columns,
     mode: Cell<Mode>,
 }
@@ -171,6 +173,7 @@ impl Views {
             stack: super::get(b, "view_stack"),
             icons_scroll,
             list_scroll,
+            status: super::get(b, "selection_status"),
             columns: Columns::new(b),
             mode: Cell::new(Mode::Icons),
         }
@@ -368,6 +371,25 @@ pub fn connect(ui: &Rc<Ui>) {
         }));
     }
 
+    // A click on the room between the files selects none (Ctrl and Shift click: no change; a
+    // drag of a rectangle claims the click, which then ends without a release).
+    for scroll in [&v.icons_scroll, &v.list_scroll] {
+        let click = gtk::GestureClick::builder().button(1).build();
+        let w = weak.clone();
+        click.connect_released(move |g, _, x, y| {
+            let (Some(ui), Some(widget)) = (w.upgrade(), g.widget()) else {
+                return;
+            };
+            let plain = !g
+                .current_event_state()
+                .intersects(gdk::ModifierType::CONTROL_MASK | gdk::ModifierType::SHIFT_MASK);
+            if plain && on_room(&widget, x, y) {
+                ui.views.selection.unselect_all();
+            }
+        });
+        scroll.add_controller(click);
+    }
+
     // A right click on the room between the files.
     for scroll in [&v.icons_scroll, &v.list_scroll] {
         let click = gtk::GestureClick::builder().button(3).build();
@@ -382,6 +404,83 @@ pub fn connect(ui: &Rc<Ui>) {
         scroll.add_controller(click);
     }
     columns::connect(ui);
+}
+
+/// What `scroll` has at `x`, `y` is the room between the files: not a file's tile or row, the
+/// list's header or a scroll bar.
+fn on_room(scroll: &gtk::Widget, x: f64, y: f64) -> bool {
+    let mut w = scroll.pick(x, y, gtk::PickFlags::DEFAULT);
+    while let Some(widget) = w {
+        if widget == *scroll {
+            return true;
+        }
+        if matches!(
+            widget.css_name().as_str(),
+            "child" | "row" | "header" | "scrollbar" | "button"
+        ) {
+            return false;
+        }
+        w = widget.parent();
+    }
+    true
+}
+
+/// What is selected, said at the foot of the files as Files says it: one file by its name and
+/// size, several by their number and together size, folders apart.
+pub fn update_status(ui: &Ui) {
+    // Not in the columns: a click there opens a folder or shows a file in the preview.
+    let files = if ui.views.mode() == Mode::Columns {
+        Vec::new()
+    } else {
+        ui.views.selected()
+    };
+    let text = status_text(&files);
+    ui.views.status.set_visible(text.is_some());
+    if let Some(text) = text {
+        ui.views.status.set_label(&text);
+    }
+}
+
+fn status_text(files: &[File]) -> Option<String> {
+    let first = files.first()?;
+    let size = files
+        .iter()
+        .any(|f| f.size.is_some())
+        .then(|| glib::format_size(files.iter().filter_map(|f| f.size).sum()).to_string());
+    let with_size = |what: String| match &size {
+        Some(size) => gettext("{what} ({size})")
+            .replace("{what}", &what)
+            .replace("{size}", size),
+        None => what,
+    };
+    if files.len() == 1 {
+        return Some(with_size(
+            gettext("“{name}” selected").replace("{name}", &first.name),
+        ));
+    }
+    let folders = files.iter().filter(|f| f.folder).count() as u64;
+    let others = files.len() as u64 - folders;
+    let folders_text = ngettext("{n} folder selected", "{n} folders selected", folders)
+        .replace("{n}", &folders.to_string());
+    let others_text = |plural_of_all: bool| {
+        if plural_of_all {
+            ngettext("{n} item selected", "{n} items selected", others)
+        } else {
+            ngettext(
+                "{n} other item selected",
+                "{n} other items selected",
+                others,
+            )
+        }
+        .replace("{n}", &others.to_string())
+    };
+    Some(with_size(match (folders, others) {
+        (0, _) => others_text(true),
+        (_, 0) => folders_text,
+        _ => gettext("{folders}, {others}")
+            .replace("{folders}", &folders_text)
+            .replace("{others}", &others_text(false)),
+    }))
 }
 
 pub fn date(t: i64) -> String {
@@ -499,5 +598,45 @@ pub fn select_paths(selection: &gtk::MultiSelection, paths: &[String]) {
         {
             selection.select_item(i, false);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn file(name: &str, folder: bool, size: Option<u64>) -> File {
+        File {
+            name: name.into(),
+            path: name.into(),
+            folder,
+            size,
+            modified: 0,
+            mime: String::new(),
+            favorite: false,
+            has_preview: false,
+            etag: String::new(),
+            fileid: String::new(),
+        }
+    }
+
+    #[test]
+    fn the_status_says_what_is_selected() {
+        assert_eq!(status_text(&[]), None);
+        let (a, b, d) = (
+            file("a", false, Some(1000)),
+            file("b", false, Some(2000)),
+            file("d", true, Some(500)),
+        );
+        let said = |files: &[File]| status_text(files).unwrap();
+        assert!(said(std::slice::from_ref(&a)).starts_with("“a” selected"));
+        assert!(said(&[a.clone(), b.clone()]).starts_with("2 items selected (3"));
+        assert!(said(&[d.clone(), d.clone()]).starts_with("2 folders selected"));
+        assert!(said(&[d, a, b]).starts_with("1 folder selected, 2 other items selected"));
+        // No size known (a place's files): none said.
+        assert_eq!(
+            said(&[file("x", false, None), file("y", false, None)]),
+            "2 items selected"
+        );
     }
 }

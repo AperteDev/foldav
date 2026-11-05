@@ -12,7 +12,8 @@ What Foldav can do, in short. The details of each release are in the
   shown on request; the view menu as Files': the icon size (also Ctrl+plus, Ctrl+minus,
   Ctrl+0), the sort (A-Z, Z-A, Last or First Modified, Size, Type) for all three views, and
   the captions beneath the icons' names (size, type, date).
-- Select several files by dragging a rectangle around them.
+- Select several files by dragging a rectangle around them; a pill at the foot says what is
+  selected and its size.
 - Tabs as in Files, each with its folder and history; folders open in a new tab by a middle
   click or from the right-click menu; files dragged onto a tab go into its folder.
 - Favorites, shared with Nextcloud Files: star files and folders, the favorite folders in the

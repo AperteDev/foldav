@@ -154,6 +154,7 @@ pub fn update_actions(ui: &Ui) {
             .inspect(|a| a.set_enabled(on));
     }
     super::favorites::update_actions(ui);
+    super::views::update_status(ui);
 }
 
 /// The menu of a right click at `x`, `y` of `widget`; what is clicked is selected already.

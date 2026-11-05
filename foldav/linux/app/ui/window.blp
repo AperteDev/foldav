@@ -277,25 +277,41 @@ Adw.ApplicationWindow window {
               // are made in code.
               Gtk.StackPage {
                 name: "files";
-                child: Gtk.Stack view_stack {
-                  Gtk.StackPage {
-                    name: "icons";
-                    child: Gtk.ScrolledWindow icons_scroll {};
-                  }
+                child: Gtk.Overlay {
+                  child: Gtk.Stack view_stack {
+                    Gtk.StackPage {
+                      name: "icons";
+                      child: Gtk.ScrolledWindow icons_scroll {};
+                    }
 
-                  Gtk.StackPage {
-                    name: "list";
-                    child: Gtk.ScrolledWindow list_scroll {};
-                  }
+                    Gtk.StackPage {
+                      name: "list";
+                      child: Gtk.ScrolledWindow list_scroll {};
+                    }
 
-                  Gtk.StackPage {
-                    name: "columns";
-                    child: Gtk.ScrolledWindow columns_scroll {
-                      hscrollbar-policy: automatic;
-                      vscrollbar-policy: never;
+                    Gtk.StackPage {
+                      name: "columns";
+                      child: Gtk.ScrolledWindow columns_scroll {
+                        hscrollbar-policy: automatic;
+                        vscrollbar-policy: never;
 
-                      Gtk.Box columns {}
-                    };
+                        Gtk.Box columns {}
+                      };
+                    }
+                  };
+
+                  // What is selected, at the foot, as Nautilus' (src/window/views.rs
+                  // `update_status`).
+                  [overlay]
+                  Gtk.Label selection_status {
+                    halign: end;
+                    valign: end;
+                    margin-end: 12;
+                    margin-bottom: 12;
+                    visible: false;
+                    can-target: false;
+                    ellipsize: end;
+                    styles ["selection-status"]
                   }
                 };
               }

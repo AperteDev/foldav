@@ -72,6 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
+- What is selected, said in a pill at the foot of the icons and the list, as in Files: a file
+  by its name and size, several by their number and together size (folders and other items
+  counted apart); a click on the room between the files selects none
 - Select by dragging a rectangle on the room between the files, in the icons, the list and each
   column of the columns view
 - Tabs, as in Files: Ctrl+T opens one at the folder shown, Ctrl+W closes it (the last one
