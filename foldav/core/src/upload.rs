@@ -9,7 +9,8 @@ use crate::ops::{copy_name, join};
 use crate::{Client, Error, Progress, Result};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed};
+use std::sync::{Arc, Mutex};
 
 /// A file this big or bigger goes in chunks, each of `CHUNK` bytes (the server takes up to
 /// 100 MB a chunk, `capabilities.files.chunked_upload`).
@@ -17,6 +18,8 @@ const CHUNKED_FROM: u64 = 32 << 20;
 const CHUNK: u64 = 16 << 20;
 /// A chunk is sent this many times before the upload fails.
 const CHUNK_TRIES: u32 = 3;
+/// How many chunks of a file are sent at once.
+const PARALLEL: usize = 3;
 
 /// What to do with a file or folder when the name is taken in the folder it goes to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,10 +37,12 @@ fn io(e: std::io::Error) -> Error {
     Error::Io(e.to_string())
 }
 
-/// What is read of a file on its way: counted, and stopped when cancelled.
+/// What is read of a file on its way: counted (also in `sent`, what this one request took),
+/// and stopped when cancelled.
 struct Counting<R> {
     inner: R,
     p: Progress,
+    sent: Arc<AtomicU64>,
 }
 
 impl<R: Read> Read for Counting<R> {
@@ -47,6 +52,7 @@ impl<R: Read> Read for Counting<R> {
         }
         let n = self.inner.read(buf)?;
         self.p.add(n as u64);
+        self.sent.fetch_add(n as u64, Relaxed);
         Ok(n)
     }
 }
@@ -110,12 +116,19 @@ fn answer(status: u16, href: &str, body: String) -> Result<()> {
 }
 
 /// The reader of `len` bytes of `local` from `offset`.
-fn open(local: &Path, offset: u64, len: u64, p: &Progress) -> Result<Box<dyn Read + Send>> {
+fn open(
+    local: &Path,
+    offset: u64,
+    len: u64,
+    p: &Progress,
+    sent: &Arc<AtomicU64>,
+) -> Result<Box<dyn Read + Send>> {
     let mut f = std::fs::File::open(local).map_err(io)?;
     f.seek(SeekFrom::Start(offset)).map_err(io)?;
     Ok(Box::new(Counting {
         inner: f.take(len),
         p: p.clone(),
+        sent: sent.clone(),
     }))
 }
 
@@ -290,6 +303,34 @@ fn bulk(dav: &Dav, home: &str, files: &[(PathBuf, String, u64)], p: &Progress) -
     Ok(())
 }
 
+/// Send `len` bytes of `local` from `offset` as the chunk `chunk`, again if the connection
+/// drops (what the failed try counted is taken back).
+fn send_chunk(
+    dav: &Dav,
+    chunk: &str,
+    total: &str,
+    local: &Path,
+    offset: u64,
+    len: u64,
+    p: &Progress,
+) -> Result<()> {
+    for attempt in 1.. {
+        let sent = Arc::new(AtomicU64::new(0));
+        let r = dav
+            .upload("PUT", chunk, &[("OC-Total-Length", total)], len, || {
+                open(local, offset, len, p, &sent)
+            })
+            .and_then(|r| answer(r.status, chunk, r.body));
+        match r {
+            Err(Error::Net(_)) if attempt < CHUNK_TRIES && !p.is_cancelled() => {
+                p.sub(sent.load(Relaxed));
+            }
+            r => return r,
+        }
+    }
+    unreachable!("the loop returns")
+}
+
 /// Upload `local` as the file `href`, replacing what is there, if its ETag is `if_match` (when
 /// given: `Error::Conflict` if not); the ETag of what was stored.
 pub(crate) fn put(
@@ -305,7 +346,9 @@ pub(crate) fn put(
     let condition: Vec<_> = if_match.map(|e| ("If-Match", e)).into_iter().collect();
     if size < CHUNKED_FROM {
         let headers = [&[("X-OC-Mtime", modified.as_str())][..], &condition].concat();
-        let r = dav.upload("PUT", href, &headers, size, || open(local, 0, size, p))?;
+        let r = dav.upload("PUT", href, &headers, size, || {
+            open(local, 0, size, p, &Arc::default())
+        })?;
         answer(r.status, href, r.body)?;
         return Ok(r.etag);
     }
@@ -324,26 +367,35 @@ pub(crate) fn put(
         let head = [("Destination", to.as_str()), ("OC-Total-Length", &total)];
         let r = dav.request("MKCOL", &folder, &head, "")?;
         answer(r.status, &folder, r.body)?;
-        for (i, offset) in (0..size).step_by(CHUNK as usize).enumerate() {
-            let len = CHUNK.min(size - offset);
-            let chunk = format!("{folder}/{:05}", i + 1);
-            let before = p.done();
-            let mut attempt = 0;
-            loop {
-                attempt += 1;
-                let r = dav
-                    .upload("PUT", &chunk, &[("OC-Total-Length", &total)], len, || {
-                        open(local, offset, len, p)
-                    })
-                    .and_then(|r| answer(r.status, &chunk, r.body));
-                match r {
-                    Err(Error::Net(_)) if attempt < CHUNK_TRIES && !p.is_cancelled() => {
-                        // The chunk is sent again whole.
-                        p.set_done(before);
+        // The chunks go a few at a time (the server takes five at once).
+        let chunks: Vec<(usize, u64, u64)> = (0..size)
+            .step_by(CHUNK as usize)
+            .enumerate()
+            .map(|(i, offset)| (i, offset, CHUNK.min(size - offset)))
+            .collect();
+        let next = AtomicUsize::new(0);
+        let failed: Mutex<Option<Error>> = Mutex::new(None);
+        std::thread::scope(|scope| {
+            for _ in 0..PARALLEL.min(chunks.len()) {
+                scope.spawn(|| {
+                    while failed.lock().unwrap().is_none() && !p.is_cancelled() {
+                        let Some(&(i, offset, len)) = chunks.get(next.fetch_add(1, Relaxed)) else {
+                            break;
+                        };
+                        let chunk = format!("{folder}/{:05}", i + 1);
+                        let sent = send_chunk(dav, &chunk, &total, local, offset, len, p);
+                        if let Err(e) = sent {
+                            failed.lock().unwrap().get_or_insert(e);
+                        }
                     }
-                    r => break r?,
-                }
+                });
             }
+        });
+        if let Some(e) = failed.into_inner().unwrap() {
+            return Err(e);
+        }
+        if p.is_cancelled() {
+            return Err(Error::Cancelled);
         }
         let headers = [
             &[

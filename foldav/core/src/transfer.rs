@@ -50,6 +50,10 @@ impl Progress {
         self.0.done.store(n, Relaxed);
     }
 
+    pub(crate) fn sub(&self, n: u64) {
+        self.0.done.fetch_sub(n, Relaxed);
+    }
+
     pub(crate) fn set_total(&self, n: u64) {
         self.0.total.store(n, Relaxed);
     }
