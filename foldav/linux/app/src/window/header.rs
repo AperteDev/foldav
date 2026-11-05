@@ -18,6 +18,11 @@ pub struct Header {
     toggle: adw::ToggleGroup,
     /// The view menu's button (`options`).
     pub(super) options: gtk::MenuButton,
+    /// The path bar and, in its place while shown, the path to type.
+    pathbar_box: gtk::Box,
+    location_box: gtk::Box,
+    location_entry: gtk::Entry,
+    location_close: gtk::Button,
     search_bar: gtk::SearchBar,
     search_entry: gtk::SearchEntry,
 }
@@ -29,6 +34,10 @@ impl Header {
             scroll: super::get(b, "pathbar_scroll"),
             toggle: super::get(b, "view_toggle"),
             options: super::get(b, "view_options"),
+            pathbar_box: super::get(b, "pathbar_box"),
+            location_box: super::get(b, "location_box"),
+            location_entry: super::get(b, "location_entry"),
+            location_close: super::get(b, "location_close"),
             search_bar: super::get(b, "search_bar"),
             search_entry: super::get(b, "search_entry"),
         }
@@ -93,7 +102,111 @@ fn connect_search(ui: &Rc<Ui>) {
 }
 
 /// The actions of the header and its menus, and the view the user left off with.
+/// The path bar turned into a field with the folder's path to edit (a click on the bar's room,
+/// Ctrl+L), as Files has it; Enter goes there, Escape or leaving it brings the bar back.
+fn edit_location(ui: &Rc<Ui>) {
+    let h = &ui.header;
+    let text = match ui.at.borrow().as_ref() {
+        Some((_, p)) if !places::is_place(p) => format!("/{p}"),
+        _ => "/".to_string(),
+    };
+    h.location_entry.set_text(&text);
+    h.pathbar_box.set_visible(false);
+    h.location_box.set_visible(true);
+    // The entry is on screen only after this turn.
+    let entry = h.location_entry.clone();
+    glib::idle_add_local_once(move || {
+        entry.grab_focus();
+        entry.select_region(0, -1);
+    });
+}
+
+fn close_location(ui: &Ui) {
+    ui.header.location_box.set_visible(false);
+    ui.header.pathbar_box.set_visible(true);
+}
+
+fn connect_location(ui: &Rc<Ui>) {
+    let h = &ui.header;
+    action(ui, "location", edit_location);
+
+    // A click on the bar's room (not on a segment or the menu), which is no start of dragging
+    // the window: a drag takes the click.
+    let click = gtk::GestureClick::builder().button(1).build();
+    let weak = Rc::downgrade(ui);
+    click.connect_released(move |g, _, x, y| {
+        let (Some(ui), Some(bar)) = (weak.upgrade(), g.widget()) else {
+            return;
+        };
+        let mut hit = bar.pick(x, y, gtk::PickFlags::DEFAULT);
+        while let Some(w) = hit {
+            if w == bar {
+                return edit_location(&ui);
+            }
+            if w.is::<gtk::Button>() {
+                return;
+            }
+            hit = w.parent();
+        }
+    });
+    h.pathbar_box.add_controller(click);
+
+    let weak = Rc::downgrade(ui);
+    h.location_close.connect_clicked(move |_| {
+        if let Some(ui) = weak.upgrade() {
+            close_location(&ui);
+        }
+    });
+    let key = gtk::EventControllerKey::new();
+    let weak = Rc::downgrade(ui);
+    key.connect_key_pressed(move |_, keyval, _, _| {
+        if keyval == gdk::Key::Escape
+            && let Some(ui) = weak.upgrade()
+        {
+            close_location(&ui);
+            return glib::Propagation::Stop;
+        }
+        glib::Propagation::Proceed
+    });
+    h.location_entry.add_controller(key);
+    // Leaving the field (a click elsewhere) closes it.
+    let focus = gtk::EventControllerFocus::new();
+    let weak = Rc::downgrade(ui);
+    focus.connect_leave(move |_| {
+        if let Some(ui) = weak.upgrade() {
+            close_location(&ui);
+        }
+    });
+    h.location_entry.add_controller(focus);
+
+    // Enter: the folder typed, if the server has it.
+    let weak = Rc::downgrade(ui);
+    h.location_entry.connect_activate(move |entry| {
+        let Some(ui) = weak.upgrade() else { return };
+        let Some((id, _)) = ui.at.borrow().clone() else {
+            return;
+        };
+        let text = entry.text();
+        let path = text
+            .split('/')
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join("/");
+        glib::spawn_future_local(async move {
+            let p = path.clone();
+            match gio::spawn_blocking(move || core().list(id, &p)).await {
+                Ok(Ok(_)) => nav::open(&ui, id, path),
+                _ => ui.toasts.add_toast(super::note(
+                    &gettext("“{path}” is not a folder here")
+                        .replace("{path}", &format!("/{path}")),
+                )),
+            }
+        });
+    });
+}
+
 pub fn connect(ui: &Rc<Ui>) {
+    connect_location(ui);
     action(ui, "up", nav::up);
     action(ui, "back", nav::back);
     action(ui, "forward", nav::forward);
@@ -163,6 +276,7 @@ pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.forward", &["<Alt>Right"]);
     app.set_accels_for_action("win.reload", &["F5", "<Control>r"]);
     app.set_accels_for_action("win.search", &["<Control>f"]);
+    app.set_accels_for_action("win.location", &["<Control>l"]);
     app.set_accels_for_action("win.view-icons", &["<Control>1"]);
     app.set_accels_for_action("win.view-list", &["<Control>2"]);
     app.set_accels_for_action("win.view-columns", &["<Control>3"]);
@@ -177,6 +291,7 @@ pub fn accels(app: &adw::Application) {
 pub fn update(ui: &Rc<Ui>) {
     let at = ui.at.borrow().clone();
     super::tabs::update_title(ui);
+    close_location(ui);
     let set = |name: &str, on: bool| {
         ui.window
             .lookup_action(name)

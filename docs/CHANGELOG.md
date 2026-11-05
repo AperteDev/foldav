@@ -72,6 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
+- The location as a path to type, as in Files: a click on the path bar's room or Ctrl+L turns
+  the bar into a field with the folder's path; Enter goes there (a toast says when there is no
+  such folder), Escape or a click elsewhere brings the bar back; dragging the bar still moves
+  the window
 - The Tags place shows how many files each tag is on in the size column (counted in the
   background after the list shows, a few requests at a time), and no date for a tag
 - The star of a favorite as in Nextcloud's web app: filled, toned (a dark gold on light

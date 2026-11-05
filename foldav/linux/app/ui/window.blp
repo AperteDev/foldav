@@ -171,13 +171,14 @@ Adw.ApplicationWindow window {
                   }
                 }
 
-                Gtk.Box {
+                // The path bar, or (a click on its room, Ctrl+L) the path to type in its place
+                // (src/window/header.rs).
+                Gtk.Box pathbar_box {
                   styles ["pathbar"]
                   hexpand: true;
                   valign: center;
 
-                  // The segments of the folder's path, each opening that folder
-                  // (src/window/header.rs).
+                  // The segments of the folder's path, each opening that folder.
                   Gtk.ScrolledWindow pathbar_scroll {
                     hexpand: true;
                     hscrollbar-policy: external;
@@ -191,6 +192,29 @@ Adw.ApplicationWindow window {
                     icon-name: "view-more-symbolic";
                     menu-model: path_menu;
                     tooltip-text: _("Folder Menu");
+                    styles ["flat"]
+                  }
+                }
+
+                Gtk.Box location_box {
+                  spacing: 6;
+                  hexpand: true;
+                  valign: center;
+                  visible: false;
+
+                  Gtk.Entry location_entry {
+                    hexpand: true;
+                    valign: center;
+                    placeholder-text: _("Enter a folder's path");
+                    secondary-icon-name: "edit-clear-symbolic";
+                    secondary-icon-tooltip-text: _("Clear");
+                    styles ["location-entry"]
+                  }
+
+                  Gtk.Button location_close {
+                    icon-name: "window-close-symbolic";
+                    tooltip-text: _("Close the Location (Esc)");
+                    valign: center;
                     styles ["flat"]
                   }
                 }

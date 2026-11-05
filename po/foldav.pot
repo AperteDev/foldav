@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 12:29+0100\n"
+"POT-Creation-Date: 2026-11-05 12:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -195,74 +195,74 @@ msgstr ""
 msgid "{name} removed"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:132
+#: foldav/linux/app/src/window.rs:134
 msgid "Support on Ko-fi"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:136
+#: foldav/linux/app/src/window.rs:138
 msgid "Sponsor on GitHub"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:140
+#: foldav/linux/app/src/window.rs:142
 msgid "Donate on Liberapay"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:308
+#: foldav/linux/app/src/window.rs:310
 msgid ""
 "Foldav is developed in my free time. If it helps you with your files, you "
 "can support its development."
 msgstr ""
 
 #. Translators: the About row that opens the page with the donation links.
-#: foldav/linux/app/src/window.rs:338
+#: foldav/linux/app/src/window.rs:340
 msgid "_Support"
 msgstr ""
 
 #. Translators: title of About's page with the donation links.
-#: foldav/linux/app/src/window.rs:340
+#: foldav/linux/app/src/window.rs:342
 msgid "Support"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:542
+#: foldav/linux/app/src/window.rs:544
 msgid "Enter the Nextcloud server first"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:577
+#: foldav/linux/app/src/window.rs:579
 msgid "Cannot start login"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:578
+#: foldav/linux/app/src/window.rs:580
 #, rust-format
 msgid "Cannot start login: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:586
+#: foldav/linux/app/src/window.rs:588
 msgid "Login link copied to clipboard"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:606
+#: foldav/linux/app/src/window.rs:608
 #, rust-format
 msgid "Login failed: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:608
+#: foldav/linux/app/src/window.rs:610
 msgid "Login failed"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:611
+#: foldav/linux/app/src/window.rs:613
 msgid "Login timed out"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:660
+#: foldav/linux/app/src/window.rs:662
 msgid "Wrong login name or password"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:661
+#: foldav/linux/app/src/window.rs:663
 #, rust-format
 msgid "Sign-in failed: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:662
+#: foldav/linux/app/src/window.rs:664
 msgid "Sign-in failed"
 msgstr ""
 
@@ -303,8 +303,13 @@ msgstr ""
 msgid "Cannot change the favorites"
 msgstr ""
 
-#: foldav/linux/app/src/window/header.rs:198
-#: foldav/linux/app/src/window/header.rs:207
+#: foldav/linux/app/src/window/header.rs:200
+#, rust-format
+msgid "“{path}” is not a folder here"
+msgstr ""
+
+#: foldav/linux/app/src/window/header.rs:313
+#: foldav/linux/app/src/window/header.rs:322
 #: foldav/linux/app/src/window/sidebar.rs:405
 #: foldav/linux/app/src/window/tabs.rs:51
 #: foldav/linux/app/src/window/tabs.rs:58
@@ -384,7 +389,7 @@ msgstr ""
 msgid "Downloaded"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:372 foldav/linux/app/ui/shortcuts.blp:125
+#: foldav/linux/app/src/window/ops.rs:372 foldav/linux/app/ui/shortcuts.blp:130
 msgid "Undo"
 msgstr ""
 
@@ -396,8 +401,8 @@ msgstr ""
 msgid "Untitled Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:401 foldav/linux/app/ui/shortcuts.blp:95
-#: foldav/linux/app/ui/window.blp:390 foldav/linux/app/ui/window.blp:521
+#: foldav/linux/app/src/window/ops.rs:401 foldav/linux/app/ui/shortcuts.blp:100
+#: foldav/linux/app/ui/window.blp:414 foldav/linux/app/ui/window.blp:545
 msgid "New Folder"
 msgstr ""
 
@@ -410,7 +415,7 @@ msgid "Creating folder"
 msgstr ""
 
 #: foldav/linux/app/src/window/ops.rs:430
-#: foldav/linux/app/src/window/ops.rs:431 foldav/linux/app/ui/shortcuts.blp:100
+#: foldav/linux/app/src/window/ops.rs:431 foldav/linux/app/ui/shortcuts.blp:105
 msgid "Rename"
 msgstr ""
 
@@ -438,7 +443,7 @@ msgstr ""
 msgid "Upload Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:547 foldav/linux/app/ui/shortcuts.blp:90
+#: foldav/linux/app/src/window/ops.rs:547 foldav/linux/app/ui/shortcuts.blp:95
 msgid "Upload Files"
 msgstr ""
 
@@ -546,12 +551,12 @@ msgid "None"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:116
-#: foldav/linux/app/src/window/views.rs:163 foldav/linux/app/ui/window.blp:589
+#: foldav/linux/app/src/window/views.rs:163 foldav/linux/app/ui/window.blp:613
 msgid "Size"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:117
-#: foldav/linux/app/ui/window.blp:595
+#: foldav/linux/app/ui/window.blp:619
 msgid "Type"
 msgstr ""
 
@@ -564,12 +569,12 @@ msgid "Icon Size"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:385
-#: foldav/linux/app/ui/shortcuts.blp:65
+#: foldav/linux/app/ui/shortcuts.blp:70
 msgid "Zoom Out"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:386
-#: foldav/linux/app/ui/shortcuts.blp:60
+#: foldav/linux/app/ui/shortcuts.blp:65
 msgid "Zoom In"
 msgstr ""
 
@@ -707,7 +712,7 @@ msgid "Used {used}"
 msgstr ""
 
 #: foldav/linux/app/src/window/sidebar.rs:369
-#: foldav/linux/app/ui/window.blp:437 foldav/linux/app/ui/window.blp:513
+#: foldav/linux/app/ui/window.blp:461 foldav/linux/app/ui/window.blp:537
 msgid "Remove from Favorites"
 msgstr ""
 
@@ -774,12 +779,12 @@ msgid "Versions of “{name}”"
 msgstr ""
 
 #: foldav/linux/app/src/window/versions.rs:67
-#: foldav/linux/app/ui/shortcuts.blp:85 foldav/linux/app/ui/window.blp:358
+#: foldav/linux/app/ui/shortcuts.blp:90 foldav/linux/app/ui/window.blp:382
 msgid "Open"
 msgstr ""
 
 #: foldav/linux/app/src/window/versions.rs:71
-#: foldav/linux/app/ui/window.blp:484
+#: foldav/linux/app/ui/window.blp:508
 msgid "Restore"
 msgstr ""
 
@@ -1028,67 +1033,71 @@ msgid "Columns"
 msgstr ""
 
 #: foldav/linux/app/ui/shortcuts.blp:40
-msgid "New Tab"
+msgid "Enter a Location"
 msgstr ""
 
 #: foldav/linux/app/ui/shortcuts.blp:45
-msgid "Close Tab"
+msgid "New Tab"
 msgstr ""
 
 #: foldav/linux/app/ui/shortcuts.blp:50
-msgid "Next Tab"
+msgid "Close Tab"
 msgstr ""
 
 #: foldav/linux/app/ui/shortcuts.blp:55
+msgid "Next Tab"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:60
 msgid "Previous Tab"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:70
+#: foldav/linux/app/ui/shortcuts.blp:75
 msgid "Reset Zoom"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:75
+#: foldav/linux/app/ui/shortcuts.blp:80
 msgid "Add Folder to Favorites"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:80 foldav/linux/app/ui/window.blp:602
+#: foldav/linux/app/ui/shortcuts.blp:85 foldav/linux/app/ui/window.blp:626
 msgid "Show Hidden Files"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:105 foldav/linux/app/ui/window.blp:410
+#: foldav/linux/app/ui/shortcuts.blp:110 foldav/linux/app/ui/window.blp:434
 msgid "Cut"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:110 foldav/linux/app/ui/window.blp:416
+#: foldav/linux/app/ui/shortcuts.blp:115 foldav/linux/app/ui/window.blp:440
 msgid "Copy"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:115 foldav/linux/app/ui/window.blp:422
-#: foldav/linux/app/ui/window.blp:539
+#: foldav/linux/app/ui/shortcuts.blp:120 foldav/linux/app/ui/window.blp:446
+#: foldav/linux/app/ui/window.blp:563
 msgid "Paste"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:120 foldav/linux/app/ui/window.blp:478
+#: foldav/linux/app/ui/shortcuts.blp:125 foldav/linux/app/ui/window.blp:502
 msgid "Move to Trash"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:130 foldav/linux/app/ui/window.blp:603
+#: foldav/linux/app/ui/shortcuts.blp:135 foldav/linux/app/ui/window.blp:627
 msgid "Reload"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:135
+#: foldav/linux/app/ui/shortcuts.blp:140
 msgid "Toggle Sidebar"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:140 foldav/linux/app/ui/window.blp:612
+#: foldav/linux/app/ui/shortcuts.blp:145 foldav/linux/app/ui/window.blp:636
 msgid "Preferences"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:145 foldav/linux/app/ui/window.blp:613
+#: foldav/linux/app/ui/shortcuts.blp:150 foldav/linux/app/ui/window.blp:637
 msgid "Keyboard Shortcuts"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:150 foldav/linux/app/ui/window.blp:615
+#: foldav/linux/app/ui/shortcuts.blp:155 foldav/linux/app/ui/window.blp:639
 msgid "Quit"
 msgstr ""
 
@@ -1116,135 +1125,147 @@ msgstr ""
 msgid "Parent Folder (Alt+Up)"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:193
+#: foldav/linux/app/ui/window.blp:194
 msgid "Folder Menu"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:200
+#: foldav/linux/app/ui/window.blp:208
+msgid "Enter a folder's path"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:210
+msgid "Clear"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:216
+msgid "Close the Location (Esc)"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:224
 msgid "Search (Ctrl+F)"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:211
+#: foldav/linux/app/ui/window.blp:235
 msgid "Icons (Ctrl+1)"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:217
+#: foldav/linux/app/ui/window.blp:241
 msgid "List (Ctrl+2)"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:223
+#: foldav/linux/app/ui/window.blp:247
 msgid "Columns (Ctrl+3)"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:230
+#: foldav/linux/app/ui/window.blp:254
 msgid "View Options"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:253
+#: foldav/linux/app/ui/window.blp:277
 msgid "Search here"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:260
+#: foldav/linux/app/ui/window.blp:284
 msgid "Foldav was updated: restart it to use the new version"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:261
+#: foldav/linux/app/ui/window.blp:285
 msgid "Restart"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:323
+#: foldav/linux/app/ui/window.blp:347
 msgid "Empty Folder"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:331
+#: foldav/linux/app/ui/window.blp:355
 msgid "Cannot Load the Folder"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:334
+#: foldav/linux/app/ui/window.blp:358
 msgid "Try Again"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:364
+#: foldav/linux/app/ui/window.blp:388
 msgid "Open in New Tab"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:370
+#: foldav/linux/app/ui/window.blp:394
 msgid "Open With…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:376
+#: foldav/linux/app/ui/window.blp:400
 msgid "Download…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:382
+#: foldav/linux/app/ui/window.blp:406
 msgid "Download as ZIP…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:396 foldav/linux/app/ui/window.blp:527
+#: foldav/linux/app/ui/window.blp:420 foldav/linux/app/ui/window.blp:551
 msgid "Upload Files…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:402 foldav/linux/app/ui/window.blp:533
+#: foldav/linux/app/ui/window.blp:426 foldav/linux/app/ui/window.blp:557
 msgid "Upload Folder…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:431 foldav/linux/app/ui/window.blp:507
+#: foldav/linux/app/ui/window.blp:455 foldav/linux/app/ui/window.blp:531
 msgid "Add to Favorites"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:446
+#: foldav/linux/app/ui/window.blp:470
 msgid "Share…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:452
+#: foldav/linux/app/ui/window.blp:476
 msgid "Versions…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:458
+#: foldav/linux/app/ui/window.blp:482
 msgid "Tags…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:464
+#: foldav/linux/app/ui/window.blp:488
 msgid "Open in Browser"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:472
+#: foldav/linux/app/ui/window.blp:496
 msgid "Rename…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:490
+#: foldav/linux/app/ui/window.blp:514
 msgid "Delete Permanently…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:496 foldav/linux/app/ui/window.blp:545
+#: foldav/linux/app/ui/window.blp:520 foldav/linux/app/ui/window.blp:569
 msgid "Empty Trash…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:562
+#: foldav/linux/app/ui/window.blp:586
 msgid "Sort"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:565
+#: foldav/linux/app/ui/window.blp:589
 msgid "A-Z"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:571
+#: foldav/linux/app/ui/window.blp:595
 msgid "Z-A"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:577
+#: foldav/linux/app/ui/window.blp:601
 msgid "Last Modified"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:583
+#: foldav/linux/app/ui/window.blp:607
 msgid "First Modified"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:607
+#: foldav/linux/app/ui/window.blp:631
 msgid "Captions…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:614
+#: foldav/linux/app/ui/window.blp:638
 msgid "About Foldav"
 msgstr ""
 

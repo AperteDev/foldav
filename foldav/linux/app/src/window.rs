@@ -40,6 +40,8 @@ const CSS: &str = "
 .pathbar menubutton > button { min-width: 34px; padding: 0; border-radius: 8px; }
 .pathbar button.path-segment.current { font-weight: bold; }
 .pathbar .path-separator { opacity: 0.5; }
+/* The path to type takes the path bar's place and height. */
+entry.location-entry { min-height: 34px; border-radius: 8px; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
 /* The star of a favorite, filled and toned (a dark gold on light, a soft yellow on dark), the same

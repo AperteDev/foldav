@@ -12,6 +12,7 @@ What Foldav can do, in short. The details of each release are in the
   shown on request; the view menu as Files': the icon size (also Ctrl+plus, Ctrl+minus,
   Ctrl+0), the sort (A-Z, Z-A, Last or First Modified, Size, Type) for all three views, and
   the captions beneath the icons' names (size, type, date).
+- Type a folder's path in the location (Ctrl+L, or a click on the path bar's room).
 - Select several files by dragging a rectangle around them; a pill at the foot says what is
   selected and its size.
 - Tabs as in Files, each with its folder and history; folders open in a new tab by a middle
