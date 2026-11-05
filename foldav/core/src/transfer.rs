@@ -10,6 +10,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};
 use std::time::{Duration, SystemTime};
 
+/// The most (bytes) the previews and texts kept for browsing take, the oldest going first.
+const PREVIEWS_LIMIT: u64 = 256 << 20;
+
 /// How far a transfer is, and a way to stop it; shared between the thread doing it and the one
 /// showing it.
 #[derive(Default, Clone)]
@@ -178,6 +181,7 @@ impl Client {
             }
         }
         self.prune_thumbnails(max_age);
+        self.limit_thumbnails(PREVIEWS_LIMIT);
     }
 
     /// A new, empty folder on this device for files to hand to another app at once (the files

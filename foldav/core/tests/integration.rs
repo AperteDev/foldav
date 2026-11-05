@@ -499,6 +499,14 @@ fn previews_are_fetched_once_and_kept_by_etag() {
     let text = files.iter().find(|f| f.name == "t.txt").unwrap();
     assert!(text.is_text());
     assert_eq!(c.text_head(A, text, 2).unwrap().as_deref(), Some("a"));
+    // Kept by the ETag: the second read is the first's, not another request.
+    assert_eq!(c.text_head(A, text, 4).unwrap().as_deref(), Some("a"));
+    // Changed, so another ETag: read again.
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    dav.request("PUT", &format!("{home}{root}/t.txt"), &[], &"aé".repeat(11))
+        .unwrap();
+    let files = c.list(A, &root).unwrap();
+    let text = files.iter().find(|f| f.name == "t.txt").unwrap();
     assert_eq!(c.text_head(A, text, 4).unwrap().as_deref(), Some("aéa"));
     assert_eq!(c.text_head(A, file("plain.bin"), 4).unwrap(), None);
 }

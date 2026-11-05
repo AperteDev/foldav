@@ -72,8 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
 - A bigger preview of the file selected in the columns view: an image (or a document or
-  video, from the server's preview) shown large and the start of a text file, as in Files;
-  "Preview Files" in Preferences, on to begin with, turns it off
+  video or a PDF's first page, from the server's preview) shown large and the start of a text
+  file, as in Files; "Preview Files" in Preferences, on to begin with, turns it off. What is
+  fetched for it is kept on this device by the file's ETag, never asked for twice, and the
+  oldest previews go when they take more than 256 MB
 - The trash bin: Deleted Files lists what was deleted; Restore, Delete Permanently and
   Empty Trash, each asking first where it cannot be taken back
 - Search by name in the folder shown and below it (Ctrl+F or the magnifier in the header),

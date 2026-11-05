@@ -68,8 +68,8 @@ Once a third app copies the same code, a shared crate in its own repository beco
 
 1. **Browsing**, what is left of it (the Nautilus-like window with icons, list and columns,
    path bar, history, favorite folders, folder tree, accounts, thumbnails and search by name
-   is done): a limit to the listing and thumbnail caches' size (now they go by age), and a
-   long-offline mode that shows them without asking; a zoom for the icons; sorting also in
+   is done): a limit to the listing cache's size (now it goes by age; the previews have one,
+   256 MB), and a long-offline mode that shows them without asking; a zoom for the icons; sorting also in
    the icons and columns; the last folder and account restored at start.
 2. **The web app's places in the sidebar**, what is left of them (All files is the tree's
    "Home"; Recent, Starred, Shared with you, Shared with others, Shared by link, Tags and
