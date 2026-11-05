@@ -19,6 +19,11 @@ pub const DEVICE_ONLY: &[&str] = &[
     "window_maximized",
     // How wide the columns view's columns are.
     "column_width",
+    // What the view menu sets: the sort, the icon sizes and the captions.
+    "sort",
+    "grid_zoom",
+    "list_zoom",
+    "captions",
 ];
 
 /// key → (value, unix time of the last change)

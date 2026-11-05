@@ -19,6 +19,7 @@ mod favorites;
 mod header;
 mod nav;
 mod ops;
+mod options;
 mod share;
 mod sidebar;
 mod tags;
@@ -128,6 +129,8 @@ struct Ui {
     server: RefCell<HashMap<i64, sidebar::Server>>,
     /// Hidden files show (the device-only `show_hidden` setting).
     hidden: Cell<bool>,
+    /// What the view menu sets: the sort, the icon size, the captions (`options`).
+    options: options::Options,
     /// Cut or copied files, to paste (`ops`).
     clipboard: RefCell<Option<ops::Clipboard>>,
     /// The menu of a right click on the files.
@@ -440,6 +443,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
         fav_version: Cell::new(0),
         server: RefCell::default(),
         hidden: Cell::new(false),
+        options: options::Options::load(),
         clipboard: RefCell::new(None),
         file_menu: get(&b, "file_menu"),
     });
@@ -474,6 +478,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     ops::watch_copies(&ui);
     favorites::connect(&ui);
     header::connect(&ui);
+    options::connect(&ui);
     ui
 }
 

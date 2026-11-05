@@ -209,7 +209,7 @@ Adw.ApplicationWindow window {
                   }
                 }
 
-                Gtk.MenuButton {
+                Gtk.MenuButton view_options {
                   icon-name: "view-more-symbolic";
                   menu-model: view_menu;
                   tooltip-text: _("View Options");
@@ -501,13 +501,62 @@ menu path_menu {
   }
 }
 
+// As Files' view menu (src/window/options.rs): the icon size's buttons are a widget the code
+// puts in at "zoom".
 menu view_menu {
   section {
-    item (_("Show Hidden Files"), "win.show-hidden")
+    item {
+      custom: "zoom";
+    }
   }
 
   section {
+    label: _("Sort");
+
+    item {
+      label: _("A-Z");
+      action: "win.sort";
+      target: "name";
+    }
+
+    item {
+      label: _("Z-A");
+      action: "win.sort";
+      target: "name-desc";
+    }
+
+    item {
+      label: _("Last Modified");
+      action: "win.sort";
+      target: "modified";
+    }
+
+    item {
+      label: _("First Modified");
+      action: "win.sort";
+      target: "modified-asc";
+    }
+
+    item {
+      label: _("Size");
+      action: "win.sort";
+      target: "size";
+    }
+
+    item {
+      label: _("Type");
+      action: "win.sort";
+      target: "type";
+    }
+  }
+
+  section {
+    item (_("Show Hidden Files"), "win.show-hidden")
     item (_("Reload"), "win.reload")
+  }
+
+  section {
+    item (_("Captions…"), "win.captions")
   }
 }
 

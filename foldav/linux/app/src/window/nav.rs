@@ -59,14 +59,16 @@ pub fn visible(ui: &Ui, files: &[File]) -> Vec<File> {
         .as_ref()
         .map(|(id, _)| super::favorites::paths(ui, *id))
         .unwrap_or_default();
-    files
+    let mut shown: Vec<File> = files
         .iter()
         .filter(|f| ui.hidden.get() || !f.hidden())
         .map(|f| File {
             favorite: starred.contains(&f.path),
             ..f.clone()
         })
-        .collect()
+        .collect();
+    ui.options.sort_files(&mut shown);
+    shown
 }
 
 pub fn open(ui: &Rc<Ui>, id: i64, path: String) {

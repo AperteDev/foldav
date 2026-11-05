@@ -71,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
+- The view menu as Files': Icon Size with plus and minus (Ctrl+plus, Ctrl+minus, Ctrl+0; the
+  icons' and the list's own), Sort (A-Z, Z-A, Last Modified, First Modified, Size, Type; one
+  for the icons, the list and the columns, the list's header sets it too), Show Hidden Files,
+  and Captions…: the size, type or date of a file beneath its name in the icons, up to three,
+  more of them as the icons grow
 - A bigger preview of the file selected in the columns view: an image (or a document or
   video or a PDF's first page, from the server's preview) shown large and the start of a text
   file, as in Files; "Preview Files" in Preferences, on to begin with, turns it off. What is

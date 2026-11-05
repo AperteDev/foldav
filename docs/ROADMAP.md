@@ -69,8 +69,9 @@ Once a third app copies the same code, a shared crate in its own repository beco
 1. **Browsing**, what is left of it (the Nautilus-like window with icons, list and columns,
    path bar, history, favorite folders, folder tree, accounts, thumbnails and search by name
    is done): a limit to the listing cache's size (now it goes by age; the previews have one,
-   256 MB), and a long-offline mode that shows them without asking; a zoom for the icons; sorting also in
-   the icons and columns; the last folder and account restored at start.
+   256 MB), and a long-offline mode that shows them without asking; the columns view's icon size (it has
+   one); more captions (Nextcloud has no creation date, owner or permissions to show); the
+   last folder and account restored at start.
 2. **The web app's places in the sidebar**, what is left of them (All files is the tree's
    "Home"; Recent, Starred, Shared with you, Shared with others, Shared by link, Tags and
    Deleted files are built, each shown where the server's capabilities have it, and the
@@ -78,7 +79,7 @@ Once a third app copies the same code, a shared crate in its own repository beco
    external storage; *Pending shares* (`shares/pending`, to accept or decline), *File
    requests* (upload-only links, Nextcloud 32), *Deleted shares* (`deletedshares`, to
    restore); *Files settings* (Preferences: sorting, hidden files, the web app's own settings
-   in the browser). The places' files come in the server's order, whatever the view sorts by.
+   in the browser). The places' files come in the server's order until a sort is chosen in the view menu.
 3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete,
    Ctrl+Z, dragging files inside the window and the choice between replacing, keeping both
    and skipping when a name is taken are done): a

@@ -39,8 +39,9 @@ const COLUMN_SLIDE_MS: u32 = 200;
 /// One column: folder `path`, as it was filled.
 struct Column {
     path: String,
-    /// What it was filled from, whether hidden files were in it, and the favorites' number.
-    filled: Option<(Rc<Vec<File>>, bool, u64)>,
+    /// What it was filled from, whether hidden files were in it, and the favorites' and the
+    /// sort's numbers.
+    filled: Option<(Rc<Vec<File>>, bool, u64, u64)>,
     store: gio::ListStore,
     selection: gtk::MultiSelection,
     view: gtk::ListView,
@@ -468,9 +469,10 @@ pub fn refresh(ui: &Rc<Ui>) {
             let data = ui.dirs.borrow().get(&(id, levels[i].clone())).cloned();
             let hidden = ui.hidden.get();
             let stars = ui.fav_version.get();
+            let sorted = ui.options.version.get();
             let same = match (&data, &column.filled) {
-                (Some(d), Some((f, h, s))) => {
-                    (Rc::ptr_eq(d, f) || **d == **f) && *h == hidden && *s == stars
+                (Some(d), Some((f, h, s, o))) => {
+                    (Rc::ptr_eq(d, f) || **d == **f) && *h == hidden && *s == stars && *o == sorted
                 }
                 (None, None) => true,
                 _ => false,
@@ -489,7 +491,7 @@ pub fn refresh(ui: &Rc<Ui>) {
                     .collect();
                 column.store.splice(0, column.store.n_items(), &items);
                 select_paths(&column.selection, &kept);
-                column.filled = data.map(|d| (d, hidden, stars));
+                column.filled = data.map(|d| (d, hidden, stars, sorted));
             }
             // The folder the next column shows is the one selected here.
             if let Some(next) = levels.get(i + 1) {

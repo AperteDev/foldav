@@ -1,0 +1,32 @@
+using Gtk 4.0;
+using Adw 1;
+
+// What the icons show beneath their names (src/window/options.rs); the choices of the three
+// rows are filled in by the code.
+Adw.Dialog dialog {
+  title: _("Grid View Captions");
+  content-width: 460;
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {}
+
+    content: Adw.PreferencesPage {
+      Adw.PreferencesGroup {
+        description: _("Add information to be displayed beneath file and folder names. More information will appear when zooming closer.");
+
+        Adw.ComboRow first {
+          title: _("First");
+        }
+
+        Adw.ComboRow second {
+          title: _("Second");
+        }
+
+        Adw.ComboRow third {
+          title: _("Third");
+        }
+      }
+    };
+  };
+}

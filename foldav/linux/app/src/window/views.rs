@@ -3,7 +3,7 @@
 //! switching keeps what is selected; the columns have a model each.
 
 use super::columns::Columns;
-use super::{Ui, columns, nav, ops};
+use super::{Ui, columns, nav, ops, options};
 use crate::core;
 use crate::i18n::gettext;
 use adw::prelude::*;
@@ -43,7 +43,7 @@ pub struct Views {
     store: gio::ListStore,
     selection: gtk::MultiSelection,
     grid: gtk::GridView,
-    list: gtk::ColumnView,
+    pub(super) list: gtk::ColumnView,
     stack: gtk::Stack,
     icons_scroll: gtk::ScrolledWindow,
     list_scroll: gtk::ScrolledWindow,
@@ -82,10 +82,13 @@ pub fn icon(f: &File) -> gio::Icon {
 /// small size the theme gives a monochrome one for some icons (a folder's).
 pub fn set_icon(image: &gtk::Image, f: &File) {
     thread_local! {
-        /// The icons looked up, by type and scale: scrolling binds the same few over and over.
-        static ICONS: std::cell::RefCell<std::collections::HashMap<(String, i32), gtk::IconPaintable>> =
+        /// The icons looked up, by type, scale and size: scrolling binds the same few over and
+        /// over.
+        static ICONS: std::cell::RefCell<std::collections::HashMap<(String, i32, i32), gtk::IconPaintable>> =
             std::cell::RefCell::default();
     }
+    // Looked up larger for the big icons (and their thumbnails).
+    let size = if image.pixel_size() > 128 { 256 } else { 128 };
     match gtk::gdk::Display::default() {
         Some(display) => {
             let scale = image.scale_factor();
@@ -96,6 +99,7 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
                     f.mime.clone()
                 },
                 scale,
+                size,
             );
             let paintable = ICONS.with(|c| {
                 c.borrow_mut()
@@ -103,7 +107,7 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
                     .or_insert_with(|| {
                         gtk::IconTheme::for_display(&display).lookup_by_gicon(
                             &icon(f),
-                            128,
+                            size,
                             scale,
                             gtk::TextDirection::None,
                             gtk::IconLookupFlags::FORCE_REGULAR,
@@ -116,11 +120,7 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
         None => image.set_from_gicon(&icon(f)),
     }
     image.set_opacity(if f.hidden() { 0.5 } else { 1.0 });
-    super::thumbs::apply(image, f, 128);
-}
-
-fn sorter(by: impl Fn(&File, &File) -> Ordering + 'static) -> gtk::CustomSorter {
-    gtk::CustomSorter::new(move |a, b| by(&file_of(a), &file_of(b)).into())
+    super::thumbs::apply(image, f, size as u32);
 }
 
 impl Views {
@@ -129,9 +129,10 @@ impl Views {
         let list = gtk::ColumnView::builder()
             .css_classes(["files-view"])
             .build();
-        // The list's header sorts the model icons and list share.
-        let sorted = gtk::SortListModel::new(Some(store.clone()), list.sorter());
-        let selection = gtk::MultiSelection::new(Some(sorted));
+        // The files come sorted (`options`): a click on the list's header only tells the sort,
+        // which is the menu's too, so the sorter of its columns sorts nothing (it is for
+        // their arrows) and the three views are in one order.
+        let selection = gtk::MultiSelection::new(Some(store.clone()));
         let grid = gtk::GridView::builder()
             .max_columns(100)
             .css_classes(["files-view"])
@@ -139,26 +140,19 @@ impl Views {
         grid.set_model(Some(&selection));
         list.set_model(Some(&selection));
 
-        // Folders before files, whichever way; then the column's own order.
-        type By = Box<dyn Fn(&File, &File) -> Ordering>;
-        let columns: [(String, By); 3] = [
-            (
-                gettext("Name"),
-                Box::new(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-            ),
-            (gettext("Size"), Box::new(|a, b| a.size.cmp(&b.size))),
-            (
-                gettext("Modified"),
-                Box::new(|a, b| a.modified.cmp(&b.modified)),
-            ),
-        ];
-        for (i, (title, by)) in columns.into_iter().enumerate() {
+        for (i, (id, title)) in [
+            ("name", gettext("Name")),
+            ("size", gettext("Size")),
+            ("modified", gettext("Modified")),
+        ]
+        .into_iter()
+        .enumerate()
+        {
             let column = gtk::ColumnViewColumn::new(Some(&title), None::<gtk::ListItemFactory>);
+            column.set_id(Some(id));
             column.set_expand(i == 0);
             column.set_resizable(true);
-            column.set_sorter(Some(&sorter(move |a, b| {
-                (!a.folder).cmp(&!b.folder).then_with(|| by(a, b))
-            })));
+            column.set_sorter(Some(&gtk::CustomSorter::new(|_, _| Ordering::Equal.into())));
             list.append_column(&column);
         }
 
@@ -205,18 +199,18 @@ pub fn connect(ui: &Rc<Ui>) {
         let item = item.downcast_ref::<gtk::ListItem>().expect("a list item");
         let b = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
-            .spacing(6)
+            .spacing(2)
             .margin_top(8)
             .margin_bottom(8)
             .margin_start(6)
             .margin_end(6)
             .halign(gtk::Align::Center)
-            .width_request(108)
             .build();
         // The icon, and the star of a favorite at its corner.
         let overlay = gtk::Overlay::builder()
-            .child(&gtk::Image::builder().pixel_size(64).build())
+            .child(&gtk::Image::new())
             .halign(gtk::Align::Center)
+            .margin_bottom(4)
             .build();
         overlay.add_overlay(&star(16));
         b.append(&overlay);
@@ -226,30 +220,60 @@ pub fn connect(ui: &Rc<Ui>) {
                 .wrap_mode(gtk::pango::WrapMode::WordChar)
                 .lines(2)
                 .ellipsize(gtk::pango::EllipsizeMode::End)
-                .max_width_chars(12)
                 .justify(gtk::Justification::Center)
                 .build(),
         );
+        // The captions beneath the name (`options`), as many as the icons' size has room for.
+        for _ in 0..options::CAPTIONS {
+            b.append(
+                &gtk::Label::builder()
+                    .ellipsize(gtk::pango::EllipsizeMode::End)
+                    .justify(gtk::Justification::Center)
+                    .css_classes(["dim-label", "caption"])
+                    .visible(false)
+                    .build(),
+            );
+        }
         item.set_child(Some(&b));
         attach_menu(&w, item, b.upcast_ref());
     });
-    factory.connect_bind(|_, item| {
+    let w = weak.clone();
+    factory.connect_bind(move |_, item| {
         let item = item.downcast_ref::<gtk::ListItem>().expect("a list item");
-        let (Some(f), Some(b)) = (item.item().map(|o| file_of(&o)), item.child()) else {
+        let (Some(f), Some(b), Some(ui)) =
+            (item.item().map(|o| file_of(&o)), item.child(), w.upgrade())
+        else {
             return;
         };
+        let (px, captions) = (ui.options.grid_px(), ui.options.captions());
+        let width = (px + 40).max(100);
+        b.set_width_request(width);
         let overlay = b.first_child().and_downcast::<gtk::Overlay>();
+        let name = overlay.as_ref().and_then(|o| o.next_sibling());
         if let (Some(image), Some(star), Some(label)) = (
             overlay
                 .as_ref()
                 .and_then(|o| o.child())
                 .and_downcast::<gtk::Image>(),
             overlay.as_ref().and_then(|o| o.last_child()),
-            b.last_child().and_downcast::<gtk::Label>(),
+            name.clone().and_downcast::<gtk::Label>(),
         ) {
+            image.set_pixel_size(px);
             set_icon(&image, &f);
             star.set_visible(f.favorite);
+            label.set_max_width_chars(width / 9);
             label.set_label(&f.name);
+        }
+        let mut next = name.and_then(|n| n.next_sibling());
+        for slot in 0..options::CAPTIONS {
+            let Some(label) = next.and_downcast_ref::<gtk::Label>() else {
+                break;
+            };
+            let text = captions.get(slot).map(|c| c.text(&f)).unwrap_or_default();
+            label.set_max_width_chars(width / 9);
+            label.set_label(&text);
+            label.set_visible(!text.is_empty());
+            next = label.next_sibling();
         }
         b.set_tooltip_text(Some(&f.name));
     });
@@ -284,9 +308,12 @@ pub fn connect(ui: &Rc<Ui>) {
             item.set_child(Some(&b));
             attach_menu(&w, item, b.upcast_ref());
         });
+        let w = weak.clone();
         factory.connect_bind(move |_, item| {
             let item = item.downcast_ref::<gtk::ListItem>().expect("a list item");
-            let (Some(f), Some(b)) = (item.item().map(|o| file_of(&o)), item.child()) else {
+            let (Some(f), Some(b), Some(ui)) =
+                (item.item().map(|o| file_of(&o)), item.child(), w.upgrade())
+            else {
                 return;
             };
             // The name's cell is the icon, the name, the star; the others' just the text.
@@ -300,6 +327,7 @@ pub fn connect(ui: &Rc<Ui>) {
             match i {
                 0 => {
                     if let Some(image) = b.first_child().and_downcast::<gtk::Image>() {
+                        image.set_pixel_size(ui.options.list_px());
                         set_icon(&image, &f);
                     }
                     if let Some(star) = b.last_child() {
@@ -418,6 +446,7 @@ pub fn set_mode(ui: &Rc<Ui>, mode: Mode) {
     let _ = core().set_setting("view_mode".into(), mode.name().into());
     nav::show(ui);
     ops::update_actions(ui);
+    options::update(ui);
 }
 
 /// The star of a favorite, hidden until a file is one.

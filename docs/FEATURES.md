@@ -9,7 +9,9 @@ What Foldav can do, in short. The details of each release are in the
   one account.
 - Browse the folders of your Nextcloud Files as in Files: icons, list or columns, a path bar,
   back and forward, a sidebar with the accounts, favorite folders and a folder tree; hidden files
-  shown on request.
+  shown on request; the view menu as Files': the icon size (also Ctrl+plus, Ctrl+minus,
+  Ctrl+0), the sort (A-Z, Z-A, Last or First Modified, Size, Type) for all three views, and
+  the captions beneath the icons' names (size, type, date).
 - Favorites, shared with Nextcloud Files: star files and folders, the favorite folders in the
   sidebar; kept on the device and synced with the server.
 - Folders show at once from what was listed before (kept on this device), then are checked

@@ -16,6 +16,8 @@ pub struct Header {
     pathbar: gtk::Box,
     scroll: gtk::ScrolledWindow,
     toggle: adw::ToggleGroup,
+    /// The view menu's button (`options`).
+    pub(super) options: gtk::MenuButton,
     search_bar: gtk::SearchBar,
     search_entry: gtk::SearchEntry,
 }
@@ -26,6 +28,7 @@ impl Header {
             pathbar: super::get(b, "pathbar"),
             scroll: super::get(b, "pathbar_scroll"),
             toggle: super::get(b, "view_toggle"),
+            options: super::get(b, "view_options"),
             search_bar: super::get(b, "search_bar"),
             search_entry: super::get(b, "search_entry"),
         }
@@ -156,6 +159,9 @@ pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.view-list", &["<Control>2"]);
     app.set_accels_for_action("win.view-columns", &["<Control>3"]);
     app.set_accels_for_action("win.show-hidden", &["<Control>h"]);
+    app.set_accels_for_action("win.zoom-in", &["<Control>plus", "<Control>equal"]);
+    app.set_accels_for_action("win.zoom-out", &["<Control>minus"]);
+    app.set_accels_for_action("win.zoom-reset", &["<Control>0"]);
 }
 
 /// The path bar and what depends on the folder shown: back, forward, up, favorites.
