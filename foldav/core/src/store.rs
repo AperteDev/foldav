@@ -4,9 +4,10 @@ use crate::{Error, Result};
 use rusqlite::{Connection, OptionalExtension};
 
 /// The schema, then each change to it (none yet), applied in order from the database's
-/// `user_version`. Released steps are never edited: a change is a new step (see `AGENTS.md`).
-const MIGRATIONS: &[&str] = &[
-    r#"
+/// `user_version`. Until the first release the schema is edited in place (a database made by an
+/// earlier build is deleted, not converted); from the first release on, released steps are
+/// never edited: a change is a new step (see `AGENTS.md`).
+const MIGRATIONS: &[&str] = &[r#"
 CREATE TABLE kv (key TEXT PRIMARY KEY, value TEXT);
 -- The Nextcloud servers files are browsed on (`account.rs`).
 CREATE TABLE accounts (
@@ -18,17 +19,6 @@ CREATE TABLE accounts (
   enabled INTEGER NOT NULL DEFAULT 1,
   position INTEGER NOT NULL DEFAULT 0
 );
-"#,
-    r#"
--- Folders the user bookmarked, per account, in the order added (`bookmarks.rs`).
-CREATE TABLE bookmarks (
-  id INTEGER PRIMARY KEY,
-  account INTEGER NOT NULL,
-  path TEXT NOT NULL,                   -- relative to the Files root, '' is the root
-  UNIQUE (account, path)
-);
-"#,
-    r#"
 -- What was last listed of each folder (`cache.rs`): the folder's ETag, and what was in it.
 CREATE TABLE listings (
   account INTEGER NOT NULL,
@@ -52,11 +42,8 @@ CREATE TABLE entries (
   PRIMARY KEY (account, path)
 );
 CREATE INDEX entries_dir ON entries (account, dir);
-"#,
-    r#"
--- Nextcloud's favorites in place of local bookmarks (`favorites.rs`): what the server last said,
--- and the changes made here that it does not have yet. The folders bookmarked before go up to
--- it as favorites.
+-- Nextcloud's favorites (`favorites.rs`): what the server last said, and the changes made here
+-- that it does not have yet.
 CREATE TABLE favorites (
   account INTEGER NOT NULL,
   path TEXT NOT NULL,                   -- relative to the Files root
@@ -64,11 +51,7 @@ CREATE TABLE favorites (
   dirty INTEGER NOT NULL DEFAULT 0,     -- 0 as on the server, 1 starred here, 2 unstarred here
   PRIMARY KEY (account, path)
 );
-INSERT INTO favorites (account, path, folder, dirty)
-  SELECT account, path, 1, 1 FROM bookmarks WHERE path != '';
-DROP TABLE bookmarks;
-"#,
-];
+"#];
 
 pub fn open(path: &str) -> Result<Connection> {
     let db = Connection::open(path)?;
@@ -107,84 +90,6 @@ pub fn kv_set(db: &Connection, key: &str, value: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn a_database_of_the_first_step_gets_bookmarks() {
-        let dir = std::env::temp_dir().join(format!("foldav-test-step2-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("foldav.sqlite").to_string_lossy().to_string();
-        let old = Connection::open(&path).unwrap();
-        old.execute_batch(MIGRATIONS[0]).unwrap();
-        old.pragma_update(None, "user_version", 1).unwrap();
-        old.execute(
-            "INSERT INTO accounts (url, user) VALUES ('https://one.example', 'kris')",
-            [],
-        )
-        .unwrap();
-        drop(old);
-        let db = open(&path).unwrap();
-        let users: i64 = db
-            .query_row("SELECT COUNT(*) FROM accounts", [], |r| r.get(0))
-            .unwrap();
-        assert_eq!(users, 1, "what the first step kept is still there");
-    }
-
-    #[test]
-    fn a_database_of_the_second_step_gets_the_listing_cache() {
-        let dir = std::env::temp_dir().join(format!("foldav-test-step3-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("foldav.sqlite").to_string_lossy().to_string();
-        let old = Connection::open(&path).unwrap();
-        old.execute_batch(MIGRATIONS[0]).unwrap();
-        old.execute_batch(MIGRATIONS[1]).unwrap();
-        old.pragma_update(None, "user_version", 2).unwrap();
-        drop(old);
-        let db = open(&path).unwrap();
-        db.execute(
-            "INSERT INTO listings (account, path, etag) VALUES (1, '', 'x')",
-            [],
-        )
-        .unwrap();
-    }
-
-    #[test]
-    fn the_bookmarks_of_the_third_step_become_favorites_to_send() {
-        let dir = std::env::temp_dir().join(format!("foldav-test-step4-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("foldav.sqlite").to_string_lossy().to_string();
-        let old = Connection::open(&path).unwrap();
-        for m in &MIGRATIONS[..3] {
-            old.execute_batch(m).unwrap();
-        }
-        old.pragma_update(None, "user_version", 3).unwrap();
-        old.execute(
-            "INSERT INTO bookmarks (account, path) VALUES (1, 'Photos'), (1, ''), (2, 'A/B')",
-            [],
-        )
-        .unwrap();
-        drop(old);
-        let db = open(&path).unwrap();
-        let mut st = db
-            .prepare("SELECT account, path, folder, dirty FROM favorites ORDER BY account")
-            .unwrap();
-        let rows: Vec<(i64, String, bool, i64)> = st
-            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
-            .unwrap()
-            .collect::<rusqlite::Result<_>>()
-            .unwrap();
-        // The root cannot be a favorite; the others wait to be sent.
-        assert_eq!(
-            rows,
-            [
-                (1, "Photos".to_string(), true, 1),
-                (2, "A/B".to_string(), true, 1)
-            ]
-        );
-        assert!(db.prepare("SELECT 1 FROM bookmarks").is_err(), "gone");
-    }
 
     #[test]
     fn a_newer_foldavs_database_is_left_alone() {

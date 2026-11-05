@@ -60,12 +60,15 @@
 
 ## Stored data
 
-- An update carries on with what the previous version kept. The database (`foldav.sqlite` in
-  the data folder) changes only by a new step at the end of `foldav/core/src/store.rs`
-  `MIGRATIONS` that converts what is there; a released step is never edited, and each new step
-  gets a test that opens a database of the step before. A database from a newer Foldav is
-  refused (`store::open`), never written to. Synced settings (`.config/foldav/settings.json`)
-  are also read by other devices: a synced key changed in meaning goes under a new name.
+- Not released yet: no legacy. The schema (`MIGRATIONS` in `foldav/core/src/store.rs`) is one
+  initial step, edited in place, and no code converts what an earlier build made (delete the
+  data folder, `foldav.sqlite`, or reset the sandbox). From the first release on, an update
+  carries on with what the previous version kept: the database changes only by a new step at
+  the end of `MIGRATIONS` that converts what is there; a released step is never edited, and
+  each new step gets a test that opens a database of the step before.
+- A database from a newer Foldav is refused (`store::open`), never written to. Synced settings
+  (`.config/foldav/settings.json`) are also read by other devices: a synced key changed in
+  meaning goes under a new name (once released).
 
 ## Accounts
 
