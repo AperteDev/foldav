@@ -67,6 +67,8 @@ listview.miller-list > row:hover > .miller-row { background-color: alpha(current
 listview.miller-list:not(.miller-active) > row:selected { background: none; }
 listview.miller-list:not(.miller-active) > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
 .miller-list image { -gtk-icon-style: regular; }
+/* The star is a symbolic icon, drawn in its own colour. */
+.miller-list image.favorite-star { -gtk-icon-style: symbolic; }
 /* The files on the window's own background, as in Files, not the view's darker one; the icons'
    tiles rounded and close, as there. */
 .files-view, .files-view listview { background: none; }
