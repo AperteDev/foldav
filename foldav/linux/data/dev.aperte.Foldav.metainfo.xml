@@ -13,6 +13,10 @@
     </p>
     <ul>
       <li>Connects through GNOME Online Accounts or a browser sign-in, to more than one account</li>
+      <li>Opens files in their apps and sends back what you save</li>
+      <li>Uploads and downloads files and folders, with drag and drop to and from Files</li>
+      <li>Shows the trash bin, recent and starred files, thumbnails and search by name</li>
+      <li>Shares by link or with users, and keeps versions and tags</li>
     </ul>
   </description>
   <developer id="dev.aperte">

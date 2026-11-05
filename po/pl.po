@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 03:46+0100\n"
+"POT-Creation-Date: 2026-11-05 03:50+0100\n"
 "PO-Revision-Date: 2026-11-04 23:52+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -274,7 +274,7 @@ msgid "Sign-in failed"
 msgstr "Logowanie nie powiodło się"
 
 #: foldav/linux/app/src/window/columns.rs:146
-#: foldav/linux/app/src/window/views.rs:130
+#: foldav/linux/app/src/window/views.rs:151
 msgid "Modified"
 msgstr "Zmodyfikowano"
 
@@ -758,11 +758,11 @@ msgstr "Otwórz"
 msgid "Restore"
 msgstr "Przywróć"
 
-#: foldav/linux/app/src/window/views.rs:125 foldav/linux/app/ui/account.blp:18
+#: foldav/linux/app/src/window/views.rs:146 foldav/linux/app/ui/account.blp:18
 msgid "Name"
 msgstr "Nazwa"
 
-#: foldav/linux/app/src/window/views.rs:128
+#: foldav/linux/app/src/window/views.rs:149
 msgid "Size"
 msgstr "Rozmiar"
 
@@ -1129,6 +1129,26 @@ msgid ""
 msgstr ""
 "Łączy się przez Konta online GNOME lub logowanie w przeglądarce, także z "
 "kilkoma kontami"
+
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:16
+msgid "Opens files in their apps and sends back what you save"
+msgstr "Otwiera pliki w ich aplikacjach i odsyła to, co zapiszesz"
+
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:17
+msgid ""
+"Uploads and downloads files and folders, with drag and drop to and from Files"
+msgstr "Wysyła i pobiera pliki oraz foldery, z przeciąganiem do i z Plików"
+
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:18
+msgid ""
+"Shows the trash bin, recent and starred files, thumbnails and search by name"
+msgstr ""
+"Pokazuje kosz, ostatnie i oznaczone gwiazdką pliki, miniatury i wyszukiwanie "
+"po nazwie"
+
+#: foldav/linux/data/dev.aperte.Foldav.metainfo.xml:19
+msgid "Shares by link or with users, and keeps versions and tags"
+msgstr "Udostępnia linkiem lub użytkownikom oraz przechowuje wersje i tagi"
 
 #~ msgid "Files cannot be moved between accounts yet"
 #~ msgstr "Plików nie można jeszcze przenosić między kontami"
