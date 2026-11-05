@@ -235,3 +235,73 @@ fn files_are_opened_from_a_kept_copy_and_downloaded_with_their_folders() {
     assert!(!dest.join("dir (copy 2)").exists());
     let _ = std::fs::remove_dir_all(&dest);
 }
+
+#[test]
+fn files_and_folders_are_uploaded_whole_or_in_chunks() {
+    use foldav_core::{Progress, Taken};
+    let (c, _dav, root) = fixture("upload");
+    let local = std::env::temp_dir().join(format!("foldav-it-upload-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&local);
+    std::fs::create_dir_all(local.join("tree/sub")).unwrap();
+    std::fs::write(local.join("a.txt"), "hello").unwrap();
+    std::fs::write(local.join("tree/b.txt"), "b").unwrap();
+    std::fs::write(local.join("tree/sub/c ż.txt"), "c").unwrap();
+    // Over the size where a file goes in chunks (the last one a short one).
+    let big: Vec<u8> = (0..(40u32 << 20) + 5).map(|i| (i % 251) as u8).collect();
+    std::fs::write(local.join("big.bin"), &big).unwrap();
+
+    let items = [
+        local.join("a.txt"),
+        local.join("tree"),
+        local.join("big.bin"),
+    ];
+    let p = Progress::default();
+    c.upload(A, &root, &items, Taken::KeepBoth, &p).unwrap();
+    assert_eq!(
+        (p.done(), p.total()),
+        (big.len() as u64 + 7, big.len() as u64 + 7)
+    );
+    assert_eq!(names(&c, &root), ["tree", "a.txt", "big.bin"]);
+    assert_eq!(names(&c, &format!("{root}/tree/sub")), ["c ż.txt"]);
+    let read = |path: &str| {
+        let f = c
+            .list(A, &root)
+            .unwrap()
+            .into_iter()
+            .find(|f| f.name == path)
+            .unwrap();
+        let copy = c.open_file(A, &f, &Progress::default()).unwrap();
+        std::fs::read(copy).unwrap()
+    };
+    assert_eq!(read("a.txt"), b"hello");
+    assert!(read("big.bin") == big, "the chunks came together");
+
+    // Names taken: asked about, kept both, replaced, or left out.
+    let all = ["a.txt".to_string(), "new".to_string(), "tree".to_string()];
+    assert_eq!(c.taken(A, &root, &all).unwrap(), ["a.txt", "tree"]);
+    std::fs::write(local.join("a.txt"), "second").unwrap();
+    let again = &items[..2];
+    c.upload(A, &root, again, Taken::KeepBoth, &Progress::default())
+        .unwrap();
+    assert_eq!(
+        names(&c, &root),
+        ["tree", "tree (copy)", "a (copy).txt", "a.txt", "big.bin"]
+    );
+    c.upload(A, &root, again, Taken::Skip, &Progress::default())
+        .unwrap();
+    assert_eq!(names(&c, &root).len(), 5);
+    // The server keeps the ETag of a file rewritten within a moment of its last change.
+    std::thread::sleep(std::time::Duration::from_secs(3));
+    c.upload(A, &root, again, Taken::Replace, &Progress::default())
+        .unwrap();
+    assert_eq!(names(&c, &root).len(), 5);
+    assert_eq!(read("a.txt"), b"second");
+
+    // Cancelled: nothing is sent, and no half of a big file is left.
+    let p = Progress::default();
+    p.cancel();
+    let r = c.upload(A, &root, &items[2..], Taken::KeepBoth, &p);
+    assert!(matches!(r, Err(Error::Cancelled)), "{r:?}");
+    assert_eq!(names(&c, &root).len(), 5);
+    let _ = std::fs::remove_dir_all(&local);
+}

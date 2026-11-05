@@ -288,21 +288,23 @@ impl Dav {
         }
     }
 
-    /// Send a request and return the response as it comes: its body not read yet.
-    fn send(
+    /// Send a request and return the response as it comes: its body not read yet. `body` makes
+    /// the body anew for each try; `xml`: it is an XML text, to be sent as such.
+    fn send<B: ureq::AsSendBody>(
         &self,
         agent: &ureq::Agent,
         method: &str,
         href: &str,
         headers: &[(&str, &str)],
-        body: &str,
+        xml: bool,
+        body: impl Fn() -> Result<B>,
     ) -> Result<ureq::http::Response<ureq::Body>> {
         let req = || {
             let mut b = ureq::http::Request::builder()
                 .method(method)
                 .uri(self.url(href))
                 .header("Authorization", &self.auth);
-            if !body.is_empty()
+            if xml
                 && !headers
                     .iter()
                     .any(|(k, _)| k.eq_ignore_ascii_case("content-type"))
@@ -318,8 +320,7 @@ impl Dav {
                 };
                 b = b.header(*k, v);
             }
-            b.body(body.to_string())
-                .map_err(|e| Error::Net(e.to_string()))
+            b.body(body()?).map_err(|e| Error::Net(e.to_string()))
         };
         // A connection the server never answers is tried again rather than waited out (until
         // the global timeout): nothing was sent on it yet.
@@ -341,7 +342,35 @@ impl Dav {
         headers: &[(&str, &str)],
         body: &str,
     ) -> Result<HttpResponse> {
-        let mut resp = self.send(&self.agent, method, href, headers, body)?;
+        let resp = self.send(&self.agent, method, href, headers, !body.is_empty(), || {
+            Ok(body.to_string())
+        })?;
+        Self::read(resp)
+    }
+
+    /// A request of `len` bytes read from what `body` opens (again for each try), however long
+    /// it takes: a file on its way to the server. `headers` need not have the length.
+    pub fn upload(
+        &self,
+        method: &str,
+        href: &str,
+        headers: &[(&str, &str)],
+        len: u64,
+        body: impl Fn() -> Result<Box<dyn std::io::Read + Send>>,
+    ) -> Result<HttpResponse> {
+        let len = len.to_string();
+        let headers: Vec<_> = headers
+            .iter()
+            .copied()
+            .chain([("Content-Length", len.as_str())])
+            .collect();
+        let resp = self.send(&self.stream, method, href, &headers, false, || {
+            Ok(ureq::SendBody::from_owned_reader(body()?))
+        })?;
+        Self::read(resp)
+    }
+
+    fn read(mut resp: ureq::http::Response<ureq::Body>) -> Result<HttpResponse> {
         let header = |n: &str| {
             resp.headers()
                 .get(n)
@@ -375,7 +404,7 @@ impl Dav {
             .map(|e| ("If-None-Match", e))
             .into_iter()
             .collect();
-        let mut resp = self.send(&self.stream, "GET", href, &h, "")?;
+        let mut resp = self.send(&self.stream, "GET", href, &h, false, || Ok(String::new()))?;
         let etag = resp
             .headers()
             .get("etag")

@@ -14,6 +14,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 mod columns;
+mod dnd;
 mod favorites;
 mod header;
 mod nav;
@@ -38,6 +39,8 @@ const CSS: &str = "
 /* The long actions at the foot of the sidebar: rows as the tree's. */
 .transfers menubutton > button { min-height: 28px; padding: 4px 8px; border-radius: 6px; }
 .transfers label { font-weight: normal; }
+/* The folder files would be dropped into. */
+.drop-target { background-color: alpha(@accent_bg_color, 0.3); border-radius: 8px; }
 /* The window buttons are in a plain toolbar row, not a header bar: its buttons' own background
    must not show behind their circles. */
 .toolbar windowcontrols button, .toolbar windowcontrols button:hover,

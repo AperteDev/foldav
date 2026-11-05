@@ -12,8 +12,11 @@ use std::time::{Duration, SystemTime};
 
 /// How far a transfer is, and a way to stop it; shared between the thread doing it and the one
 /// showing it.
+#[derive(Default, Clone)]
+pub struct Progress(std::sync::Arc<Counters>);
+
 #[derive(Default)]
-pub struct Progress {
+struct Counters {
     done: AtomicU64,
     total: AtomicU64,
     cancelled: AtomicBool,
@@ -22,21 +25,33 @@ pub struct Progress {
 impl Progress {
     /// Bytes transferred so far.
     pub fn done(&self) -> u64 {
-        self.done.load(Relaxed)
+        self.0.done.load(Relaxed)
     }
 
     /// Bytes to transfer; 0 while it is not known.
     pub fn total(&self) -> u64 {
-        self.total.load(Relaxed)
+        self.0.total.load(Relaxed)
     }
 
     /// Stop the transfer: it ends with `Error::Cancelled` at its next read.
     pub fn cancel(&self) {
-        self.cancelled.store(true, Relaxed);
+        self.0.cancelled.store(true, Relaxed);
     }
 
     pub fn is_cancelled(&self) -> bool {
-        self.cancelled.load(Relaxed)
+        self.0.cancelled.load(Relaxed)
+    }
+
+    pub(crate) fn add(&self, n: u64) {
+        self.0.done.fetch_add(n, Relaxed);
+    }
+
+    pub(crate) fn set_done(&self, n: u64) {
+        self.0.done.store(n, Relaxed);
+    }
+
+    pub(crate) fn set_total(&self, n: u64) {
+        self.0.total.store(n, Relaxed);
     }
 }
 
@@ -63,7 +78,7 @@ fn save(mut dl: Download, target: &Path, p: &Progress) -> Result<()> {
                 return Ok(());
             }
             out.write_all(&buf[..n]).map_err(io)?;
-            p.done.fetch_add(n as u64, Relaxed);
+            p.add(n as u64);
         }
     })();
     match copied.and_then(|()| std::fs::rename(&part, target).map_err(io)) {
@@ -73,6 +88,25 @@ fn save(mut dl: Download, target: &Path, p: &Progress) -> Result<()> {
             Err(e)
         }
     }
+}
+
+/// What is directly in folder `p`.
+fn dirs(p: &Path) -> Vec<PathBuf> {
+    std::fs::read_dir(p)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .collect()
+}
+
+/// `p` was last changed longer than `age` ago.
+fn older(p: &Path, age: Duration) -> bool {
+    std::fs::metadata(p)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| SystemTime::now().duration_since(t).ok())
+        .is_some_and(|d| d > age)
 }
 
 /// `name` in `dir`, or the first of its copy names ("a (copy).txt") that is free.
@@ -113,7 +147,7 @@ impl Client {
                 // What was kept goes first: a file renamed since is another name in `f`.
                 let _ = std::fs::remove_dir_all(&kept);
                 std::fs::create_dir_all(&kept).map_err(io)?;
-                p.total.store(dl.length.or(file.size).unwrap_or(0), Relaxed);
+                p.set_total(dl.length.or(file.size).unwrap_or(0));
                 let etag = dl.etag.clone().unwrap_or_default();
                 save(dl, &copy, p)?;
                 let mut perms = std::fs::metadata(&copy).map_err(io)?.permissions();
@@ -129,28 +163,28 @@ impl Client {
 
     /// Delete the copies `open_file` made that were not used for `max_age`.
     pub fn prune_cache(&self, max_age: Duration) {
-        let old = |p: &Path| {
-            std::fs::metadata(p)
-                .and_then(|m| m.modified())
-                .ok()
-                .and_then(|t| SystemTime::now().duration_since(t).ok())
-                .is_some_and(|age| age > max_age)
-        };
-        let dirs = |p: &Path| -> Vec<PathBuf> {
-            std::fs::read_dir(p)
-                .into_iter()
-                .flatten()
-                .flatten()
-                .map(|e| e.path())
-                .collect()
-        };
         for account in dirs(&self.cache_dir.join("files")) {
             for copy in dirs(&account) {
-                if old(&copy.join("etag")) {
+                if older(&copy.join("etag"), max_age) {
                     let _ = std::fs::remove_dir_all(copy);
                 }
             }
         }
+    }
+
+    /// A new, empty folder on this device for files to hand to another app at once (the files
+    /// of a drag); the ones of earlier hours are removed.
+    pub fn scratch(&self) -> Result<PathBuf> {
+        static MADE: AtomicU64 = AtomicU64::new(0);
+        let base = self.cache_dir.join("drag");
+        for old in dirs(&base) {
+            if older(&old, Duration::from_secs(3600)) {
+                let _ = std::fs::remove_dir_all(old);
+            }
+        }
+        let dir = base.join(format!("{}-{}", crate::now(), MADE.fetch_add(1, Relaxed)));
+        std::fs::create_dir_all(&dir).map_err(io)?;
+        Ok(dir)
     }
 
     /// Save `files` (and what folders hold) of account `id` into folder `dest` of this device,
@@ -159,8 +193,7 @@ impl Client {
     // ponytail: a folder is fetched file by file, one request each; a ZIP from the server is
     // faster where there is one.
     pub fn download(&self, id: i64, files: &[File], dest: &Path, p: &Progress) -> Result<()> {
-        p.total
-            .store(files.iter().filter_map(|f| f.size).sum(), Relaxed);
+        p.set_total(files.iter().filter_map(|f| f.size).sum());
         files.iter().try_for_each(|f| self.save_to(id, f, dest, p))
     }
 

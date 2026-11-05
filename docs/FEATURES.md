@@ -19,6 +19,10 @@ What Foldav can do, in short. The details of each release are in the
 - Open a file in its default app from a copy kept on the device and checked against the server
   each time; download files and folders to a folder you pick; long actions listed at the foot
   of the sidebar with their progress and time left, transfers cancellable.
+- Upload files and folders, big files in chunks that survive a dropped connection; choose
+  Replace, Keep Both or Skip when a name is taken.
+- Drag and drop: inside the window (move, Ctrl copies), in from Files or the desktop (upload)
+  and out to them (download).
 - Settings synced between your devices, through the account you choose.
 
 ## Planned

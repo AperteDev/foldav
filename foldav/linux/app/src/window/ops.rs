@@ -7,11 +7,11 @@
 use super::nav::reload;
 use super::{Ui, action, nav, note, popup_menu, toast, transfers, ui};
 use crate::core;
-use crate::i18n::gettext;
+use crate::i18n::{gettext, ngettext};
 use adw::prelude::*;
-use foldav_core::{Client, Error, File};
+use foldav_core::{Client, Error, File, Taken};
 use gtk::{gio, glib};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 /// Files cut or copied, to paste into a folder of the same account.
@@ -45,6 +45,8 @@ pub fn connect(ui: &Rc<Ui>) {
         }
     });
     action(ui, "download", download);
+    action(ui, "upload-files", |ui| pick(ui, false));
+    action(ui, "upload-folder", |ui| pick(ui, true));
     action(ui, "new-folder", new_folder);
     action(ui, "rename", rename);
     action(ui, "cut", |ui| copy(ui, true));
@@ -57,6 +59,7 @@ pub fn connect(ui: &Rc<Ui>) {
 
 pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.open", &["<Control>o"]);
+    app.set_accels_for_action("win.upload-files", &["<Control>u"]);
     app.set_accels_for_action("win.new-folder", &["<Control><Shift>n"]);
     app.set_accels_for_action("win.rename", &["F2"]);
     app.set_accels_for_action("win.cut", &["<Control>x"]);
@@ -78,6 +81,8 @@ pub fn update_actions(ui: &Ui) {
     for (name, on) in [
         ("open", n == 1),
         ("download", n > 0),
+        ("upload-files", at.is_some()),
+        ("upload-folder", at.is_some()),
         ("new-folder", at.is_some()),
         ("rename", n == 1),
         ("cut", n > 0),
@@ -319,22 +324,184 @@ fn paste(ui: &Rc<Ui>) {
     let Some(Clipboard { paths, cut, .. }) = clip else {
         return;
     };
-    if cut {
-        run(ui, gettext("Moving"), gettext("Moved"), move |c| {
-            c.move_to(id, &paths, &dest)
-        });
-    } else {
+    if !cut {
         // Pasted again later: the copy stays on the clipboard.
         *ui.clipboard.borrow_mut() = Some(Clipboard {
             account: id,
             paths: paths.clone(),
             cut: false,
         });
+    }
+    put(ui, id, paths, dest, cut);
+    update_actions(ui);
+}
+
+/// Move (`cut`) or copy the files of `paths` into folder `dest`, all of account `id`.
+pub fn put(ui: &Rc<Ui>, id: i64, paths: Vec<String>, dest: String, cut: bool) {
+    if cut {
+        run(ui, gettext("Moving"), gettext("Moved"), move |c| {
+            c.move_to(id, &paths, &dest)
+        });
+    } else {
         run(ui, gettext("Copying"), String::new(), move |c| {
             c.copy_to(id, &paths, &dest).map(|()| None)
         });
     }
-    update_actions(ui);
+}
+
+// --- uploads -----------------------------------------------------------------
+
+/// Pick files (or a folder) on this device and upload them into the folder shown.
+fn pick(ui: &Rc<Ui>, folder: bool) {
+    let Some((id, dest)) = ui.at.borrow().clone() else {
+        return;
+    };
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        // For tests of the sandbox copy, which cannot drive the dialog: the files it names
+        // (separated by `:`) are picked.
+        if crate::sandbox()
+            && let Ok(picked) = std::env::var("FOLDAV_SANDBOX_PICK")
+        {
+            return upload(
+                &ui,
+                id,
+                dest,
+                picked.split(':').map(PathBuf::from).collect(),
+            );
+        }
+        let dialog = gtk::FileDialog::builder()
+            .title(if folder {
+                gettext("Upload Folder")
+            } else {
+                gettext("Upload Files")
+            })
+            .accept_label(gettext("Upload"))
+            .build();
+        let items: Vec<gio::File> = if folder {
+            dialog
+                .select_folder_future(Some(&ui.window))
+                .await
+                .into_iter()
+                .collect()
+        } else {
+            match dialog.open_multiple_future(Some(&ui.window)).await {
+                Ok(list) => list.iter::<gio::File>().flatten().collect(),
+                Err(_) => return,
+            }
+        };
+        upload(
+            &ui,
+            id,
+            dest,
+            items.iter().filter_map(|f| f.path()).collect(),
+        );
+    });
+}
+
+/// What to do with the names taken in the folder: None when the upload is called off.
+async fn ask_taken(ui: &Ui, taken: &[String]) -> Option<Taken> {
+    let heading = match taken {
+        [name] => gettext("“{name}” exists already").replace("{name}", name),
+        _ => ngettext(
+            "{n} item exists already",
+            "{n} items exist already",
+            taken.len() as u64,
+        )
+        .replace("{n}", &taken.len().to_string()),
+    };
+    let alert = adw::AlertDialog::new(
+        Some(&heading),
+        Some(&gettext("Replace what is there, keep both, or skip it?")),
+    );
+    alert.add_responses(&[
+        ("cancel", &gettext("Cancel")),
+        ("skip", &gettext("Skip")),
+        ("keep", &gettext("Keep Both")),
+        ("replace", &gettext("Replace")),
+    ]);
+    alert.set_response_appearance("replace", adw::ResponseAppearance::Destructive);
+    alert.set_default_response(Some("keep"));
+    alert.set_close_response("cancel");
+    match alert.choose_future(Some(&ui.window)).await.as_str() {
+        "skip" => Some(Taken::Skip),
+        "keep" => Some(Taken::KeepBoth),
+        "replace" => Some(Taken::Replace),
+        _ => None,
+    }
+}
+
+/// Upload the files and folders `items` of this device into folder `dest` of account `id`,
+/// asking first what to do with the names that are taken.
+pub fn upload(ui: &Rc<Ui>, id: i64, dest: String, items: Vec<PathBuf>) {
+    if items.is_empty() {
+        return toast(&gettext("Only files on this device can be uploaded"));
+    }
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        let names: Vec<String> = items
+            .iter()
+            .filter_map(|p| p.file_name())
+            .map(|n| n.to_string_lossy().into_owned())
+            .collect();
+        let (d, n) = (dest.clone(), names.clone());
+        let taken = match gio::spawn_blocking(move || core().taken(id, &d, &n)).await {
+            Ok(Ok(t)) => t,
+            Ok(Err(e)) => return ui.toasts.add_toast(note(&error_text(&e))),
+            Err(_) => return ui.toasts.add_toast(note(&gettext("The operation failed"))),
+        };
+        let policy = if taken.is_empty() {
+            Taken::KeepBoth
+        } else {
+            let Some(policy) = ask_taken(&ui, &taken).await else {
+                return;
+            };
+            policy
+        };
+        let title = match names.as_slice() {
+            [name] => gettext("Uploading “{name}”").replace("{name}", name),
+            _ => gettext("Uploading files"),
+        };
+        let r = transfers::run(&ui, &title, true, move |c, p| {
+            c.upload(id, &dest, &items, policy, p)
+        })
+        .await;
+        // After a failure too: what went through is there.
+        reload(&ui);
+        match r {
+            Some(Ok(())) => toast(&gettext("Uploaded")),
+            Some(Err(Error::Cancelled)) => {}
+            Some(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
+            None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
+        }
+    });
+}
+
+/// Files dropped (or pasted) from another place of this window into folder `dest` of account
+/// `id`: moved, or copied. False when they cannot go there.
+pub fn drop_files(
+    ui: &Rc<Ui>,
+    id: i64,
+    from: i64,
+    files: &[File],
+    dest: String,
+    cut: bool,
+) -> bool {
+    if from != id {
+        toast(&gettext("Files cannot be moved between accounts yet"));
+        return false;
+    }
+    // What is there already, or would go into itself, is left as it is.
+    let paths: Vec<String> = files
+        .iter()
+        .map(|f| f.path.clone())
+        .filter(|p| nav::parent(p) != dest || !cut)
+        .filter(|p| *p != dest)
+        .collect();
+    if !paths.is_empty() {
+        put(ui, id, paths, dest, cut);
+    }
+    true
 }
 
 fn delete(ui: &Rc<Ui>) {

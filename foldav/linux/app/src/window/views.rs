@@ -308,6 +308,13 @@ pub fn connect(ui: &Rc<Ui>) {
         }
     });
 
+    // Files dropped on the room between the files go into the folder shown.
+    for scroll in [&v.icons_scroll, &v.list_scroll, &v.columns.scroll] {
+        scroll.add_controller(super::dnd::target(&weak, false, |ui| {
+            ui.at.borrow().clone()
+        }));
+    }
+
     // A right click on the room between the files.
     for scroll in [&v.icons_scroll, &v.list_scroll] {
         let click = gtk::GestureClick::builder().button(3).build();
@@ -332,7 +339,7 @@ pub fn date(t: i64) -> String {
 }
 
 /// The selection model of the list, grid or column view `w` is in.
-fn model_of(w: &gtk::Widget) -> Option<gtk::SelectionModel> {
+pub fn model_of(w: &gtk::Widget) -> Option<gtk::SelectionModel> {
     w.ancestor(gtk::GridView::static_type())
         .and_downcast::<gtk::GridView>()
         .and_then(|v| v.model())
@@ -350,6 +357,7 @@ fn model_of(w: &gtk::Widget) -> Option<gtk::SelectionModel> {
 
 /// A right click on `item`'s widget `w` selects it, unless it is selected, and opens the menu.
 pub fn attach_menu(ui: &Weak<Ui>, item: &gtk::ListItem, w: &gtk::Widget) {
+    super::dnd::attach(ui, item, w);
     let click = gtk::GestureClick::builder().button(3).build();
     let (ui, item) = (ui.clone(), item.downgrade());
     click.connect_pressed(move |g, _, x, y| {

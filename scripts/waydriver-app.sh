@@ -9,5 +9,8 @@
 # Build it first (`cargo build -p foldav-linux`).
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
-export FOLDAV_SANDBOX=1 XDG_DATA_HOME="$root/target/sandbox"
+# No portals: file dialogs and the launcher stay in the test's own window, not on the desktop.
+export FOLDAV_SANDBOX=1 XDG_DATA_HOME="$root/target/sandbox" GTK_USE_PORTAL=0
+# Files the Upload actions pick without a dialog (`:`-separated paths in /tmp/foldav-pick).
+[ -f /tmp/foldav-pick ] && export FOLDAV_SANDBOX_PICK=$(cat /tmp/foldav-pick)
 exec -a foldav-waydriver "$root/target/debug/foldav-linux" "$@"

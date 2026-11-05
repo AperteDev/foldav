@@ -131,6 +131,10 @@ fn segment(ui: &Rc<Ui>, name: &str, id: i64, path: &str, current: bool) {
         button.add_css_class("current");
     }
     let (weak, path) = (Rc::downgrade(ui), path.to_string());
+    let p = path.clone();
+    button.add_controller(super::dnd::target(&weak, true, move |_| {
+        Some((id, p.clone()))
+    }));
     button.connect_clicked(move |_| {
         if let Some(ui) = weak.upgrade() {
             nav::open(&ui, id, path.clone());

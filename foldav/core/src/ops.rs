@@ -16,7 +16,7 @@ pub fn valid_name(name: &str) -> bool {
         && !name.chars().any(char::is_control)
 }
 
-fn join(dir: &str, name: &str) -> String {
+pub(crate) fn join(dir: &str, name: &str) -> String {
     if dir.is_empty() {
         name.into()
     } else {
@@ -28,7 +28,7 @@ fn parent(path: &str) -> &str {
     path.rsplit_once('/').map_or("", |(p, _)| p)
 }
 
-fn name_of(path: &str) -> &str {
+pub(crate) fn name_of(path: &str) -> &str {
     path.rsplit('/').next().unwrap_or(path)
 }
 
@@ -65,6 +65,18 @@ impl Client {
     /// The href of `path` of account `id`.
     fn href(&self, id: i64, path: &str) -> Result<String> {
         Ok(format!("{}{path}", self.files_home(id)?))
+    }
+
+    /// The names in folder `dest`, hidden files too (`list` leaves them out).
+    pub(crate) fn names_in(&self, id: i64, dest: &str) -> Result<HashSet<String>> {
+        let dir = format!("{}/", self.href(id, dest)?.trim_end_matches('/'));
+        Ok(self
+            .dav(id)?
+            .list(&dir, "1")?
+            .into_iter()
+            .skip(1)
+            .map(|e| name_of(percent_decode(&e.href).trim_end_matches('/')).to_string())
+            .collect())
     }
 
     /// Run `f`, which adds what it did to `done`; the journal keeps that, also when it fails.
@@ -137,14 +149,7 @@ impl Client {
     /// itself.
     pub fn copy_to(&self, id: i64, paths: &[String], dest: &str) -> Result<()> {
         let dav = self.dav(id)?;
-        let dir = format!("{}/", self.href(id, dest)?.trim_end_matches('/'));
-        // Hidden files count, `list` leaves them out.
-        let mut names: HashSet<String> = dav
-            .list(&dir, "1")?
-            .into_iter()
-            .skip(1)
-            .map(|e| name_of(percent_decode(&e.href).trim_end_matches('/')).to_string())
-            .collect();
+        let mut names = self.names_in(id, dest)?;
         for path in paths {
             if inside(dest, path) {
                 return Err(Error::Invalid(name_of(path).into()));

@@ -192,6 +192,10 @@ pub fn refresh_favorites(ui: &Rc<Ui>) {
             }
         });
         r.add_controller(click);
+        let (id, path) = (at.as_ref().map(|(id, _)| *id), f.path.clone());
+        r.add_controller(super::dnd::target(&Rc::downgrade(ui), true, move |_| {
+            Some((id?, path.clone()))
+        }));
         s.favorites.append(&r);
     }
     let here = at.and_then(|(_, path)| list.iter().position(|f| f.path == path));
@@ -297,5 +301,10 @@ fn tree_row(ui: &Rc<Ui>, id: i64, path: &str, name: &str, depth: i32) -> gtk::Li
             .ellipsize(gtk::pango::EllipsizeMode::End)
             .build(),
     );
-    gtk::ListBoxRow::builder().child(&b).build()
+    let row = gtk::ListBoxRow::builder().child(&b).build();
+    let p = path.to_string();
+    row.add_controller(super::dnd::target(&Rc::downgrade(ui), true, move |_| {
+        Some((id, p.clone()))
+    }));
+    row
 }

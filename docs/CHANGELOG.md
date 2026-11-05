@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Long actions show as in Files: once an action has taken a second, a row with a ring and its
   title is added at the foot of the sidebar; a click opens its progress, the time left and the
   speed, and a way to cancel a transfer
+- Upload files and folders (Upload Files… with Ctrl+U, Upload Folder… in the right-click menu
+  and the path bar's): a file in one request, a big one (32 MB or more) in chunks of 16 MB
+  that are sent again one at a time when the connection drops, with the file's date kept;
+  when a name is taken you choose Replace (the server keeps the old file as a version), Keep
+  Both or Skip
+- Drag and drop as in Files: files to a folder in the views, the sidebar or the path bar move
+  there (Ctrl copies); files dragged from Files or the desktop into the window are uploaded
+  to the folder they are dropped on or shown; files dragged out of the window to Files or the
+  desktop are downloaded first, listed in the sidebar like any transfer
 - New folder (Ctrl+Shift+N), rename (F2), cut, copy and paste (a copy of a name taken is
   named "a (copy)"), and delete to the trash bin, each one request to the server whatever the
   size of the folder, from the keys, the header or a right click; several files selected at

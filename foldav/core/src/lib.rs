@@ -12,6 +12,7 @@ mod settings;
 pub mod store;
 mod transfer;
 mod undo;
+mod upload;
 
 use dav::Dav;
 use rusqlite::Connection;
@@ -25,6 +26,7 @@ pub use login::{Credentials, LoginFlow, login_flow_poll, login_flow_start, passw
 pub use ops::valid_name;
 pub use settings::DEVICE_ONLY;
 pub use transfer::Progress;
+pub use upload::Taken;
 
 pub trait ChangeListener: Send + Sync {
     /// Settings changed by another device arrived.

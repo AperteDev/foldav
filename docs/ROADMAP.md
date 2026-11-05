@@ -91,19 +91,21 @@ Once a third app copies the same code, a shared crate in its own repository beco
      used and available (`d:quota-used-bytes` and `d:quota-available-bytes` of the Files
      root, as "10,7 TB used"), and *Files settings* (Preferences: sorting, hidden files, the
      web app's own settings in the browser).
-3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete
-   and Ctrl+Z are done): dragging files inside the window to a folder or the sidebar; a
+3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete,
+   Ctrl+Z and dragging files inside the window are done): a
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
    server's capabilities (`Features`, as in Notav) and ask first where it has none; a
    choice between replacing and keeping both when
-   a name is taken (now a move refuses and a copy takes a free name); copies between accounts.
-4. **Transfers**, what is left of them (downloads of files and folders to a folder picked,
-   with the sidebar's rows for running actions and their cancel, are done): uploads (chunked for
-   big files, Nextcloud's bulk upload for many small ones), and files dragged to and from
-   Nautilus or the desktop; a folder downloaded as one ZIP where the server offers it (now
-   file by file). Transfers queue, resume after a dropped connection, and finish before the
-   app quits (now closing the window stops them). A stalled connection is not given up on
-   until the system does (`ureq` has no idle timeout).
+   a name is taken in a move or copy (now a move refuses and a copy takes a free name); copies
+   between accounts (a drag from one account to another is refused now).
+4. **Transfers**, what is left of them (downloads, uploads in one request or in chunks, drag
+   and drop inside the window and to and from other apps, and the sidebar's rows for running
+   actions and their cancel, are done): Nextcloud's bulk upload for many small files; a folder
+   downloaded as one ZIP where the server offers it (now file by file). Transfers queue,
+   resume after a dropped connection (a chunk is sent again, a download starts over), and
+   finish before the app quits (now closing the window stops them). A stalled connection is
+   not given up on until the system does (`ureq` has no idle timeout). Dragging to and from
+   other apps is not tested against Files itself, only between the window's own views.
 5. **Opening files**, what is left of it (a file opens in its default app from a copy kept in
    the cache folder, checked against the server's ETag, deleted after a month unused): a
    change saved to the copy is uploaded back (with the ETag checked first: a conflict keeps
