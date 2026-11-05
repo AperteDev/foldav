@@ -41,12 +41,13 @@ const CSS: &str = "
 .miller-handle { border-right: 1px solid alpha(currentColor, 0.12); }
 .miller-preview { padding: 12px; }
 listview.miller-list { padding: 6px; }
-listview.miller-list > row { padding: 0; border-radius: 9px; background: none; }
+listview.miller-list > row { padding: 0; border-radius: 9px; }
 listview.miller-list > row > .miller-row { padding: 6px 8px; border-radius: 9px; }
 listview.miller-list > row:hover > .miller-row { background-color: alpha(currentColor, 0.05); }
-listview.miller-list > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
-listview.miller-list.miller-active > row:selected { color: var(--accent-fg-color); }
-listview.miller-list.miller-active > row:selected > .miller-row { background-color: var(--accent-bg-color); }
+/* The column the user works in keeps the selection of the other views (the theme's own); the
+   others show the way to it in grey. */
+listview.miller-list:not(.miller-active) > row:selected { background: none; }
+listview.miller-list:not(.miller-active) > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
 .miller-list image { -gtk-icon-style: regular; }
 /* The files on the window's own background, as in Files, not the view's darker one; the icons'
    tiles rounded and close, as there. */
