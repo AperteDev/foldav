@@ -10,15 +10,34 @@ use adw::prelude::*;
 use foldav_core::File;
 use gtk::{gdk, gio, glib};
 use std::path::PathBuf;
-use std::rc::Weak;
+use std::rc::{Rc, Weak};
 
 /// Files dragged inside the app: what the drop targets take without going through the other
 /// side's format.
 #[derive(Clone, glib::Boxed)]
 #[boxed_type(name = "FoldavDraggedFiles")]
-struct Dragged {
+pub struct Dragged {
     account: i64,
     files: Vec<File>,
+}
+
+/// What was dropped (files of the window, or of another app) goes into folder `dest` of account
+/// `id`: moved or, with `cut` false, copied; from another app, uploaded. A place takes none.
+pub fn drop_value(ui: &Rc<Ui>, value: &glib::Value, id: i64, dest: String, cut: bool) -> bool {
+    if foldav_core::places::is_place(&dest) {
+        return false;
+    }
+    if let Ok(dragged) = value.get::<Dragged>() {
+        return ops::drop_files(ui, id, dragged.account, &dragged.files, dest, cut);
+    }
+    match value.get::<gdk::FileList>() {
+        Ok(list) => {
+            let items: Vec<PathBuf> = list.files().iter().filter_map(|f| f.path()).collect();
+            ops::upload(ui, id, dest, items);
+            true
+        }
+        Err(_) => false,
+    }
 }
 
 mod provider {
@@ -194,25 +213,14 @@ pub fn target(
         let Some(ui) = weak.upgrade() else {
             return false;
         };
-        // A place has no folder to put files in.
-        let Some((id, dest)) = d(&ui).filter(|(_, d)| !foldav_core::places::is_place(d)) else {
+        let Some((id, dest)) = d(&ui) else {
             return false;
         };
-        if let Ok(dragged) = value.get::<Dragged>() {
-            // Ctrl held: the drop offers copying only.
-            let cut = !t
-                .current_drop()
-                .is_some_and(|d| !d.actions().contains(gdk::DragAction::MOVE));
-            return ops::drop_files(&ui, id, dragged.account, &dragged.files, dest, cut);
-        }
-        match value.get::<gdk::FileList>() {
-            Ok(list) => {
-                let items: Vec<PathBuf> = list.files().iter().filter_map(|f| f.path()).collect();
-                ops::upload(&ui, id, dest, items);
-                true
-            }
-            Err(_) => false,
-        }
+        // Ctrl held: the drop offers copying only.
+        let cut = !t
+            .current_drop()
+            .is_some_and(|d| !d.actions().contains(gdk::DragAction::MOVE));
+        drop_value(&ui, value, id, dest, cut)
     });
     if highlight {
         // Only a folder: the room of the folder shown needs no mark.

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 10:49+0100\n"
+"POT-Creation-Date: 2026-11-05 10:59+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -177,9 +177,9 @@ msgid ""
 "to only hide them."
 msgstr ""
 
-#: foldav/linux/app/src/settings.rs:570 foldav/linux/app/src/window/ops.rs:163
-#: foldav/linux/app/src/window/ops.rs:577
-#: foldav/linux/app/src/window/ops.rs:691
+#: foldav/linux/app/src/settings.rs:570 foldav/linux/app/src/window/ops.rs:173
+#: foldav/linux/app/src/window/ops.rs:587
+#: foldav/linux/app/src/window/ops.rs:701
 #: foldav/linux/app/src/window/transfers.rs:145
 #: foldav/linux/app/ui/account.blp:34 foldav/linux/app/ui/add-account.blp:167
 #: foldav/linux/app/ui/password-login.blp:19
@@ -195,74 +195,74 @@ msgstr ""
 msgid "{name} removed"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:83
+#: foldav/linux/app/src/window.rs:84
 msgid "Support on Ko-fi"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:87
+#: foldav/linux/app/src/window.rs:88
 msgid "Sponsor on GitHub"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:91
+#: foldav/linux/app/src/window.rs:92
 msgid "Donate on Liberapay"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:257
+#: foldav/linux/app/src/window.rs:260
 msgid ""
 "Foldav is developed in my free time. If it helps you with your files, you "
 "can support its development."
 msgstr ""
 
 #. Translators: the About row that opens the page with the donation links.
-#: foldav/linux/app/src/window.rs:287
+#: foldav/linux/app/src/window.rs:290
 msgid "_Support"
 msgstr ""
 
 #. Translators: title of About's page with the donation links.
-#: foldav/linux/app/src/window.rs:289
+#: foldav/linux/app/src/window.rs:292
 msgid "Support"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:489
+#: foldav/linux/app/src/window.rs:494
 msgid "Enter the Nextcloud server first"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:524
+#: foldav/linux/app/src/window.rs:529
 msgid "Cannot start login"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:525
+#: foldav/linux/app/src/window.rs:530
 #, rust-format
 msgid "Cannot start login: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:533
+#: foldav/linux/app/src/window.rs:538
 msgid "Login link copied to clipboard"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:553
+#: foldav/linux/app/src/window.rs:558
 #, rust-format
 msgid "Login failed: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:555
+#: foldav/linux/app/src/window.rs:560
 msgid "Login failed"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:558
+#: foldav/linux/app/src/window.rs:563
 msgid "Login timed out"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:607
+#: foldav/linux/app/src/window.rs:612
 msgid "Wrong login name or password"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:608
+#: foldav/linux/app/src/window.rs:613
 #, rust-format
 msgid "Sign-in failed: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:609
+#: foldav/linux/app/src/window.rs:614
 msgid "Sign-in failed"
 msgstr ""
 
@@ -272,28 +272,30 @@ msgstr ""
 msgid "Modified"
 msgstr ""
 
-#: foldav/linux/app/src/window/dnd.rs:93
+#: foldav/linux/app/src/window/dnd.rs:112
 msgid "The window is closed"
 msgstr ""
 
-#: foldav/linux/app/src/window/dnd.rs:96 foldav/linux/app/src/window/dnd.rs:110
-#: foldav/linux/app/src/window/ops.rs:196
-#: foldav/linux/app/src/window/ops.rs:298
-#: foldav/linux/app/src/window/ops.rs:354
-#: foldav/linux/app/src/window/ops.rs:376
-#: foldav/linux/app/src/window/ops.rs:610
-#: foldav/linux/app/src/window/ops.rs:634
-#: foldav/linux/app/src/window/ops.rs:662
+#: foldav/linux/app/src/window/dnd.rs:115
+#: foldav/linux/app/src/window/dnd.rs:129
+#: foldav/linux/app/src/window/ops.rs:206
+#: foldav/linux/app/src/window/ops.rs:308
+#: foldav/linux/app/src/window/ops.rs:364
+#: foldav/linux/app/src/window/ops.rs:386
+#: foldav/linux/app/src/window/ops.rs:620
+#: foldav/linux/app/src/window/ops.rs:644
+#: foldav/linux/app/src/window/ops.rs:672
 msgid "The operation failed"
 msgstr ""
 
-#: foldav/linux/app/src/window/dnd.rs:99 foldav/linux/app/src/window/ops.rs:339
+#: foldav/linux/app/src/window/dnd.rs:118
+#: foldav/linux/app/src/window/ops.rs:349
 #, rust-format
 msgid "Downloading “{name}”"
 msgstr ""
 
-#: foldav/linux/app/src/window/dnd.rs:100
-#: foldav/linux/app/src/window/ops.rs:340
+#: foldav/linux/app/src/window/dnd.rs:119
+#: foldav/linux/app/src/window/ops.rs:350
 msgid "Downloading the selected files"
 msgstr ""
 
@@ -301,9 +303,12 @@ msgstr ""
 msgid "Cannot change the favorites"
 msgstr ""
 
-#: foldav/linux/app/src/window/header.rs:188
-#: foldav/linux/app/src/window/header.rs:197
-#: foldav/linux/app/src/window/sidebar.rs:385
+#: foldav/linux/app/src/window/header.rs:198
+#: foldav/linux/app/src/window/header.rs:207
+#: foldav/linux/app/src/window/sidebar.rs:391
+#: foldav/linux/app/src/window/tabs.rs:51
+#: foldav/linux/app/src/window/tabs.rs:58
+#: foldav/linux/app/src/window/tabs.rs:209
 msgid "Home"
 msgstr ""
 
@@ -315,7 +320,7 @@ msgstr ""
 msgid "Loading failed"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:33 foldav/linux/app/src/window/ops.rs:564
+#: foldav/linux/app/src/window/ops.rs:33 foldav/linux/app/src/window/ops.rs:574
 #, rust-format
 msgid "“{name}” exists already"
 msgstr ""
@@ -333,206 +338,206 @@ msgstr ""
 msgid "It is locked on the server"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:237
+#: foldav/linux/app/src/window/ops.rs:247
 msgid "Saving changes"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:243
+#: foldav/linux/app/src/window/ops.rs:253
 #, rust-format
 msgid "Saved “{name}” to Nextcloud"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:246
+#: foldav/linux/app/src/window/ops.rs:256
 #, rust-format
 msgid "“{name}” changed on the server: your version is saved as “{kept}”"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:254
+#: foldav/linux/app/src/window/ops.rs:264
 #, rust-format
 msgid "Cannot save “{name}”: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:292
+#: foldav/linux/app/src/window/ops.rs:302
 #: foldav/linux/app/src/window/versions.rs:121
 #, rust-format
 msgid "Opening “{name}”"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:310
+#: foldav/linux/app/src/window/ops.rs:320
 #, rust-format
 msgid "Cannot open the file: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:325
+#: foldav/linux/app/src/window/ops.rs:335
 msgid "Download to"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:326
+#: foldav/linux/app/src/window/ops.rs:336
 msgid "Download"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:336
+#: foldav/linux/app/src/window/ops.rs:346
 msgid "Cannot save to this folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:351
+#: foldav/linux/app/src/window/ops.rs:361
 msgid "Downloaded"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:361 foldav/linux/app/ui/shortcuts.blp:105
+#: foldav/linux/app/src/window/ops.rs:371 foldav/linux/app/ui/shortcuts.blp:125
 msgid "Undo"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:374
+#: foldav/linux/app/src/window/ops.rs:384
 msgid "Nothing to undo"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:387
+#: foldav/linux/app/src/window/ops.rs:397
 msgid "Untitled Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:390 foldav/linux/app/ui/shortcuts.blp:75
-#: foldav/linux/app/ui/window.blp:342 foldav/linux/app/ui/window.blp:473
+#: foldav/linux/app/src/window/ops.rs:400 foldav/linux/app/ui/shortcuts.blp:95
+#: foldav/linux/app/ui/window.blp:359 foldav/linux/app/ui/window.blp:490
 msgid "New Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:391
+#: foldav/linux/app/src/window/ops.rs:401
 msgid "Create"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:399
+#: foldav/linux/app/src/window/ops.rs:409
 msgid "Creating folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:419
-#: foldav/linux/app/src/window/ops.rs:420 foldav/linux/app/ui/shortcuts.blp:80
+#: foldav/linux/app/src/window/ops.rs:429
+#: foldav/linux/app/src/window/ops.rs:430 foldav/linux/app/ui/shortcuts.blp:100
 msgid "Rename"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:429
+#: foldav/linux/app/src/window/ops.rs:439
 msgid "Renamed"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:429
+#: foldav/linux/app/src/window/ops.rs:439
 msgid "Renaming"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:501
+#: foldav/linux/app/src/window/ops.rs:511
 msgid "Moved"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:501
+#: foldav/linux/app/src/window/ops.rs:511
 msgid "Moving"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:503
+#: foldav/linux/app/src/window/ops.rs:513
 msgid "Copying"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:534
+#: foldav/linux/app/src/window/ops.rs:544
 msgid "Upload Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:536 foldav/linux/app/ui/shortcuts.blp:70
+#: foldav/linux/app/src/window/ops.rs:546 foldav/linux/app/ui/shortcuts.blp:90
 msgid "Upload Files"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:538
+#: foldav/linux/app/src/window/ops.rs:548
 msgid "Upload"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:566
+#: foldav/linux/app/src/window/ops.rs:576
 #, rust-format
 msgid "{n} item exists already"
 msgid_plural "{n} items exist already"
 msgstr[0] ""
 msgstr[1] ""
 
-#: foldav/linux/app/src/window/ops.rs:574
+#: foldav/linux/app/src/window/ops.rs:584
 msgid "Replace what is there, keep both, or skip it?"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:578
+#: foldav/linux/app/src/window/ops.rs:588
 msgid "Skip"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:579
+#: foldav/linux/app/src/window/ops.rs:589
 msgid "Keep Both"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:580
+#: foldav/linux/app/src/window/ops.rs:590
 msgid "Replace"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:597
+#: foldav/linux/app/src/window/ops.rs:607
 msgid "Only files on this device can be uploaded"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:621
+#: foldav/linux/app/src/window/ops.rs:631
 #, rust-format
 msgid "Uploading “{name}”"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:622
+#: foldav/linux/app/src/window/ops.rs:632
 msgid "Uploading files"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:631
+#: foldav/linux/app/src/window/ops.rs:641
 msgid "Uploaded"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:653
+#: foldav/linux/app/src/window/ops.rs:663
 msgid "Copying to another account"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:659
+#: foldav/linux/app/src/window/ops.rs:669
 msgid "Copied to the other account"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:706
+#: foldav/linux/app/src/window/ops.rs:716
 msgid "Restoring"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:719
+#: foldav/linux/app/src/window/ops.rs:729
 #, rust-format
 msgid "Delete {n} item permanently?"
 msgid_plural "Delete {n} items permanently?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: foldav/linux/app/src/window/ops.rs:727
+#: foldav/linux/app/src/window/ops.rs:737
 msgid "It cannot be restored."
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:728
+#: foldav/linux/app/src/window/ops.rs:738
 msgid "Delete"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:732
+#: foldav/linux/app/src/window/ops.rs:742
 msgid "Deleting"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:745
+#: foldav/linux/app/src/window/ops.rs:755
 msgid "All the items in the trash will be deleted permanently."
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:748
+#: foldav/linux/app/src/window/ops.rs:758
 msgid "Empty the trash?"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:750
+#: foldav/linux/app/src/window/ops.rs:760
 msgid "Empty Trash"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:756
+#: foldav/linux/app/src/window/ops.rs:766
 msgid "Emptying the trash"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:772
+#: foldav/linux/app/src/window/ops.rs:782
 msgid "Moving to Trash"
 msgstr ""
 
-#: foldav/linux/app/src/window/ops.rs:773
+#: foldav/linux/app/src/window/ops.rs:783
 msgid "Moved to Trash"
 msgstr ""
 
@@ -541,30 +546,30 @@ msgid "None"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:116
-#: foldav/linux/app/src/window/views.rs:145 foldav/linux/app/ui/window.blp:541
+#: foldav/linux/app/src/window/views.rs:145 foldav/linux/app/ui/window.blp:558
 msgid "Size"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:117
-#: foldav/linux/app/ui/window.blp:547
+#: foldav/linux/app/ui/window.blp:564
 msgid "Type"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:126
+#: foldav/linux/app/src/window/options.rs:130
 msgid "Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:381
+#: foldav/linux/app/src/window/options.rs:383
 msgid "Icon Size"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:387
-#: foldav/linux/app/ui/shortcuts.blp:45
+#: foldav/linux/app/src/window/options.rs:389
+#: foldav/linux/app/ui/shortcuts.blp:65
 msgid "Zoom Out"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:388
-#: foldav/linux/app/ui/shortcuts.blp:40
+#: foldav/linux/app/src/window/options.rs:390
+#: foldav/linux/app/ui/shortcuts.blp:60
 msgid "Zoom In"
 msgstr ""
 
@@ -691,18 +696,18 @@ msgstr ""
 msgid "Search: {query}"
 msgstr ""
 
-#: foldav/linux/app/src/window/sidebar.rs:269
+#: foldav/linux/app/src/window/sidebar.rs:273
 #, rust-format
 msgid "{used} of {total} used"
 msgstr ""
 
-#: foldav/linux/app/src/window/sidebar.rs:272
+#: foldav/linux/app/src/window/sidebar.rs:276
 #, rust-format
 msgid "{used} used"
 msgstr ""
 
-#: foldav/linux/app/src/window/sidebar.rs:351
-#: foldav/linux/app/ui/window.blp:389 foldav/linux/app/ui/window.blp:465
+#: foldav/linux/app/src/window/sidebar.rs:355
+#: foldav/linux/app/ui/window.blp:406 foldav/linux/app/ui/window.blp:482
 msgid "Remove from Favorites"
 msgstr ""
 
@@ -769,12 +774,12 @@ msgid "Versions of “{name}”"
 msgstr ""
 
 #: foldav/linux/app/src/window/versions.rs:67
-#: foldav/linux/app/ui/shortcuts.blp:65 foldav/linux/app/ui/window.blp:316
+#: foldav/linux/app/ui/shortcuts.blp:85 foldav/linux/app/ui/window.blp:327
 msgid "Open"
 msgstr ""
 
 #: foldav/linux/app/src/window/versions.rs:71
-#: foldav/linux/app/ui/window.blp:436
+#: foldav/linux/app/ui/window.blp:453
 msgid "Restore"
 msgstr ""
 
@@ -979,52 +984,68 @@ msgstr ""
 msgid "Columns"
 msgstr ""
 
+#: foldav/linux/app/ui/shortcuts.blp:40
+msgid "New Tab"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:45
+msgid "Close Tab"
+msgstr ""
+
 #: foldav/linux/app/ui/shortcuts.blp:50
-msgid "Reset Zoom"
+msgid "Next Tab"
 msgstr ""
 
 #: foldav/linux/app/ui/shortcuts.blp:55
+msgid "Previous Tab"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:70
+msgid "Reset Zoom"
+msgstr ""
+
+#: foldav/linux/app/ui/shortcuts.blp:75
 msgid "Add Folder to Favorites"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:60 foldav/linux/app/ui/window.blp:554
+#: foldav/linux/app/ui/shortcuts.blp:80 foldav/linux/app/ui/window.blp:571
 msgid "Show Hidden Files"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:85 foldav/linux/app/ui/window.blp:362
+#: foldav/linux/app/ui/shortcuts.blp:105 foldav/linux/app/ui/window.blp:379
 msgid "Cut"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:90 foldav/linux/app/ui/window.blp:368
+#: foldav/linux/app/ui/shortcuts.blp:110 foldav/linux/app/ui/window.blp:385
 msgid "Copy"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:95 foldav/linux/app/ui/window.blp:374
-#: foldav/linux/app/ui/window.blp:491
+#: foldav/linux/app/ui/shortcuts.blp:115 foldav/linux/app/ui/window.blp:391
+#: foldav/linux/app/ui/window.blp:508
 msgid "Paste"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:100 foldav/linux/app/ui/window.blp:430
+#: foldav/linux/app/ui/shortcuts.blp:120 foldav/linux/app/ui/window.blp:447
 msgid "Move to Trash"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:110 foldav/linux/app/ui/window.blp:555
+#: foldav/linux/app/ui/shortcuts.blp:130 foldav/linux/app/ui/window.blp:572
 msgid "Reload"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:115
+#: foldav/linux/app/ui/shortcuts.blp:135
 msgid "Toggle Sidebar"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:120 foldav/linux/app/ui/window.blp:564
+#: foldav/linux/app/ui/shortcuts.blp:140 foldav/linux/app/ui/window.blp:581
 msgid "Preferences"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:125 foldav/linux/app/ui/window.blp:565
+#: foldav/linux/app/ui/shortcuts.blp:145 foldav/linux/app/ui/window.blp:582
 msgid "Keyboard Shortcuts"
 msgstr ""
 
-#: foldav/linux/app/ui/shortcuts.blp:130 foldav/linux/app/ui/window.blp:567
+#: foldav/linux/app/ui/shortcuts.blp:150 foldav/linux/app/ui/window.blp:584
 msgid "Quit"
 msgstr ""
 
@@ -1076,107 +1097,111 @@ msgstr ""
 msgid "View Options"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:231
+#: foldav/linux/app/ui/window.blp:238
 msgid "Search here"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:238
+#: foldav/linux/app/ui/window.blp:245
 msgid "Foldav was updated: restart it to use the new version"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:239
+#: foldav/linux/app/ui/window.blp:246
 msgid "Restart"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:285
+#: foldav/linux/app/ui/window.blp:292
 msgid "Empty Folder"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:293
+#: foldav/linux/app/ui/window.blp:300
 msgid "Cannot Load the Folder"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:296
+#: foldav/linux/app/ui/window.blp:303
 msgid "Try Again"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:322
+#: foldav/linux/app/ui/window.blp:333
+msgid "Open in New Tab"
+msgstr ""
+
+#: foldav/linux/app/ui/window.blp:339
 msgid "Open With…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:328
+#: foldav/linux/app/ui/window.blp:345
 msgid "Download…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:334
+#: foldav/linux/app/ui/window.blp:351
 msgid "Download as ZIP…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:348 foldav/linux/app/ui/window.blp:479
+#: foldav/linux/app/ui/window.blp:365 foldav/linux/app/ui/window.blp:496
 msgid "Upload Files…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:354 foldav/linux/app/ui/window.blp:485
+#: foldav/linux/app/ui/window.blp:371 foldav/linux/app/ui/window.blp:502
 msgid "Upload Folder…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:383 foldav/linux/app/ui/window.blp:459
+#: foldav/linux/app/ui/window.blp:400 foldav/linux/app/ui/window.blp:476
 msgid "Add to Favorites"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:398
+#: foldav/linux/app/ui/window.blp:415
 msgid "Share…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:404
+#: foldav/linux/app/ui/window.blp:421
 msgid "Versions…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:410
+#: foldav/linux/app/ui/window.blp:427
 msgid "Tags…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:416
+#: foldav/linux/app/ui/window.blp:433
 msgid "Open in Browser"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:424
+#: foldav/linux/app/ui/window.blp:441
 msgid "Rename…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:442
+#: foldav/linux/app/ui/window.blp:459
 msgid "Delete Permanently…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:448 foldav/linux/app/ui/window.blp:497
+#: foldav/linux/app/ui/window.blp:465 foldav/linux/app/ui/window.blp:514
 msgid "Empty Trash…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:514
+#: foldav/linux/app/ui/window.blp:531
 msgid "Sort"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:517
+#: foldav/linux/app/ui/window.blp:534
 msgid "A-Z"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:523
+#: foldav/linux/app/ui/window.blp:540
 msgid "Z-A"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:529
+#: foldav/linux/app/ui/window.blp:546
 msgid "Last Modified"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:535
+#: foldav/linux/app/ui/window.blp:552
 msgid "First Modified"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:559
+#: foldav/linux/app/ui/window.blp:576
 msgid "Captions…"
 msgstr ""
 
-#: foldav/linux/app/ui/window.blp:566
+#: foldav/linux/app/ui/window.blp:583
 msgid "About Foldav"
 msgstr ""
 

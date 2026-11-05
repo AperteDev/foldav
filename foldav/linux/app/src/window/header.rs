@@ -33,6 +33,12 @@ impl Header {
             search_entry: super::get(b, "search_entry"),
         }
     }
+
+    /// The search bar closed, and its query gone.
+    pub fn close_search(&self) {
+        self.search_bar.set_search_mode(false);
+        self.search_entry.set_text("");
+    }
 }
 
 /// Search the folder shown and below it as the query is typed; the results are a place, so
@@ -46,7 +52,9 @@ fn connect_search(ui: &Rc<Ui>) {
     });
     let weak = Rc::downgrade(ui);
     h.search_entry.connect_search_changed(move |entry| {
-        let Some(ui) = weak.upgrade() else { return };
+        let Some(ui) = weak.upgrade().filter(|ui| !ui.tabs.switching.get()) else {
+            return;
+        };
         let (query, at) = (entry.text().trim().to_string(), ui.at.borrow().clone());
         let Some((id, path)) = at else { return };
         let searching = places::search_of(&path).map(|(folder, _)| folder.to_string());
@@ -162,11 +170,13 @@ pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.zoom-in", &["<Control>plus", "<Control>equal"]);
     app.set_accels_for_action("win.zoom-out", &["<Control>minus"]);
     app.set_accels_for_action("win.zoom-reset", &["<Control>0"]);
+    super::tabs::accels(app);
 }
 
 /// The path bar and what depends on the folder shown: back, forward, up, favorites.
 pub fn update(ui: &Rc<Ui>) {
     let at = ui.at.borrow().clone();
+    super::tabs::update_title(ui);
     let set = |name: &str, on: bool| {
         ui.window
             .lookup_action(name)
@@ -227,6 +237,8 @@ fn segment(ui: &Rc<Ui>, name: &str, id: i64, path: &str, current: bool) {
     button.add_controller(super::dnd::target(&weak, true, move |_| {
         Some((id, p.clone()))
     }));
+    let p = path.clone();
+    super::tabs::middle_click(&weak, &button, move |_| Some((id, p.clone())));
     button.connect_clicked(move |_| {
         if let Some(ui) = weak.upgrade() {
             nav::open(&ui, id, path.clone());

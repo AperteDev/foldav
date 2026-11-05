@@ -22,6 +22,7 @@ mod ops;
 mod options;
 mod share;
 mod sidebar;
+mod tabs;
 mod tags;
 mod thumbs;
 mod transfers;
@@ -131,6 +132,8 @@ struct Ui {
     hidden: Cell<bool>,
     /// What the view menu sets: the sort, the icon size, the captions (`options`).
     options: options::Options,
+    /// The tabs: each its own folder and history, the views shared (`tabs`).
+    tabs: tabs::Tabs,
     /// Cut or copied files, to paste (`ops`).
     clipboard: RefCell<Option<ops::Clipboard>>,
     /// The menu of a right click on the files.
@@ -444,6 +447,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
         server: RefCell::default(),
         hidden: Cell::new(false),
         options: options::Options::load(),
+        tabs: tabs::Tabs::new(&b),
         clipboard: RefCell::new(None),
         file_menu: get(&b, "file_menu"),
     });
@@ -479,6 +483,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     favorites::connect(&ui);
     header::connect(&ui);
     options::connect(&ui);
+    tabs::connect(&ui);
     ui
 }
 

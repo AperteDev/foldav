@@ -222,6 +222,13 @@ Adw.ApplicationWindow window {
               }
             }
 
+            // The tabs, when there is more than one (src/window/tabs.rs).
+            [top]
+            Adw.TabBar tab_bar {
+              view: tab_view;
+              autohide: true;
+            }
+
             // Search by name in the folder shown and below it (src/window/header.rs).
             [top]
             Gtk.SearchBar search_bar {
@@ -308,6 +315,10 @@ Adw.ApplicationWindow window {
   };
 }
 
+// The pages of the tab bar: no content, a tab keeps its folder and history in the code, and
+// the views are shared (src/window/tabs.rs).
+Adw.TabView tab_view {}
+
 // A right click on the files (src/window/ops.rs, `context_menu`); what does not apply to
 // the place or the selection is left out.
 menu file_menu {
@@ -315,6 +326,12 @@ menu file_menu {
     item {
       label: _("Open");
       action: "win.open";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Open in New Tab");
+      action: "win.open-new-tab";
       hidden-when: "action-disabled";
     }
 

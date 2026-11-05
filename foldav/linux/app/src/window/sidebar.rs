@@ -253,6 +253,8 @@ pub fn refresh_places(ui: &Rc<Ui>) {
     let list = place_list(ui, id);
     for (p, title, icon) in &list {
         let r = row(icon, title);
+        let target = p.clone();
+        super::tabs::middle_click(&Rc::downgrade(ui), &r, move |_| Some((id, target.clone())));
         s.places.append(&r);
         if *p == path {
             s.places.select_row(Some(&r));
@@ -359,9 +361,11 @@ pub fn refresh_favorites(ui: &Rc<Ui>) {
         });
         r.add_controller(click);
         let (id, path) = (at.as_ref().map(|(id, _)| *id), f.path.clone());
+        let p = path.clone();
         r.add_controller(super::dnd::target(&Rc::downgrade(ui), true, move |_| {
-            Some((id?, path.clone()))
+            Some((id?, p.clone()))
         }));
+        super::tabs::middle_click(&Rc::downgrade(ui), &r, move |_| Some((id?, path.clone())));
         s.favorites.append(&r);
     }
     let here = at.and_then(|(_, path)| list.iter().position(|f| f.path == path));
@@ -472,5 +476,7 @@ fn tree_row(ui: &Rc<Ui>, id: i64, path: &str, name: &str, depth: i32) -> gtk::Li
     row.add_controller(super::dnd::target(&Rc::downgrade(ui), true, move |_| {
         Some((id, p.clone()))
     }));
+    let p = path.to_string();
+    super::tabs::middle_click(&Rc::downgrade(ui), &row, move |_| Some((id, p.clone())));
     row
 }

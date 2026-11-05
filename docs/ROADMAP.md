@@ -71,7 +71,9 @@ Once a third app copies the same code, a shared crate in its own repository beco
    is done): a limit to the listing cache's size (now it goes by age; the previews have one,
    256 MB), and a long-offline mode that shows them without asking; the columns view's icon size (it has
    one); more captions (Nextcloud has no creation date, owner or permissions to show); the
-   last folder and account restored at start.
+   last folder and account restored at start; tabs that keep what was selected and scrolled to
+   (the views are shared, so a tab shown again starts at the top of its folder), moving a tab
+   to a new window, and the tabs restored at start.
 2. **The web app's places in the sidebar**, what is left of them (All files is the tree's
    "Home"; Recent, Starred, Shared with you, Shared with others, Shared by link, Tags and
    Deleted files are built, each shown where the server's capabilities have it, and the

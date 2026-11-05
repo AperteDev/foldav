@@ -408,6 +408,13 @@ pub fn model_of(w: &gtk::Widget) -> Option<gtk::SelectionModel> {
 /// A right click on `item`'s widget `w` selects it, unless it is selected, and opens the menu.
 pub fn attach_menu(ui: &Weak<Ui>, item: &gtk::ListItem, w: &gtk::Widget) {
     super::dnd::attach(ui, item, w);
+    // A middle click on a folder opens it in a new tab.
+    let row = item.downgrade();
+    super::tabs::middle_click(ui, w, move |ui| {
+        let (id, _) = ui.at.borrow().clone()?;
+        let f = row.upgrade()?.item().map(|o| file_of(&o))?;
+        f.folder.then_some((id, f.path))
+    });
     let click = gtk::GestureClick::builder().button(3).build();
     let (ui, item) = (ui.clone(), item.downgrade());
     click.connect_pressed(move |g, _, x, y| {

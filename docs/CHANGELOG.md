@@ -71,6 +71,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
+- Tabs, as in Files: Ctrl+T opens one at the folder shown, Ctrl+W closes it (the last one
+  closes the window), Ctrl+Page Down and Ctrl+Page Up (or Ctrl+Tab) switch, Ctrl+Shift+Page
+  Up and Down move a tab, Alt+1 to 9 pick one; a folder opens in a new tab from "Open in New
+  Tab" in the right-click menu or a middle click (on the views, the sidebar and the path
+  bar). Each tab has its own folder and history, and files dragged onto a tab are moved into
+  its folder (Ctrl: copied; from other apps: uploaded)
 - The view menu as Files': Icon Size with plus and minus (Ctrl+plus, Ctrl+minus, Ctrl+0; the
   icons' and the list's own), Sort (A-Z, Z-A, Last Modified, First Modified, Size, Type; one
   for the icons, the list and the columns, the list's header sets it too), Show Hidden Files,

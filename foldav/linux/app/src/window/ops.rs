@@ -41,6 +41,12 @@ fn error_text(e: &Error) -> String {
 /// The actions (keys in `accels`).
 pub fn connect(ui: &Rc<Ui>) {
     action(ui, "open", open_selected);
+    action(ui, "open-new-tab", |ui| {
+        let id = ui.at.borrow().as_ref().map(|(id, _)| *id);
+        if let ([folder], Some(id)) = (selected(ui).as_slice(), id) {
+            super::tabs::open(ui, Some((id, folder.path.clone())));
+        }
+    });
     action(ui, "open-with", |ui| {
         if let [file] = selected(ui).as_slice() {
             open_in(ui, file.clone(), true);
@@ -119,6 +125,10 @@ pub fn update_actions(ui: &Ui) {
         .is_some_and(|c| Some(c.account) == at);
     for (name, on) in [
         ("open", (n == 1 || any_file) && !trash),
+        (
+            "open-new-tab",
+            n == 1 && !trash && selected(ui).first().is_some_and(|f| f.folder),
+        ),
         ("open-with", one_file && !trash),
         ("download", n > 0 && !trash),
         ("download-zip", n > 0 && !place),
