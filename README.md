@@ -48,6 +48,12 @@ sudo tar -xzf foldav-<version>-x86_64.tar.gz -C /
 
 Then open Foldav and sign in to your Nextcloud.
 
+## Translations
+
+Foldav speaks English and Polish, and follows your GNOME language. Missing your language? Ask for
+it in an [issue](https://github.com/AperteDev/foldav/issues), or translate it yourself (see
+[CONTRIBUTING.md](docs/CONTRIBUTING.md#translations)).
+
 ## Building
 
 Needs Rust, GTK 4.14+, libadwaita 1.8+, libsecret, SQLite, `blueprint-compiler` and gettext.
