@@ -48,10 +48,6 @@ fn names(c: &Client, path: &str) -> Vec<String> {
         .collect()
 }
 
-fn paths(p: &[&str]) -> Vec<String> {
-    p.iter().map(|s| s.to_string()).collect()
-}
-
 #[test]
 fn folders_are_made_renamed_moved_copied_and_deleted_on_the_server() {
     let (c, dav, root) = fixture("ops");
@@ -304,4 +300,57 @@ fn files_and_folders_are_uploaded_whole_or_in_chunks() {
     assert!(matches!(r, Err(Error::Cancelled)), "{r:?}");
     assert_eq!(names(&c, &root).len(), 5);
     let _ = std::fs::remove_dir_all(&local);
+}
+
+#[test]
+fn a_change_saved_to_an_opened_copy_goes_back_unless_the_server_changed() {
+    use foldav_core::{Progress, Saved};
+    let (c, dav, root) = fixture("edits");
+    let home = c.files_home(A).unwrap();
+    let url = format!("{home}{root}/a.txt");
+    let put = |body: &str| {
+        let r = dav.request("PUT", &url, &[], body).unwrap();
+        assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    };
+    let server = || dav.request("GET", &url, &[], "").unwrap().body;
+    let file = || {
+        c.list(A, &root)
+            .unwrap()
+            .into_iter()
+            .find(|f| f.name == "a.txt")
+            .unwrap()
+    };
+    // The server keeps the ETag of a file rewritten within a moment of its last change; a copy
+    // is left to settle before it is sent.
+    let wait = || std::thread::sleep(std::time::Duration::from_secs(3));
+    put("v1");
+    wait();
+    let copy = c.open_file(A, &file(), &Progress::default()).unwrap();
+    assert!(!c.has_changes());
+
+    std::fs::write(&copy, "v2 edited").unwrap();
+    wait();
+    assert!(c.has_changes());
+    let saved = c.save_changes(&Progress::default());
+    assert!(
+        matches!(saved.as_slice(), [(n, Ok(Saved::Uploaded))] if n == "a.txt"),
+        "{saved:?}"
+    );
+    assert_eq!(server(), "v2 edited");
+    assert!(!c.has_changes());
+
+    // The server's file changed meanwhile: it stays, the edited copy is kept beside it.
+    std::fs::write(&copy, "v3 local").unwrap();
+    put("v3 server");
+    wait();
+    let saved = c.save_changes(&Progress::default());
+    assert!(
+        matches!(saved.as_slice(), [(_, Ok(Saved::Conflict(n)))] if n == "a (conflicted copy).txt"),
+        "{saved:?}"
+    );
+    assert_eq!(server(), "v3 server");
+    assert_eq!(names(&c, &root), ["a (conflicted copy).txt", "a.txt"]);
+    // Opened again: the current file, not the old copy.
+    let copy = c.open_file(A, &file(), &Progress::default()).unwrap();
+    assert_eq!(std::fs::read_to_string(copy).unwrap(), "v3 server");
 }

@@ -102,6 +102,7 @@ fn answer(status: u16, href: &str, body: String) -> Result<()> {
     match status {
         200..=299 => Ok(()),
         404 | 409 => Err(Error::NotFound(href.into())),
+        412 => Err(Error::Conflict),
         423 => Err(Error::Locked(href.into())),
         s => Err(Error::Http(s, body)),
     }
@@ -185,8 +186,8 @@ impl Client {
                     }
                 }
                 Step::File { local, to, size } => {
-                    let r = put(&dav, &home, &format!("{home}{to}"), &local, size, p);
-                    unless_cancelled(p, r)?;
+                    let href = format!("{home}{to}");
+                    unless_cancelled(p, put(&dav, &home, &href, &local, size, None, p))?;
                 }
             }
         }
@@ -194,14 +195,24 @@ impl Client {
     }
 }
 
-/// Upload `local` as the file `href`, replacing what is there.
-fn put(dav: &Dav, home: &str, href: &str, local: &Path, size: u64, p: &Progress) -> Result<()> {
+/// Upload `local` as the file `href`, replacing what is there, if its ETag is `if_match` (when
+/// given: `Error::Conflict` if not); the ETag of what was stored.
+pub(crate) fn put(
+    dav: &Dav,
+    home: &str,
+    href: &str,
+    local: &Path,
+    size: u64,
+    if_match: Option<&str>,
+    p: &Progress,
+) -> Result<Option<String>> {
     let modified = mtime(local).to_string();
+    let condition: Vec<_> = if_match.map(|e| ("If-Match", e)).into_iter().collect();
     if size < CHUNKED_FROM {
-        let r = dav.upload("PUT", href, &[("X-OC-Mtime", &modified)], size, || {
-            open(local, 0, size, p)
-        })?;
-        return answer(r.status, href, r.body);
+        let headers = [&[("X-OC-Mtime", modified.as_str())][..], &condition].concat();
+        let r = dav.upload("PUT", href, &headers, size, || open(local, 0, size, p))?;
+        answer(r.status, href, r.body)?;
+        return Ok(r.etag);
     }
     static UPLOADS: AtomicU64 = AtomicU64::new(0);
     let nanos = std::time::SystemTime::now()
@@ -240,13 +251,18 @@ fn put(dav: &Dav, home: &str, href: &str, local: &Path, size: u64, p: &Progress)
             }
         }
         let headers = [
-            ("Destination", to.as_str()),
-            ("OC-Total-Length", &total),
-            ("X-OC-Mtime", &modified),
-            ("Overwrite", "T"),
-        ];
+            &[
+                ("Destination", to.as_str()),
+                ("OC-Total-Length", &total),
+                ("X-OC-Mtime", &modified),
+                ("Overwrite", "T"),
+            ][..],
+            &condition,
+        ]
+        .concat();
         let r = dav.request("MOVE", &format!("{folder}/.file"), &headers, "")?;
-        answer(r.status, href, r.body)
+        answer(r.status, href, r.body)?;
+        Ok(r.etag)
     })();
     if r.is_err() {
         // What was sent so far is of no use.

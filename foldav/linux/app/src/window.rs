@@ -437,6 +437,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     views::connect(&ui);
     sidebar::connect(&ui);
     ops::connect(&ui);
+    ops::watch_copies(&ui);
     favorites::connect(&ui);
     header::connect(&ui);
     ui

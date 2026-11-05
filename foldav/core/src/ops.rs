@@ -43,13 +43,18 @@ fn inside(path: &str, folder: &str) -> bool {
 /// The name of a copy: "a.txt" gives "a (copy).txt", then "a (copy 2).txt"; a folder's whole
 /// name is the stem.
 pub(crate) fn copy_name(name: &str, n: u32, folder: bool) -> String {
+    labeled_name(name, "copy", n, folder)
+}
+
+/// "a (label).txt", then "a (label 2).txt".
+pub(crate) fn labeled_name(name: &str, label: &str, n: u32, folder: bool) -> String {
     let (stem, ext) = match name.rfind('.') {
         Some(i) if !folder && i > 0 => name.split_at(i),
         _ => (name, ""),
     };
     match n {
-        1 => format!("{stem} (copy){ext}"),
-        n => format!("{stem} (copy {n}){ext}"),
+        1 => format!("{stem} ({label}){ext}"),
+        n => format!("{stem} ({label} {n}){ext}"),
     }
 }
 

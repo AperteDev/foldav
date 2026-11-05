@@ -9,7 +9,7 @@ use super::{Ui, action, nav, note, popup_menu, toast, transfers, ui};
 use crate::core;
 use crate::i18n::{gettext, ngettext};
 use adw::prelude::*;
-use foldav_core::{Client, Error, File, Taken};
+use foldav_core::{Client, Error, File, Saved, Taken};
 use gtk::{gio, glib};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
@@ -148,6 +148,71 @@ fn run(
             None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
         }
     });
+}
+
+/// How often the copies of opened files are looked at for changes to send back.
+const WATCH: u32 = 5;
+/// After a copy could not be sent, how long before it is tried again.
+const RETRY: std::time::Duration = std::time::Duration::from_secs(60);
+
+thread_local! {
+    /// Not before: a change is being sent, or failed lately.
+    static NOT_BEFORE: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) };
+}
+
+/// Send back what other apps changed in the copies they opened (also what was changed while
+/// Foldav was closed), and say what became of it.
+pub fn watch_copies(ui: &Rc<Ui>) {
+    let weak = Rc::downgrade(ui);
+    glib::timeout_add_seconds_local(WATCH, move || {
+        let Some(ui) = weak.upgrade() else {
+            return glib::ControlFlow::Break;
+        };
+        let ready = NOT_BEFORE
+            .get()
+            .is_none_or(|t| t <= std::time::Instant::now());
+        if ready {
+            // Taken for the time it takes: no second one starts meanwhile.
+            NOT_BEFORE.set(Some(std::time::Instant::now() + 24 * RETRY));
+            glib::spawn_future_local(save_changes(ui));
+        }
+        glib::ControlFlow::Continue
+    });
+}
+
+async fn save_changes(ui: Rc<Ui>) {
+    let changed = gio::spawn_blocking(|| core().has_changes())
+        .await
+        .unwrap_or(false);
+    let mut failed = false;
+    if changed {
+        let title = gettext("Saving changes");
+        let r = transfers::run(&ui, &title, true, |c, p| Ok(c.save_changes(p))).await;
+        reload(&ui);
+        for (name, saved) in r.and_then(Result::ok).unwrap_or_default() {
+            match saved {
+                Ok(Saved::Uploaded) => {
+                    toast(&gettext("Saved “{name}” to Nextcloud").replace("{name}", &name))
+                }
+                Ok(Saved::Conflict(kept)) => ui.toasts.add_toast(note(
+                    &gettext("“{name}” changed on the server: your version is saved as “{kept}”")
+                        .replace("{name}", &name)
+                        .replace("{kept}", &kept),
+                )),
+                Err(Error::Cancelled) => failed = true,
+                Err(e) => {
+                    failed = true;
+                    ui.toasts.add_toast(note(
+                        &gettext("Cannot save “{name}”: {error}")
+                            .replace("{name}", &name)
+                            .replace("{error}", &error_text(&e)),
+                    ));
+                }
+            }
+        }
+    }
+    // A failed one is tried again after a while, not every few seconds.
+    NOT_BEFORE.set(failed.then(|| std::time::Instant::now() + RETRY));
 }
 
 /// Open a folder in the window, a file in its default app, from a copy kept on this device.

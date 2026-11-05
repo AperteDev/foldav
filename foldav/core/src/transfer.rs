@@ -55,7 +55,7 @@ impl Progress {
     }
 }
 
-fn io(e: std::io::Error) -> Error {
+pub(crate) fn io(e: std::io::Error) -> Error {
     Error::Io(e.to_string())
 }
 
@@ -91,7 +91,7 @@ fn save(mut dl: Download, target: &Path, p: &Progress) -> Result<()> {
 }
 
 /// What is directly in folder `p`.
-fn dirs(p: &Path) -> Vec<PathBuf> {
+pub(crate) fn dirs(p: &Path) -> Vec<PathBuf> {
     std::fs::read_dir(p)
         .into_iter()
         .flatten()
@@ -101,7 +101,7 @@ fn dirs(p: &Path) -> Vec<PathBuf> {
 }
 
 /// `p` was last changed longer than `age` ago.
-fn older(p: &Path, age: Duration) -> bool {
+pub(crate) fn older(p: &Path, age: Duration) -> bool {
     std::fs::metadata(p)
         .and_then(|m| m.modified())
         .ok()
@@ -125,7 +125,7 @@ fn free_path(dir: &Path, name: &str, folder: bool) -> PathBuf {
 impl Client {
     /// A copy of `file` of account `id` on this device, for another app to open: the one kept
     /// from before when the server says the file is the same (one small request), else it is
-    /// fetched. Kept read-only: a change saved to it would not reach the server.
+    /// fetched. A change the other app saves to it is sent back (`save_changes`).
     pub fn open_file(&self, id: i64, file: &File, p: &Progress) -> Result<PathBuf> {
         if file.fileid.is_empty() {
             return Err(Error::Invalid(file.name.clone()));
@@ -137,6 +137,10 @@ impl Client {
             .join(&file.fileid);
         let (etag_file, kept) = (dir.join("etag"), dir.join("f"));
         let copy = kept.join(&file.name);
+        // What was changed in it and not sent yet goes first: fetching would lose it.
+        if crate::edits::changed(&dir).is_some() {
+            let _ = self.send_copy(id, &dir, p);
+        }
         let known = std::fs::read_to_string(&etag_file)
             .ok()
             .filter(|e| !e.is_empty() && copy.exists());
@@ -150,14 +154,12 @@ impl Client {
                 p.set_total(dl.length.or(file.size).unwrap_or(0));
                 let etag = dl.etag.clone().unwrap_or_default();
                 save(dl, &copy, p)?;
-                let mut perms = std::fs::metadata(&copy).map_err(io)?.permissions();
-                perms.set_readonly(true);
-                std::fs::set_permissions(&copy, perms).map_err(io)?;
                 etag
             }
         };
         // Written again also when it did not change: its time says when the copy was last used.
         std::fs::write(&etag_file, etag).map_err(io)?;
+        crate::edits::record(&dir, file, &copy)?;
         Ok(copy)
     }
 
@@ -165,7 +167,8 @@ impl Client {
     pub fn prune_cache(&self, max_age: Duration) {
         for account in dirs(&self.cache_dir.join("files")) {
             for copy in dirs(&account) {
-                if older(&copy.join("etag"), max_age) {
+                // One with changes not sent yet stays.
+                if older(&copy.join("etag"), max_age) && crate::edits::changed(&copy).is_none() {
                     let _ = std::fs::remove_dir_all(copy);
                 }
             }

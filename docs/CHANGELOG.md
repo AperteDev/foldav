@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that are sent again one at a time when the connection drops, with the file's date kept;
   when a name is taken you choose Replace (the server keeps the old file as a version), Keep
   Both or Skip
+- A change another app saves to the copy of an opened file goes back to the server (also one
+  made while Foldav was closed, at the next start), unless the file changed on the server
+  meanwhile: then it stays, and your version is kept beside it as "name (conflicted
+  copy).ext", as the desktop client does
 - Drag and drop as in Files: files to a folder in the views, the sidebar or the path bar move
   there (Ctrl copies); files dragged from Files or the desktop into the window are uploaded
   to the folder they are dropped on or shown; files dragged out of the window to Files or the

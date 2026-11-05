@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 03:20+0100\n"
+"POT-Creation-Date: 2026-11-05 03:23+0100\n"
 "PO-Revision-Date: 2026-11-04 23:52+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -183,7 +183,7 @@ msgstr ""
 "tego, aby tylko je ukryć."
 
 #: foldav/linux/app/src/settings.rs:565 foldav/linux/app/src/window/ops.rs:115
-#: foldav/linux/app/src/window/ops.rs:418
+#: foldav/linux/app/src/window/ops.rs:483
 #: foldav/linux/app/src/window/transfers.rs:145
 #: foldav/linux/app/ui/account.blp:34 foldav/linux/app/ui/add-account.blp:167
 #: foldav/linux/app/ui/password-login.blp:19
@@ -229,46 +229,46 @@ msgstr "_Wsparcie"
 msgid "Support"
 msgstr "Wsparcie"
 
-#: foldav/linux/app/src/window.rs:449
+#: foldav/linux/app/src/window.rs:450
 msgid "Enter the Nextcloud server first"
 msgstr "Najpierw podaj serwer Nextcloud"
 
-#: foldav/linux/app/src/window.rs:484
+#: foldav/linux/app/src/window.rs:485
 msgid "Cannot start login"
 msgstr "Nie można rozpocząć logowania"
 
-#: foldav/linux/app/src/window.rs:485
+#: foldav/linux/app/src/window.rs:486
 #, rust-format
 msgid "Cannot start login: {error}"
 msgstr "Nie można rozpocząć logowania: {error}"
 
-#: foldav/linux/app/src/window.rs:493
+#: foldav/linux/app/src/window.rs:494
 msgid "Login link copied to clipboard"
 msgstr "Skopiowano odnośnik logowania do schowka"
 
-#: foldav/linux/app/src/window.rs:513
+#: foldav/linux/app/src/window.rs:514
 #, rust-format
 msgid "Login failed: {error}"
 msgstr "Logowanie nie powiodło się: {error}"
 
-#: foldav/linux/app/src/window.rs:515
+#: foldav/linux/app/src/window.rs:516
 msgid "Login failed"
 msgstr "Logowanie nie powiodło się"
 
-#: foldav/linux/app/src/window.rs:518
+#: foldav/linux/app/src/window.rs:519
 msgid "Login timed out"
 msgstr "Upłynął czas na zalogowanie"
 
-#: foldav/linux/app/src/window.rs:567
+#: foldav/linux/app/src/window.rs:568
 msgid "Wrong login name or password"
 msgstr "Błędna nazwa użytkownika lub hasło"
 
-#: foldav/linux/app/src/window.rs:568
+#: foldav/linux/app/src/window.rs:569
 #, rust-format
 msgid "Sign-in failed: {error}"
 msgstr "Logowanie nie powiodło się: {error}"
 
-#: foldav/linux/app/src/window.rs:569
+#: foldav/linux/app/src/window.rs:570
 msgid "Sign-in failed"
 msgstr "Logowanie nie powiodło się"
 
@@ -283,21 +283,21 @@ msgstr "Okno jest zamknięte"
 
 #: foldav/linux/app/src/window/dnd.rs:96 foldav/linux/app/src/window/dnd.rs:110
 #: foldav/linux/app/src/window/ops.rs:148
-#: foldav/linux/app/src/window/ops.rs:169
-#: foldav/linux/app/src/window/ops.rs:222
-#: foldav/linux/app/src/window/ops.rs:244
-#: foldav/linux/app/src/window/ops.rs:451
-#: foldav/linux/app/src/window/ops.rs:475
+#: foldav/linux/app/src/window/ops.rs:234
+#: foldav/linux/app/src/window/ops.rs:287
+#: foldav/linux/app/src/window/ops.rs:309
+#: foldav/linux/app/src/window/ops.rs:516
+#: foldav/linux/app/src/window/ops.rs:540
 msgid "The operation failed"
 msgstr "Operacja nie powiodła się"
 
-#: foldav/linux/app/src/window/dnd.rs:99 foldav/linux/app/src/window/ops.rs:211
+#: foldav/linux/app/src/window/dnd.rs:99 foldav/linux/app/src/window/ops.rs:276
 #, rust-format
 msgid "Downloading “{name}”"
 msgstr "Pobieranie „{name}”"
 
 #: foldav/linux/app/src/window/dnd.rs:100
-#: foldav/linux/app/src/window/ops.rs:212
+#: foldav/linux/app/src/window/ops.rs:277
 msgid "Downloading the selected files"
 msgstr "Pobieranie zaznaczonych plików"
 
@@ -318,7 +318,7 @@ msgstr "Brak połączenia. Zaloguj się ponownie w Preferencje → Konta."
 msgid "Loading failed"
 msgstr "Nie udało się wczytać"
 
-#: foldav/linux/app/src/window/ops.rs:32 foldav/linux/app/src/window/ops.rs:405
+#: foldav/linux/app/src/window/ops.rs:32 foldav/linux/app/src/window/ops.rs:470
 #, rust-format
 msgid "“{name}” exists already"
 msgstr "„{name}” już istnieje"
@@ -336,95 +336,114 @@ msgstr "Nie ma go już na serwerze"
 msgid "It is locked on the server"
 msgstr "Jest zablokowany na serwerze"
 
-#: foldav/linux/app/src/window/ops.rs:163
+#: foldav/linux/app/src/window/ops.rs:189
+msgid "Saving changes"
+msgstr "Zapisywanie zmian"
+
+#: foldav/linux/app/src/window/ops.rs:195
+#, rust-format
+msgid "Saved “{name}” to Nextcloud"
+msgstr "Zapisano „{name}” w Nextcloud"
+
+#: foldav/linux/app/src/window/ops.rs:198
+#, rust-format
+msgid "“{name}” changed on the server: your version is saved as “{kept}”"
+msgstr "„{name}” zmieniono na serwerze: Twoja wersja jest zapisana jako „{kept}”"
+
+#: foldav/linux/app/src/window/ops.rs:206
+#, rust-format
+msgid "Cannot save “{name}”: {error}"
+msgstr "Nie można zapisać „{name}”: {error}"
+
+#: foldav/linux/app/src/window/ops.rs:228
 #, rust-format
 msgid "Opening “{name}”"
 msgstr "Otwieranie „{name}”"
 
-#: foldav/linux/app/src/window/ops.rs:182
+#: foldav/linux/app/src/window/ops.rs:247
 #, rust-format
 msgid "Cannot open the file: {error}"
 msgstr "Nie można otworzyć pliku: {error}"
 
-#: foldav/linux/app/src/window/ops.rs:197
+#: foldav/linux/app/src/window/ops.rs:262
 msgid "Download to"
 msgstr "Pobierz do"
 
-#: foldav/linux/app/src/window/ops.rs:198
+#: foldav/linux/app/src/window/ops.rs:263
 msgid "Download"
 msgstr "Pobierz"
 
-#: foldav/linux/app/src/window/ops.rs:208
+#: foldav/linux/app/src/window/ops.rs:273
 msgid "Cannot save to this folder"
 msgstr "Nie można zapisać w tym folderze"
 
-#: foldav/linux/app/src/window/ops.rs:219
+#: foldav/linux/app/src/window/ops.rs:284
 msgid "Downloaded"
 msgstr "Pobrano"
 
-#: foldav/linux/app/src/window/ops.rs:229 foldav/linux/app/ui/shortcuts.blp:90
+#: foldav/linux/app/src/window/ops.rs:294 foldav/linux/app/ui/shortcuts.blp:90
 msgid "Undo"
 msgstr "Cofnij"
 
-#: foldav/linux/app/src/window/ops.rs:242
+#: foldav/linux/app/src/window/ops.rs:307
 msgid "Nothing to undo"
 msgstr "Nie ma czego cofnąć"
 
-#: foldav/linux/app/src/window/ops.rs:255
+#: foldav/linux/app/src/window/ops.rs:320
 msgid "Untitled Folder"
 msgstr "Folder bez nazwy"
 
-#: foldav/linux/app/src/window/ops.rs:258 foldav/linux/app/ui/shortcuts.blp:60
+#: foldav/linux/app/src/window/ops.rs:323 foldav/linux/app/ui/shortcuts.blp:60
 #: foldav/linux/app/ui/window.blp:281 foldav/linux/app/ui/window.blp:330
 msgid "New Folder"
 msgstr "Nowy folder"
 
-#: foldav/linux/app/src/window/ops.rs:259
+#: foldav/linux/app/src/window/ops.rs:324
 msgid "Create"
 msgstr "Utwórz"
 
-#: foldav/linux/app/src/window/ops.rs:267
+#: foldav/linux/app/src/window/ops.rs:332
 msgid "Creating folder"
 msgstr "Tworzenie folderu"
 
-#: foldav/linux/app/src/window/ops.rs:287
-#: foldav/linux/app/src/window/ops.rs:288 foldav/linux/app/ui/shortcuts.blp:65
+#: foldav/linux/app/src/window/ops.rs:352
+#: foldav/linux/app/src/window/ops.rs:353 foldav/linux/app/ui/shortcuts.blp:65
 msgid "Rename"
 msgstr "Zmień nazwę"
 
-#: foldav/linux/app/src/window/ops.rs:297
+#: foldav/linux/app/src/window/ops.rs:362
 msgid "Renamed"
 msgstr "Zmieniono nazwę"
 
-#: foldav/linux/app/src/window/ops.rs:297
+#: foldav/linux/app/src/window/ops.rs:362
 msgid "Renaming"
 msgstr "Zmiana nazwy"
 
-#: foldav/linux/app/src/window/ops.rs:342
+#: foldav/linux/app/src/window/ops.rs:407
 msgid "Moved"
 msgstr "Przeniesiono"
 
-#: foldav/linux/app/src/window/ops.rs:342
+#: foldav/linux/app/src/window/ops.rs:407
 msgid "Moving"
 msgstr "Przenoszenie"
 
-#: foldav/linux/app/src/window/ops.rs:346
+#: foldav/linux/app/src/window/ops.rs:411
 msgid "Copying"
 msgstr "Kopiowanie"
 
-#: foldav/linux/app/src/window/ops.rs:375
+#: foldav/linux/app/src/window/ops.rs:440
 msgid "Upload Folder"
 msgstr "Wyślij folder"
 
-#: foldav/linux/app/src/window/ops.rs:377 foldav/linux/app/ui/shortcuts.blp:55
+#: foldav/linux/app/src/window/ops.rs:442 foldav/linux/app/ui/shortcuts.blp:55
 msgid "Upload Files"
 msgstr "Wyślij pliki"
 
-#: foldav/linux/app/src/window/ops.rs:379
+#: foldav/linux/app/src/window/ops.rs:444
 msgid "Upload"
 msgstr "Wyślij"
 
-#: foldav/linux/app/src/window/ops.rs:407
+#: foldav/linux/app/src/window/ops.rs:472
 #, rust-format
 msgid "{n} item exists already"
 msgid_plural "{n} items exist already"
@@ -432,48 +451,48 @@ msgstr[0] "{n} element już istnieje"
 msgstr[1] "{n} elementy już istnieją"
 msgstr[2] "{n} elementów już istnieje"
 
-#: foldav/linux/app/src/window/ops.rs:415
+#: foldav/linux/app/src/window/ops.rs:480
 msgid "Replace what is there, keep both, or skip it?"
 msgstr "Zastąpić istniejące, zachować oba czy pominąć?"
 
-#: foldav/linux/app/src/window/ops.rs:419
+#: foldav/linux/app/src/window/ops.rs:484
 msgid "Skip"
 msgstr "Pomiń"
 
-#: foldav/linux/app/src/window/ops.rs:420
+#: foldav/linux/app/src/window/ops.rs:485
 msgid "Keep Both"
 msgstr "Zachowaj oba"
 
-#: foldav/linux/app/src/window/ops.rs:421
+#: foldav/linux/app/src/window/ops.rs:486
 msgid "Replace"
 msgstr "Zastąp"
 
-#: foldav/linux/app/src/window/ops.rs:438
+#: foldav/linux/app/src/window/ops.rs:503
 msgid "Only files on this device can be uploaded"
 msgstr "Można wysyłać tylko pliki z tego urządzenia"
 
-#: foldav/linux/app/src/window/ops.rs:462
+#: foldav/linux/app/src/window/ops.rs:527
 #, rust-format
 msgid "Uploading “{name}”"
 msgstr "Wysyłanie „{name}”"
 
-#: foldav/linux/app/src/window/ops.rs:463
+#: foldav/linux/app/src/window/ops.rs:528
 msgid "Uploading files"
 msgstr "Wysyłanie plików"
 
-#: foldav/linux/app/src/window/ops.rs:472
+#: foldav/linux/app/src/window/ops.rs:537
 msgid "Uploaded"
 msgstr "Wysłano"
 
-#: foldav/linux/app/src/window/ops.rs:491
+#: foldav/linux/app/src/window/ops.rs:556
 msgid "Files cannot be moved between accounts yet"
 msgstr "Plików nie można jeszcze przenosić między kontami"
 
-#: foldav/linux/app/src/window/ops.rs:515
+#: foldav/linux/app/src/window/ops.rs:580
 msgid "Moving to Trash"
 msgstr "Przenoszenie do kosza"
 
-#: foldav/linux/app/src/window/ops.rs:516
+#: foldav/linux/app/src/window/ops.rs:581
 msgid "Moved to Trash"
 msgstr "Przeniesiono do kosza"
 

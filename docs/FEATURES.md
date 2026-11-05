@@ -21,6 +21,8 @@ What Foldav can do, in short. The details of each release are in the
   of the sidebar with their progress and time left, transfers cancellable.
 - Upload files and folders, big files in chunks that survive a dropped connection; choose
   Replace, Keep Both or Skip when a name is taken.
+- Edit a file in another app: what you save goes back to the server; a file changed there
+  meanwhile is not overwritten, your version is kept as a "conflicted copy".
 - Drag and drop: inside the window (move, Ctrl copies), in from Files or the desktop (upload)
   and out to them (download).
 - Settings synced between your devices, through the account you choose.

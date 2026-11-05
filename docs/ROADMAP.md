@@ -107,10 +107,11 @@ Once a third app copies the same code, a shared crate in its own repository beco
    not given up on until the system does (`ureq` has no idle timeout). Dragging to and from
    other apps is not tested against Files itself, only between the window's own views.
 5. **Opening files**, what is left of it (a file opens in its default app from a copy kept in
-   the cache folder, checked against the server's ETag, deleted after a month unused): a
-   change saved to the copy is uploaded back (with the ETag checked first: a conflict keeps
-   both, as the desktop client does; the copy is read-only until then); Open With…; several
-   files opened at once; a limit to the copies' total size.
+   the cache folder, checked against the server's ETag, deleted after a month unused; a
+   change saved to the copy is uploaded back, with the ETag checked first and a conflict
+   kept beside the file): Open With…; several files opened at once; a limit to the copies'
+   total size; a copy of a file renamed or moved on the server meanwhile is sent to its old
+   path (as a conflicted copy, the ETag check fails there).
 6. **Nextcloud's features** on files (the places that list them are above):
    - Trash: restore, delete for good, empty it.
    - Versions: list a file's versions, restore one, open one.
@@ -134,7 +135,9 @@ Later (v2):
 ## Open questions and risks
 
 - **Opening files in other apps**: a local copy in a cache folder is built (kept a month,
-  cleaned at start); watching it for saves, to upload them, is left. A FUSE mount or a GVfs
+  cleaned at start) and looked at every 5 seconds for saves, which are sent back once the
+  file has rested 2 seconds; an app that touches the copy without a change sends it again.
+  A FUSE mount or a GVfs
   backend would let apps open the server's paths directly but is much more work.
   The server may keep a file's ETag when it is rewritten within a second of its last change,
   so a copy can then be taken for current (the integration test waits for it).
