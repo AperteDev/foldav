@@ -42,7 +42,9 @@ const CSS: &str = "
 .pathbar .path-separator { opacity: 0.5; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
-.favorite-star { color: #f5c211; }
+/* The star of a favorite, filled and toned (a dark gold on light, a soft yellow on dark), the same
+   in every view, with a hair of shadow to lift it off the icon. */
+.favorite-star { color: @warning_color; -gtk-icon-shadow: 0 0 1px alpha(black, 0.4); }
 /* The long actions at the foot of the sidebar: rows as the tree's. */
 .transfers menubutton > button { min-height: 28px; padding: 4px 8px; border-radius: 6px; }
 .transfers label { font-weight: normal; }
