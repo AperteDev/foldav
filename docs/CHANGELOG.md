@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-05
+
 ### Added
 
 - Packages of each release: a Flatpak, a tarball, a `.deb`, Fedora RPMs on COPR and the AUR
@@ -41,4 +43,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nextcloud Files, opened by a click, with Alt+Up to the parent folder; Preferences (style,
   accounts, settings synced between devices); a Polish translation
 
-[Unreleased]: https://github.com/AperteDev/foldav/commits/HEAD
+[Unreleased]: https://github.com/AperteDev/foldav/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/AperteDev/foldav/releases/tag/v0.1.0
