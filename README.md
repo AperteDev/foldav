@@ -23,9 +23,9 @@ versions, sharing, favorites. It looks and behaves like Files, and is the siblin
 [Todav](https://github.com/AperteDev/todav), the tasks and calendar app, and
 [Notav](https://github.com/AperteDev/notav), the notes app.
 
-Foldav is at an early stage: browsing, favorites and the basic operations on the server work;
-transfers, thumbnails, the trash bin, versions, sharing and search are next (see the
-[roadmap](docs/ROADMAP.md)).
+Foldav is at an early stage: browsing, favorites, the operations on the server, transfers,
+thumbnails, the trash bin, versions, sharing, tags and search by name work; what is left is in
+the [roadmap](docs/ROADMAP.md).
 
 Foldav is developed in my free time. If it helps you with your files, you can support its
 development:
@@ -49,6 +49,11 @@ development:
 - New folder, rename, cut, copy, paste and delete, each one request to the server whatever the
   size of the folder; deletions go to the trash bin, and Ctrl+Z takes back a rename, move or
   deletion.
+- Open a file in its app and what you save goes back; upload and download files and folders
+  (big files in chunks, small ones many to a request, a folder as one ZIP), with drag and drop
+  inside the window and to and from Files; long actions listed at the foot of the sidebar.
+- The web app's places: Recent, Starred, shares, tags and the trash bin; thumbnails; search by
+  name; versions, public links and shares with users, and tags on a file.
 - Sign-in through GNOME Online Accounts, the browser, or a login name and app password; more
   than one account.
 - Settings synced between your devices.

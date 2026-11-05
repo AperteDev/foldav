@@ -25,7 +25,9 @@
 - The window follows Nautilus (Files): its sidebar, header, views and keys; when something
   about it is not decided, do as Nautilus does. Its code is in `foldav/linux/app/src/window/`:
   `nav` (the folder shown, history, the folders loaded), `sidebar` (accounts, favorites, tree), `favorites` (stars, synced),
-  `header` (path bar, view switcher), `views` (icons, list), `columns` (the columns view,
+  `header` (path bar, view switcher, search), `views` (icons, list), `transfers` (the long
+  actions in the sidebar), `dnd` (drag and drop), `thumbs`, `share`, `versions` and `tags` (the
+  dialogs and previews of Nextcloud's features), `columns` (the columns view,
   modelled on the Column View of the Files extension "My Computer", MIT licence, installed at
   `/usr/share/nautilus-python/extensions/nautilus_my_computer/`: its rules and geometry are
   there when something about the columns is not decided) and `ops` (what is done to files). The content header is a plain toolbar row, not an `AdwHeaderBar` (which keeps its
