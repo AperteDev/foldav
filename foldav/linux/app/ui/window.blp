@@ -197,10 +197,10 @@ Adw.ApplicationWindow window {
                 }
 
                 Gtk.Box location_box {
-                  spacing: 6;
                   hexpand: true;
                   valign: center;
                   visible: false;
+                  styles ["linked"]
 
                   Gtk.Entry location_entry {
                     hexpand: true;
@@ -215,7 +215,6 @@ Adw.ApplicationWindow window {
                     icon-name: "window-close-symbolic";
                     tooltip-text: _("Close the Location (Esc)");
                     valign: center;
-                    styles ["flat"]
                   }
                 }
 

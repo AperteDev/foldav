@@ -113,6 +113,7 @@ fn edit_location(ui: &Rc<Ui>) {
     h.location_entry.set_text(&text);
     h.pathbar_box.set_visible(false);
     h.location_box.set_visible(true);
+    fade_in(h.location_box.upcast_ref());
     // The entry is on screen only after this turn.
     let entry = h.location_entry.clone();
     glib::idle_add_local_once(move || {
@@ -121,9 +122,25 @@ fn edit_location(ui: &Rc<Ui>) {
     });
 }
 
+/// `widget` fades in, as the path bar and the field do for each other.
+fn fade_in(widget: &gtk::Widget) {
+    widget.set_opacity(0.0);
+    let target = adw::CallbackAnimationTarget::new({
+        let widget = widget.clone();
+        move |v| widget.set_opacity(v)
+    });
+    adw::TimedAnimation::new(widget, 0.0, 1.0, 180, target).play();
+}
+
+/// The path bar back in place of the field (nothing if it is there already).
 fn close_location(ui: &Ui) {
-    ui.header.location_box.set_visible(false);
-    ui.header.pathbar_box.set_visible(true);
+    let h = &ui.header;
+    if !h.location_box.is_visible() {
+        return;
+    }
+    h.location_box.set_visible(false);
+    h.pathbar_box.set_visible(true);
+    fade_in(h.pathbar_box.upcast_ref());
 }
 
 fn connect_location(ui: &Rc<Ui>) {
@@ -150,6 +167,29 @@ fn connect_location(ui: &Rc<Ui>) {
         }
     });
     h.pathbar_box.add_controller(click);
+
+    // A click anywhere else in the window (on the room between the files, which takes no focus)
+    // brings the bar back too; the click goes on to what it was for.
+    let outside = gtk::GestureClick::new();
+    outside.set_propagation_phase(gtk::PropagationPhase::Capture);
+    let weak = Rc::downgrade(ui);
+    outside.connect_pressed(move |_, _, x, y| {
+        let Some(ui) = weak
+            .upgrade()
+            .filter(|ui| ui.header.location_box.is_visible())
+        else {
+            return;
+        };
+        let field = &ui.header.location_box;
+        let inside = ui
+            .window
+            .pick(x, y, gtk::PickFlags::DEFAULT)
+            .is_some_and(|w| w == *field || w.is_ancestor(field));
+        if !inside {
+            close_location(&ui);
+        }
+    });
+    ui.window.add_controller(outside);
 
     let weak = Rc::downgrade(ui);
     h.location_close.connect_clicked(move |_| {
