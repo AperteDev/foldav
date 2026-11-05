@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 12:03+0100\n"
+"POT-Creation-Date: 2026-11-05 12:29+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -195,80 +195,80 @@ msgstr ""
 msgid "{name} removed"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:121
+#: foldav/linux/app/src/window.rs:132
 msgid "Support on Ko-fi"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:125
+#: foldav/linux/app/src/window.rs:136
 msgid "Sponsor on GitHub"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:129
+#: foldav/linux/app/src/window.rs:140
 msgid "Donate on Liberapay"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:297
+#: foldav/linux/app/src/window.rs:308
 msgid ""
 "Foldav is developed in my free time. If it helps you with your files, you "
 "can support its development."
 msgstr ""
 
 #. Translators: the About row that opens the page with the donation links.
-#: foldav/linux/app/src/window.rs:327
+#: foldav/linux/app/src/window.rs:338
 msgid "_Support"
 msgstr ""
 
 #. Translators: title of About's page with the donation links.
-#: foldav/linux/app/src/window.rs:329
+#: foldav/linux/app/src/window.rs:340
 msgid "Support"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:531
+#: foldav/linux/app/src/window.rs:542
 msgid "Enter the Nextcloud server first"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:566
+#: foldav/linux/app/src/window.rs:577
 msgid "Cannot start login"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:567
+#: foldav/linux/app/src/window.rs:578
 #, rust-format
 msgid "Cannot start login: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:575
+#: foldav/linux/app/src/window.rs:586
 msgid "Login link copied to clipboard"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:595
+#: foldav/linux/app/src/window.rs:606
 #, rust-format
 msgid "Login failed: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:597
+#: foldav/linux/app/src/window.rs:608
 msgid "Login failed"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:600
+#: foldav/linux/app/src/window.rs:611
 msgid "Login timed out"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:649
+#: foldav/linux/app/src/window.rs:660
 msgid "Wrong login name or password"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:650
+#: foldav/linux/app/src/window.rs:661
 #, rust-format
 msgid "Sign-in failed: {error}"
 msgstr ""
 
-#: foldav/linux/app/src/window.rs:651
+#: foldav/linux/app/src/window.rs:662
 msgid "Sign-in failed"
 msgstr ""
 
 #: foldav/linux/app/src/window/columns.rs:205
 #: foldav/linux/app/src/window/options.rs:118
-#: foldav/linux/app/src/window/views.rs:151
+#: foldav/linux/app/src/window/views.rs:164
 msgid "Modified"
 msgstr ""
 
@@ -312,11 +312,11 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
-#: foldav/linux/app/src/window/nav.rs:109
+#: foldav/linux/app/src/window/nav.rs:154
 msgid "Not connected. Sign in again in Preferences → Accounts."
 msgstr ""
 
-#: foldav/linux/app/src/window/nav.rs:164
+#: foldav/linux/app/src/window/nav.rs:212
 msgid "Loading failed"
 msgstr ""
 
@@ -546,7 +546,7 @@ msgid "None"
 msgstr ""
 
 #: foldav/linux/app/src/window/options.rs:116
-#: foldav/linux/app/src/window/views.rs:150 foldav/linux/app/ui/window.blp:589
+#: foldav/linux/app/src/window/views.rs:163 foldav/linux/app/ui/window.blp:589
 msgid "Size"
 msgstr ""
 
@@ -555,20 +555,20 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:130
+#: foldav/linux/app/src/window/options.rs:126
 msgid "Folder"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:383
+#: foldav/linux/app/src/window/options.rs:379
 msgid "Icon Size"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:389
+#: foldav/linux/app/src/window/options.rs:385
 #: foldav/linux/app/ui/shortcuts.blp:65
 msgid "Zoom Out"
 msgstr ""
 
-#: foldav/linux/app/src/window/options.rs:390
+#: foldav/linux/app/src/window/options.rs:386
 #: foldav/linux/app/ui/shortcuts.blp:60
 msgid "Zoom In"
 msgstr ""
@@ -783,45 +783,52 @@ msgstr ""
 msgid "Restore"
 msgstr ""
 
-#: foldav/linux/app/src/window/views.rs:149 foldav/linux/app/ui/account.blp:18
+#: foldav/linux/app/src/window/views.rs:162 foldav/linux/app/ui/account.blp:18
 msgid "Name"
 msgstr ""
 
-#: foldav/linux/app/src/window/views.rs:451
+#: foldav/linux/app/src/window/views.rs:466
 #, rust-format
 msgid "{what} ({size})"
 msgstr ""
 
-#: foldav/linux/app/src/window/views.rs:458
+#: foldav/linux/app/src/window/views.rs:473
 #, rust-format
 msgid "“{name}” selected"
 msgstr ""
 
-#: foldav/linux/app/src/window/views.rs:463
+#: foldav/linux/app/src/window/views.rs:478
 #, rust-format
 msgid "{n} folder selected"
 msgid_plural "{n} folders selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: foldav/linux/app/src/window/views.rs:467
+#: foldav/linux/app/src/window/views.rs:482
 #, rust-format
 msgid "{n} item selected"
 msgid_plural "{n} items selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: foldav/linux/app/src/window/views.rs:470
+#: foldav/linux/app/src/window/views.rs:485
 #, rust-format
 msgid "{n} other item selected"
 msgid_plural "{n} other items selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: foldav/linux/app/src/window/views.rs:480
+#: foldav/linux/app/src/window/views.rs:495
 #, rust-format
 msgid "{folders}, {others}"
 msgstr ""
+
+#: foldav/linux/app/src/window/views.rs:505
+#, rust-format
+msgid "{n} item"
+msgid_plural "{n} items"
+msgstr[0] ""
+msgstr[1] ""
 
 #: foldav/linux/app/ui/account.blp:13
 msgid "Use This Account"

@@ -36,6 +36,12 @@ impl File {
         digits.trim_start_matches('0')
     }
 
+    /// A tag, listed as a folder in the Tags place: its `size` is how many files it is on (once
+    /// counted), not bytes, and it has no date.
+    pub fn is_tag(&self) -> bool {
+        self.path.starts_with(crate::places::TAG_PREFIX)
+    }
+
     /// Its type says it is text a preview can show.
     pub fn is_text(&self) -> bool {
         let m = self.mime.as_str();

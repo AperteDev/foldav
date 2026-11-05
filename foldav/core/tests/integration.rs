@@ -565,7 +565,11 @@ fn files_are_shared_by_link_tagged_and_keep_versions() {
         tagged.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(),
         [path.as_str()]
     );
+    // Counted: one file on it, then none.
+    let ids = [tag.id.clone()];
+    assert_eq!(c.tag_counts(A, &ids).unwrap(), [(tag.id.clone(), 1)]);
     c.set_file_tag(A, &file(), &tag.id, false).unwrap();
+    assert_eq!(c.tag_counts(A, &ids).unwrap(), [(tag.id.clone(), 0)]);
     assert!(c.file_tags(A, &file()).unwrap().is_empty());
     // Only an administrator may delete a tag: the Test user gets "forbidden", and the tag stays.
     let deleted = c.delete_tag(A, &tag.id);

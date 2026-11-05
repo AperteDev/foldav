@@ -582,6 +582,23 @@ impl Dav {
         Ok(entries(multistatus(&r.body)?.0))
     }
 
+    /// How many files below Files root `home` `rules` hold for (as `filter_files`), without what
+    /// a listing has of each.
+    pub fn count_filtered(&self, home: &str, rules: &str) -> Result<u64> {
+        let body = format!(
+            r#"<?xml version="1.0" encoding="utf-8"?><oc:filter-files xmlns:d="DAV:" xmlns:oc="{OC}"><d:prop><oc:fileid/></d:prop><oc:filter-rules>{rules}</oc:filter-rules></oc:filter-files>"#
+        );
+        let r = self.request("REPORT", home, &[], &body)?;
+        if r.status != 207 {
+            return Err(Error::Http(r.status, r.body));
+        }
+        Ok(multistatus(&r.body)?
+            .0
+            .iter()
+            .filter(|r| r.status == 200)
+            .count() as u64)
+    }
+
     /// DELETE, if the ETag still matches (when given); gone already counts as done.
     pub fn delete(&self, href: &str, etag: Option<&str>) -> Result<()> {
         let h: Vec<(&str, &str)> = etag.map(|e| ("If-Match", e)).into_iter().collect();

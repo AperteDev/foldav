@@ -3,7 +3,7 @@
 //! Ctrl+plus, Ctrl+minus and Ctrl+0), and the captions beneath the icons' names. All of it is
 //! kept on this device.
 
-use super::views::{Mode, date};
+use super::views::{Mode, date, size_text};
 use super::{Ui, action, get, nav, view};
 use crate::core;
 use crate::i18n::gettext;
@@ -122,11 +122,7 @@ impl Caption {
     pub fn text(self, f: &File) -> String {
         match self {
             Caption::None => String::new(),
-            Caption::Size => f
-                .size
-                .map(glib::format_size)
-                .unwrap_or_default()
-                .to_string(),
+            Caption::Size => size_text(f),
             Caption::Type if f.folder => gettext("Folder"),
             Caption::Type => gio::content_type_get_description(&f.mime).to_string(),
             Caption::Modified => date(f.modified),

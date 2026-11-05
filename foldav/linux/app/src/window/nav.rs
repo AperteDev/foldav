@@ -17,6 +17,45 @@ pub struct History {
     pos: usize,
 }
 
+thread_local! {
+    /// How many files each tag is on, by account and the tag's place, as last counted.
+    static TAG_COUNTS: std::cell::RefCell<std::collections::HashMap<(i64, String), u64>> =
+        std::cell::RefCell::default();
+}
+
+/// Count the files of the tags listed in the Tags place, in the background (a request for each),
+/// and show the counts as they are in.
+fn count_tags(ui: &Rc<Ui>, id: i64) {
+    let Some(files) = ui
+        .dirs
+        .borrow()
+        .get(&(id, foldav_core::places::TAGS.to_string()))
+        .cloned()
+    else {
+        return;
+    };
+    let ids: Vec<String> = files
+        .iter()
+        .filter_map(|f| f.path.strip_prefix(foldav_core::places::TAG_PREFIX))
+        .map(str::to_string)
+        .collect();
+    let weak = Rc::downgrade(ui);
+    glib::spawn_future_local(async move {
+        let counts = gio::spawn_blocking(move || core().tag_counts(id, &ids)).await;
+        let (Some(ui), Ok(Ok(counts))) = (weak.upgrade(), counts) else {
+            return;
+        };
+        TAG_COUNTS.with_borrow_mut(|c| {
+            for (tag, n) in counts {
+                c.insert((id, foldav_core::places::tag_place(&tag)), n);
+            }
+        });
+        if ui.at.borrow().as_ref() == Some(&(id, foldav_core::places::TAGS.to_string())) {
+            show(&ui);
+        }
+    });
+}
+
 /// How a folder is gone to.
 #[derive(Clone, Copy, PartialEq)]
 pub enum Go {
@@ -59,11 +98,17 @@ pub fn visible(ui: &Ui, files: &[File]) -> Vec<File> {
         .as_ref()
         .map(|(id, _)| super::favorites::paths(ui, *id))
         .unwrap_or_default();
+    let account = ui.at.borrow().as_ref().map(|(id, _)| *id);
     let mut shown: Vec<File> = files
         .iter()
         .filter(|f| ui.hidden.get() || !f.hidden())
         .map(|f| File {
             favorite: starred.contains(&f.path),
+            // The tags' counts of files, once they are in.
+            size: account
+                .filter(|_| f.is_tag())
+                .and_then(|id| TAG_COUNTS.with_borrow(|c| c.get(&(id, f.path.clone())).copied()))
+                .or(f.size),
             ..f.clone()
         })
         .collect();
@@ -156,6 +201,9 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
                 }
                 if changed {
                     show(&ui);
+                }
+                if found == foldav_core::places::TAGS {
+                    count_tags(&ui, id);
                 }
                 load_around(&ui);
             }

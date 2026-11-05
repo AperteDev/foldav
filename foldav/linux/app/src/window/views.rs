@@ -351,7 +351,7 @@ pub fn connect(ui: &Rc<Ui>) {
                     }
                     label.set_label(&f.name);
                 }
-                1 => label.set_label(&f.size.map(glib::format_size).unwrap_or_default()),
+                1 => label.set_label(&size_text(&f)),
                 _ => label.set_label(&date(f.modified)),
             }
         });
@@ -453,10 +453,15 @@ pub fn update_status(ui: &Ui) {
 
 fn status_text(files: &[File]) -> Option<String> {
     let first = files.first()?;
-    let size = files
-        .iter()
-        .any(|f| f.size.is_some())
-        .then(|| glib::format_size(files.iter().filter_map(|f| f.size).sum()).to_string());
+    // Together in bytes; a tag has a count of files instead, which is not a size to add.
+    let sized = || files.iter().filter(|f| !f.is_tag());
+    let size = if files.len() == 1 && first.is_tag() {
+        Some(size_text(first)).filter(|s| !s.is_empty())
+    } else {
+        sized()
+            .any(|f| f.size.is_some())
+            .then(|| glib::format_size(sized().filter_map(|f| f.size).sum()).to_string())
+    };
     let with_size = |what: String| match &size {
         Some(size) => gettext("{what} ({size})")
             .replace("{what}", &what)
@@ -493,7 +498,21 @@ fn status_text(files: &[File]) -> Option<String> {
     }))
 }
 
+/// What a file's size column says: its size, or for a tag how many files it is on; none where
+/// it is not known.
+pub fn size_text(f: &File) -> String {
+    match (f.size, f.is_tag()) {
+        (Some(n), true) => ngettext("{n} item", "{n} items", n).replace("{n}", &n.to_string()),
+        (Some(n), false) => glib::format_size(n).to_string(),
+        (None, _) => String::new(),
+    }
+}
+
+/// A date as the locale writes it; none for one that is not known (0: the tags have none).
 pub fn date(t: i64) -> String {
+    if t <= 0 {
+        return String::new();
+    }
     glib::DateTime::from_unix_local(t)
         .and_then(|d| d.format("%x"))
         .map(|d| d.to_string())

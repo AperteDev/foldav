@@ -256,6 +256,28 @@ impl Client {
         Ok(files)
     }
 
+    /// How many files each of the tags `ids` is on, asked a few at a time (one request each: the
+    /// server has no count to ask for). The ones it could not be asked about are left out.
+    pub fn tag_counts(&self, id: i64, ids: &[String]) -> Result<Vec<(String, u64)>> {
+        use std::sync::Mutex;
+        use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
+        let (dav, home) = (self.dav(id)?, self.files_home(id)?);
+        let (next, found) = (AtomicUsize::new(0), Mutex::new(Vec::new()));
+        std::thread::scope(|scope| {
+            for _ in 0..6.min(ids.len()) {
+                scope.spawn(|| {
+                    while let Some(tag) = ids.get(next.fetch_add(1, Relaxed)) {
+                        let rule = format!("<oc:systemtag>{}</oc:systemtag>", xml_escape(tag));
+                        if let Ok(n) = dav.count_filtered(&home, &rule) {
+                            found.lock().unwrap().push((tag.clone(), n));
+                        }
+                    }
+                });
+            }
+        });
+        Ok(found.into_inner().unwrap())
+    }
+
     /// The tags files can have (the server's, shared by its users).
     pub fn tags(&self, id: i64) -> Result<Vec<Tag>> {
         let root = self.files_home(id)?;
