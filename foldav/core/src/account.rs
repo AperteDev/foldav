@@ -171,6 +171,7 @@ impl Client {
             "DELETE FROM kv WHERE substr(key, 1, ?2) = ?1",
             params![prefix, prefix.len() as i64],
         )?;
+        let _ = std::fs::remove_dir_all(self.cache_dir.join("files").join(id.to_string()));
         crate::cache::clear(&db, id)
     }
 

@@ -203,6 +203,20 @@ pub struct HttpResponse {
     pub body: String,
 }
 
+/// A file's contents on their way from the server.
+pub struct Download {
+    pub etag: Option<String>,
+    /// Bytes, when the server said.
+    pub length: Option<u64>,
+    body: ureq::Body,
+}
+
+impl Download {
+    pub fn reader(&mut self) -> impl std::io::Read + '_ {
+        self.body.as_reader()
+    }
+}
+
 /// A file or folder in a PROPFIND listing.
 #[derive(Debug, Clone)]
 pub struct Entry {
@@ -224,6 +238,10 @@ pub struct Entry {
 
 pub struct Dav {
     agent: ureq::Agent,
+    /// For file contents: no limit on how long a transfer takes.
+    // ponytail: a stalled connection hangs until the system gives up on it (ureq has no idle
+    // timeout); a cancel is seen between reads only.
+    stream: ureq::Agent,
     origin: String,
     root: String,
     auth: String,
@@ -239,17 +257,20 @@ impl Dav {
             format!("{url}/remote.php/dav/")
         };
         let origin = url.splitn(4, '/').take(3).collect::<Vec<_>>().join("/");
-        let agent = ureq::Agent::config_builder()
-            .tls_config(crate::net::tls())
-            .allow_non_standard_methods(true)
-            .user_agent("Foldav")
-            .http_status_as_error(false)
-            .timeout_global(Some(std::time::Duration::from_secs(30)))
-            .timeout_connect(Some(CONNECT_TIMEOUT))
-            .build()
-            .new_agent();
+        let agent = |global| {
+            ureq::Agent::config_builder()
+                .tls_config(crate::net::tls())
+                .allow_non_standard_methods(true)
+                .user_agent("Foldav")
+                .http_status_as_error(false)
+                .timeout_global(global)
+                .timeout_connect(Some(CONNECT_TIMEOUT))
+                .build()
+                .new_agent()
+        };
         Dav {
-            agent,
+            agent: agent(Some(std::time::Duration::from_secs(30))),
+            stream: agent(None),
             origin,
             root,
             auth: format!(
@@ -267,13 +288,15 @@ impl Dav {
         }
     }
 
-    pub fn request(
+    /// Send a request and return the response as it comes: its body not read yet.
+    fn send(
         &self,
+        agent: &ureq::Agent,
         method: &str,
         href: &str,
         headers: &[(&str, &str)],
         body: &str,
-    ) -> Result<HttpResponse> {
+    ) -> Result<ureq::http::Response<ureq::Body>> {
         let req = || {
             let mut b = ureq::http::Request::builder()
                 .method(method)
@@ -301,14 +324,24 @@ impl Dav {
         // A connection the server never answers is tried again rather than waited out (until
         // the global timeout): nothing was sent on it yet.
         let mut tries = 0;
-        let mut resp = loop {
-            match self.agent.run(req()?) {
+        loop {
+            match agent.run(req()?) {
                 Err(ureq::Error::Timeout(ureq::Timeout::Connect)) if tries < CONNECT_TRIES => {
                     tries += 1
                 }
-                r => break r.map_err(|e| Error::Net(e.to_string()))?,
+                r => return r.map_err(|e| Error::Net(e.to_string())),
             }
-        };
+        }
+    }
+
+    pub fn request(
+        &self,
+        method: &str,
+        href: &str,
+        headers: &[(&str, &str)],
+        body: &str,
+    ) -> Result<HttpResponse> {
+        let mut resp = self.send(&self.agent, method, href, headers, body)?;
         let header = |n: &str| {
             resp.headers()
                 .get(n)
@@ -333,6 +366,36 @@ impl Dav {
             fileid,
             body,
         })
+    }
+
+    /// GET the file `href`, its body to read as it comes. None when `if_none_match` (an ETag)
+    /// is still the file's: what the caller has is current.
+    pub fn get(&self, href: &str, if_none_match: Option<&str>) -> Result<Option<Download>> {
+        let h: Vec<(&str, &str)> = if_none_match
+            .map(|e| ("If-None-Match", e))
+            .into_iter()
+            .collect();
+        let mut resp = self.send(&self.stream, "GET", href, &h, "")?;
+        let etag = resp
+            .headers()
+            .get("etag")
+            .and_then(|v| v.to_str().ok())
+            .map(|e| strong(e).to_string());
+        match resp.status().as_u16() {
+            200 => Ok(Some(Download {
+                etag,
+                length: resp.body().content_length(),
+                body: resp.into_body(),
+            })),
+            304 => Ok(None),
+            401 => Err(Error::Auth),
+            404 => Err(Error::NotFound(href.into())),
+            423 => Err(Error::Locked(href.into())),
+            s => Err(Error::Http(
+                s,
+                resp.body_mut().read_to_string().unwrap_or_default(),
+            )),
+        }
     }
 
     pub(crate) fn propfind(

@@ -32,6 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A sidebar with the accounts (only with more than one; changing the account keeps the folder
   shown where the new one has it), the favorite folders of the account and a tree of its
   folders
+- Open a file (double click, Enter or Ctrl+O) in its default app, from a copy kept on this
+  device in the cache folder: used again while the server says the file is the same (one small
+  request), read-only, and deleted when not used for a month. Download files and folders
+  (Download… in the right-click menu) to a folder you pick, none overwritten
+- Long actions show as in Files: once an action has taken a second, a row with a ring and its
+  title is added at the foot of the sidebar; a click opens its progress, the time left and the
+  speed, and a way to cancel a transfer
 - New folder (Ctrl+Shift+N), rename (F2), cut, copy and paste (a copy of a name taken is
   named "a (copy)"), and delete to the trash bin, each one request to the server whatever the
   size of the folder, from the keys, the header or a right click; several files selected at

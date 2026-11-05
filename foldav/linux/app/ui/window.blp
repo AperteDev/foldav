@@ -42,6 +42,17 @@ Adw.ApplicationWindow window {
               }
             }
 
+            // The long actions running, a row each at the foot, as Nautilus' (src/window/
+            // transfers.rs).
+            [bottom]
+            Gtk.Box transfers {
+              orientation: vertical;
+              spacing: 2;
+              margin-start: 6;
+              margin-end: 6;
+              styles ["transfers"]
+            }
+
             content: Gtk.ScrolledWindow {
               vexpand: true;
               hscrollbar-policy: never;
@@ -261,6 +272,11 @@ Adw.ApplicationWindow window {
 
 // A right click on the files (src/window/ops.rs, `context_menu`).
 menu file_menu {
+  section {
+    item (_("Open"), "win.open")
+    item (_("Download…"), "win.download")
+  }
+
   section {
     item (_("New Folder"), "win.new-folder")
   }

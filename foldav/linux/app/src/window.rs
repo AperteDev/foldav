@@ -1,7 +1,7 @@
 //! Main window: the welcome page (sign-in), and the files as Nautilus shows them: the sidebar
 //! (accounts, favorites, tree), the header and the views of a folder. Its parts are in
 //! `window/`: `nav` (where the window is, the history, what was loaded), `sidebar`, `header`,
-//! `views` and `ops` (what is done to files).
+//! `views`, `ops` (what is done to files) and `transfers` (the long actions running).
 
 use crate::core;
 use crate::i18n::{gettext, gettext_noop};
@@ -19,6 +19,7 @@ mod header;
 mod nav;
 mod ops;
 mod sidebar;
+mod transfers;
 mod views;
 
 /// The path bar and its segments, as Nautilus'; the dense tree (`.dense`, as Notav's); the row
@@ -34,6 +35,9 @@ const CSS: &str = "
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
 .favorite-star { color: #f5c211; }
+/* The long actions at the foot of the sidebar: rows as the tree's. */
+.transfers menubutton > button { min-height: 28px; padding: 4px 8px; border-radius: 6px; }
+.transfers label { font-weight: normal; }
 /* The window buttons are in a plain toolbar row, not a header bar: its buttons' own background
    must not show behind their circles. */
 .toolbar windowcontrols button, .toolbar windowcontrols button:hover,
@@ -91,6 +95,8 @@ struct Ui {
     sidebar: sidebar::Sidebar,
     header: header::Header,
     views: views::Views,
+    /// The long actions running (`transfers`).
+    transfers: transfers::Transfers,
     files_stack: gtk::Stack,
     error: adw::StatusPage,
     update_banner: adw::Banner,
@@ -403,6 +409,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
         sidebar: sidebar::Sidebar::new(&b),
         header: header::Header::new(&b),
         views: views::Views::new(&b),
+        transfers: transfers::Transfers::new(&b),
         files_stack: get(&b, "files_stack"),
         error: get(&b, "error"),
         update_banner: get(&b, "update_banner"),

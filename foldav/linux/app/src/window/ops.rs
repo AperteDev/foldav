@@ -1,14 +1,17 @@
-//! File operations in the window: new folder, rename, cut, copy and paste, delete, and undo.
-//! Each is one request to the server (`foldav_core` `ops.rs`), run in the background; the list
-//! is loaded again after it. A right click on the files opens the same actions as a menu.
+//! File operations in the window: open, download, new folder, rename, cut, copy and paste,
+//! delete, and undo. Each is run in the background, listed in the header while it takes long
+//! (`transfers.rs`); the changes to the server are one request each (`foldav_core` `ops.rs`), and
+//! the list is loaded again after them. A right click on the files opens the same actions as a
+//! menu.
 
 use super::nav::reload;
-use super::{Ui, action, note, popup_menu, ui};
+use super::{Ui, action, nav, note, popup_menu, toast, transfers, ui};
 use crate::core;
 use crate::i18n::gettext;
 use adw::prelude::*;
 use foldav_core::{Client, Error, File};
 use gtk::{gio, glib};
+use std::path::Path;
 use std::rc::Rc;
 
 /// Files cut or copied, to paste into a folder of the same account.
@@ -36,6 +39,12 @@ fn error_text(e: &Error) -> String {
 
 /// The actions (keys in `accels`).
 pub fn connect(ui: &Rc<Ui>) {
+    action(ui, "open", |ui| {
+        if let [file] = selected(ui).as_slice() {
+            open(ui, file.clone());
+        }
+    });
+    action(ui, "download", download);
     action(ui, "new-folder", new_folder);
     action(ui, "rename", rename);
     action(ui, "cut", |ui| copy(ui, true));
@@ -47,6 +56,7 @@ pub fn connect(ui: &Rc<Ui>) {
 }
 
 pub fn accels(app: &adw::Application) {
+    app.set_accels_for_action("win.open", &["<Control>o"]);
     app.set_accels_for_action("win.new-folder", &["<Control><Shift>n"]);
     app.set_accels_for_action("win.rename", &["F2"]);
     app.set_accels_for_action("win.cut", &["<Control>x"]);
@@ -66,6 +76,8 @@ pub fn update_actions(ui: &Ui) {
         .as_ref()
         .is_some_and(|c| Some(c.account) == at);
     for (name, on) in [
+        ("open", n == 1),
+        ("download", n > 0),
         ("new-folder", at.is_some()),
         ("rename", n == 1),
         ("cut", n > 0),
@@ -111,24 +123,98 @@ async fn ask_name(ui: &Ui, heading: &str, ok: &str, initial: &str, select: i32) 
     Some(entry.text().trim().to_string())
 }
 
-/// Run `op` in the background; the folder is shown again after it, and a step it made is
-/// offered to undo under `done`.
+/// Run `op` in the background, listed as `busy` if it takes long; the folder is shown again
+/// after it, and a step it made is offered to undo under `done`.
 fn run(
     ui: &Rc<Ui>,
+    busy: String,
     done: String,
     op: impl FnOnce(&Client) -> foldav_core::Result<Option<u64>> + Send + 'static,
 ) {
-    let weak = Rc::downgrade(ui);
+    let ui = ui.clone();
     glib::spawn_future_local(async move {
-        let r = gio::spawn_blocking(move || op(core())).await;
-        let Some(ui) = weak.upgrade() else { return };
+        let r = transfers::run(&ui, &busy, false, move |c, _| op(c)).await;
         // After a failure too: what went through is there.
         reload(&ui);
         match r {
-            Ok(Ok(Some(step))) => ui.toasts.add_toast(undo_toast(&done, step)),
-            Ok(Ok(None)) => {}
-            Ok(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
-            Err(_) => ui.toasts.add_toast(note(&gettext("The operation failed"))),
+            Some(Ok(Some(step))) => ui.toasts.add_toast(undo_toast(&done, step)),
+            Some(Ok(None)) => {}
+            Some(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
+            None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
+        }
+    });
+}
+
+/// Open a folder in the window, a file in its default app, from a copy kept on this device.
+pub fn open(ui: &Rc<Ui>, file: File) {
+    let Some((id, _)) = ui.at.borrow().clone() else {
+        return;
+    };
+    if file.folder {
+        return nav::open(ui, id, file.path);
+    }
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        let title = gettext("Opening “{name}”").replace("{name}", &file.name);
+        let r = transfers::run(&ui, &title, true, move |c, p| c.open_file(id, &file, p)).await;
+        match r {
+            Some(Ok(copy)) => launch(&ui, &copy),
+            Some(Err(Error::Cancelled)) => {}
+            Some(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
+            None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
+        }
+    });
+}
+
+fn launch(ui: &Ui, path: &Path) {
+    gtk::FileLauncher::new(Some(&gio::File::for_path(path))).launch(
+        Some(&ui.window),
+        gio::Cancellable::NONE,
+        |r| {
+            if let Err(e) = r
+                && !e.matches(gtk::DialogError::Dismissed)
+            {
+                toast(&gettext("Cannot open the file: {error}").replace("{error}", e.message()));
+            }
+        },
+    );
+}
+
+/// Save the selected files and folders into a folder the user picks.
+fn download(ui: &Rc<Ui>) {
+    let (at, files) = (ui.at.borrow().clone(), selected(ui));
+    let (Some((id, _)), false) = (at, files.is_empty()) else {
+        return;
+    };
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        let dialog = gtk::FileDialog::builder()
+            .title(gettext("Download to"))
+            .accept_label(gettext("Download"))
+            .build();
+        if let Some(dir) = glib::user_special_dir(glib::UserDirectory::Downloads) {
+            dialog.set_initial_folder(Some(&gio::File::for_path(dir)));
+        }
+        // Dismissed, or no folder picked.
+        let Ok(folder) = dialog.select_folder_future(Some(&ui.window)).await else {
+            return;
+        };
+        let Some(dest) = folder.path() else {
+            return toast(&gettext("Cannot save to this folder"));
+        };
+        let title = match files.as_slice() {
+            [f] => gettext("Downloading “{name}”").replace("{name}", &f.name),
+            _ => gettext("Downloading the selected files"),
+        };
+        let r = transfers::run(&ui, &title, true, move |c, p| {
+            c.download(id, &files, &dest, p)
+        })
+        .await;
+        match r {
+            Some(Ok(())) => toast(&gettext("Downloaded")),
+            Some(Err(Error::Cancelled)) => {}
+            Some(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
+            None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
         }
     });
 }
@@ -173,7 +259,7 @@ fn new_folder(ui: &Rc<Ui>) {
         else {
             return;
         };
-        run(&ui, String::new(), move |c| {
+        run(&ui, gettext("Creating folder"), String::new(), move |c| {
             c.new_folder(id, &dir, &name).map(|()| None)
         });
     });
@@ -203,7 +289,7 @@ fn rename(ui: &Rc<Ui>) {
             return;
         };
         if name != file.name {
-            run(&ui, gettext("Renamed"), move |c| {
+            run(&ui, gettext("Renaming"), gettext("Renamed"), move |c| {
                 c.rename(id, &file.path, &name)
             });
         }
@@ -234,7 +320,9 @@ fn paste(ui: &Rc<Ui>) {
         return;
     };
     if cut {
-        run(ui, gettext("Moved"), move |c| c.move_to(id, &paths, &dest));
+        run(ui, gettext("Moving"), gettext("Moved"), move |c| {
+            c.move_to(id, &paths, &dest)
+        });
     } else {
         // Pasted again later: the copy stays on the clipboard.
         *ui.clipboard.borrow_mut() = Some(Clipboard {
@@ -242,7 +330,7 @@ fn paste(ui: &Rc<Ui>) {
             paths: paths.clone(),
             cut: false,
         });
-        run(ui, String::new(), move |c| {
+        run(ui, gettext("Copying"), String::new(), move |c| {
             c.copy_to(id, &paths, &dest).map(|()| None)
         });
     }
@@ -255,6 +343,11 @@ fn delete(ui: &Rc<Ui>) {
     };
     let paths: Vec<String> = selected(ui).into_iter().map(|f| f.path).collect();
     if !paths.is_empty() {
-        run(ui, gettext("Moved to Trash"), move |c| c.delete(id, &paths));
+        run(
+            ui,
+            gettext("Moving to Trash"),
+            gettext("Moved to Trash"),
+            move |c| c.delete(id, &paths),
+        );
     }
 }

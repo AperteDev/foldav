@@ -16,6 +16,9 @@ What Foldav can do, in short. The details of each release are in the
   against the server by their ETag.
 - New folder, rename, cut, copy, paste and delete on the server, one request each whatever the
   folder's size; deletions go to the trash bin; undo for renames, moves and deletions.
+- Open a file in its default app from a copy kept on the device and checked against the server
+  each time; download files and folders to a folder you pick; long actions listed at the foot
+  of the sidebar with their progress and time left, transfers cancellable.
 - Settings synced between your devices, through the account you choose.
 
 ## Planned

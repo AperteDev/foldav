@@ -10,6 +10,7 @@ mod net;
 mod ops;
 mod settings;
 pub mod store;
+mod transfer;
 mod undo;
 
 use dav::Dav;
@@ -23,6 +24,7 @@ pub use files::File;
 pub use login::{Credentials, LoginFlow, login_flow_poll, login_flow_start, password_login};
 pub use ops::valid_name;
 pub use settings::DEVICE_ONLY;
+pub use transfer::Progress;
 
 pub trait ChangeListener: Send + Sync {
     /// Settings changed by another device arrived.
@@ -35,6 +37,8 @@ pub struct Client {
     dav: Mutex<HashMap<i64, Arc<Dav>>>,
     listeners: Mutex<Vec<Box<dyn ChangeListener>>>,
     journal: Mutex<undo::Journal>,
+    /// What can be made again from the server: the copies files are opened from (`transfer.rs`).
+    cache_dir: std::path::PathBuf,
 }
 
 pub fn now() -> i64 {
@@ -53,7 +57,15 @@ impl Client {
             dav: Mutex::default(),
             listeners: Mutex::new(Vec::new()),
             journal: Mutex::default(),
+            cache_dir: std::path::Path::new(&data_dir).join("cache"),
         })
+    }
+
+    /// Keep the copies of files in `dir` rather than in a folder of the data (a front-end's
+    /// cache folder, which the system may clean).
+    pub fn cache_in(mut self, dir: impl Into<std::path::PathBuf>) -> Client {
+        self.cache_dir = dir.into();
+        self
     }
 
     pub fn subscribe(&self, listener: Box<dyn ChangeListener>) {
@@ -75,6 +87,10 @@ pub enum Error {
     Locked(String),
     Http(u16, String),
     Net(String),
+    /// Reading or writing a file of this device failed.
+    Io(String),
+    /// Stopped by `Progress::cancel`.
+    Cancelled,
     Parse(String),
     Db(String),
     /// The data was left by a newer Foldav, whose schema this one may not read or write.
@@ -108,6 +124,8 @@ impl std::fmt::Display for Error {
                 write!(f, "HTTP {code}: {}", short.trim())
             }
             Error::Net(s) => write!(f, "network: {s}"),
+            Error::Io(s) => write!(f, "file: {s}"),
+            Error::Cancelled => write!(f, "cancelled"),
             Error::Parse(s) => write!(f, "parse: {s}"),
             Error::Db(s) => write!(f, "database: {s}"),
             Error::Newer(s) => write!(f, "made by a newer version of Foldav: {s}"),

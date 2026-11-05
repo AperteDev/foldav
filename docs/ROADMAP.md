@@ -94,16 +94,21 @@ Once a third app copies the same code, a shared crate in its own repository beco
 3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete
    and Ctrl+Z are done): dragging files inside the window to a folder or the sidebar; a
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
-   server's capabilities (`Features`, as in Notav) and ask first where it has none; progress
-   for long operations (a toast or a panel); a choice between replacing and keeping both when
+   server's capabilities (`Features`, as in Notav) and ask first where it has none; a
+   choice between replacing and keeping both when
    a name is taken (now a move refuses and a copy takes a free name); copies between accounts.
-4. **Transfers**: uploads (chunked for big files, Nextcloud's bulk upload for many small ones)
-   and downloads, dragged to and from Nautilus or the desktop; a folder downloaded as one ZIP
-   where the server offers it. Transfers queue, resume after a dropped connection, and finish
-   before the app quits.
-5. **Opening files**: a file opens in its default app from a local copy; a change saved there
-   is uploaded back (with the ETag checked first: a conflict keeps both, as the desktop client
-   does).
+4. **Transfers**, what is left of them (downloads of files and folders to a folder picked,
+   with the sidebar's rows for running actions and their cancel, are done): uploads (chunked for
+   big files, Nextcloud's bulk upload for many small ones), and files dragged to and from
+   Nautilus or the desktop; a folder downloaded as one ZIP where the server offers it (now
+   file by file). Transfers queue, resume after a dropped connection, and finish before the
+   app quits (now closing the window stops them). A stalled connection is not given up on
+   until the system does (`ureq` has no idle timeout).
+5. **Opening files**, what is left of it (a file opens in its default app from a copy kept in
+   the cache folder, checked against the server's ETag, deleted after a month unused): a
+   change saved to the copy is uploaded back (with the ETag checked first: a conflict keeps
+   both, as the desktop client does; the copy is read-only until then); Open With…; several
+   files opened at once; a limit to the copies' total size.
 6. **Nextcloud's features** on files (the places that list them are above):
    - Trash: restore, delete for good, empty it.
    - Versions: list a file's versions, restore one, open one.
@@ -126,9 +131,11 @@ Later (v2):
 
 ## Open questions and risks
 
-- **Opening files in other apps**: a local copy in a cache folder and watching it for saves is
-  simplest; a FUSE mount or a GVfs backend would let apps open the server's paths directly but
-  is much more work. Also how long copies are kept and when they are cleaned.
+- **Opening files in other apps**: a local copy in a cache folder is built (kept a month,
+  cleaned at start); watching it for saves, to upload them, is left. A FUSE mount or a GVfs
+  backend would let apps open the server's paths directly but is much more work.
+  The server may keep a file's ETag when it is rewritten within a second of its last change,
+  so a copy can then be taken for current (the integration test waits for it).
 - **Bulk operations**: which Nextcloud versions have bulk upload (`/remote.php/dav/bulk`) and
   ZIP downloads of folders over WebDAV, and what the fallbacks are; whether a server-side `COPY`
   of a huge folder can time out on the client while the server is still working.

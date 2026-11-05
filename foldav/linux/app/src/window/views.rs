@@ -292,7 +292,7 @@ pub fn connect(ui: &Rc<Ui>) {
         column.set_factory(Some(&factory));
     }
 
-    // A double click or Enter opens a folder.
+    // A double click or Enter opens a folder or a file.
     let w = weak.clone();
     v.grid.connect_activate(move |view, pos| {
         activate(&w, view.model(), pos);
@@ -370,17 +370,13 @@ pub fn attach_menu(ui: &Weak<Ui>, item: &gtk::ListItem, w: &gtk::Widget) {
     w.add_controller(click);
 }
 
-/// Open the folder at `pos` of `model`.
+/// Open the folder or file at `pos` of `model`.
 pub fn activate(ui: &Weak<Ui>, model: Option<gtk::SelectionModel>, pos: u32) {
-    let (Some(ui), Some(file)) = (
+    if let (Some(ui), Some(file)) = (
         ui.upgrade(),
         model.and_then(|m| m.item(pos)).map(|o| file_of(&o)),
-    ) else {
-        return;
-    };
-    let id = ui.at.borrow().as_ref().map(|(id, _)| *id);
-    if let (true, Some(id)) = (file.folder, id) {
-        nav::open(&ui, id, file.path);
+    ) {
+        ops::open(&ui, file);
     }
 }
 

@@ -1,16 +1,17 @@
 //! Translations and the locale, through glibc: gettext with the `foldav` domain (catalogs in
 //! `po/`, refreshed by `scripts/i18n.sh`). Mark text with `gettext`, `pgettext` where a word
-//! needs its context; `gettext_noop` for text in a `const`; xgettext finds these calls.
-//! Placeholders are named (`{title}`) and filled with `replace`. Counts (`ngettext`, as in
-//! Notav's `i18n.rs`) are added with the first text that has one.
+//! needs its context; `ngettext` for counts; `gettext_noop` for text in a `const`; xgettext
+//! finds these calls. Placeholders are named (`{title}`) and filled with `replace`.
 
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{CStr, CString, c_char, c_ulong};
 
 const DOMAIN: &str = "foldav";
 
 unsafe extern "C" {
     #[link_name = "gettext"]
     fn c_gettext(msgid: *const c_char) -> *mut c_char;
+    #[link_name = "ngettext"]
+    fn c_ngettext(one: *const c_char, many: *const c_char, n: c_ulong) -> *mut c_char;
     fn bindtextdomain(domain: *const c_char, dir: *const c_char) -> *mut c_char;
     fn bind_textdomain_codeset(domain: *const c_char, codeset: *const c_char) -> *mut c_char;
     fn textdomain(domain: *const c_char) -> *mut c_char;
@@ -58,6 +59,12 @@ fn locale_dir() -> std::path::PathBuf {
 pub fn gettext(msgid: &str) -> String {
     let m = c(msgid);
     owned(unsafe { c_gettext(m.as_ptr()) })
+}
+
+/// The form of `one`/`many` for `n` in the user's language.
+pub fn ngettext(one: &str, many: &str, n: u64) -> String {
+    let (o, m) = (c(one), c(many));
+    owned(unsafe { c_ngettext(o.as_ptr(), m.as_ptr(), n as c_ulong) })
 }
 
 /// `msgid` as meant in `context` (gettext's msgctxt), for words that translate differently.

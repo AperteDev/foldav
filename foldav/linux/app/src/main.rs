@@ -242,7 +242,10 @@ fn main() -> glib::ExitCode {
     gio::resources_register_include!("icons.gresource").expect("register icons");
     let data = glib::user_data_dir().join("foldav");
     let client = match Client::open(data.to_string_lossy().into()) {
-        Ok(c) => c,
+        // The copies of files go to the cache folder, where the system can clean them; the
+        // sandbox keeps them with its data.
+        Ok(c) if sandbox() => c,
+        Ok(c) => c.cache_in(glib::user_cache_dir().join("foldav")),
         Err(e) => return open_failed(&e),
     };
     client.subscribe(Box::new(Listener));
@@ -262,6 +265,8 @@ fn main() -> glib::ExitCode {
             sync_settings();
         }
         update::watch(app);
+        // The copies files were opened from, not used for a month.
+        gio::spawn_blocking(|| core().prune_cache(std::time::Duration::from_secs(30 * 86400)));
     });
     app.connect_activate(window::present);
     let code = app.run();

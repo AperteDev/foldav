@@ -173,3 +173,65 @@ fn favorites_go_up_and_come_down_and_changes_elsewhere_are_seen() {
     assert!(c.sync_favorites(A).unwrap());
     assert!(!kept(&two));
 }
+
+#[test]
+fn files_are_opened_from_a_kept_copy_and_downloaded_with_their_folders() {
+    use foldav_core::Progress;
+    let (c, dav, root) = fixture("transfer");
+    let home = c.files_home(A).unwrap();
+    let put = |p: &str, body: &str| {
+        let r = dav
+            .request("PUT", &format!("{home}{root}/{p}"), &[], body)
+            .unwrap();
+        assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    };
+    c.new_folder(A, &root, "dir").unwrap();
+    put("a.txt", "hello");
+    put("dir/b.txt", "inside");
+    let file = |name: &str| {
+        c.list(A, &root)
+            .unwrap()
+            .into_iter()
+            .find(|f| f.name == name)
+            .unwrap()
+    };
+
+    // Fetched, then the same copy while the server's file is the same.
+    let p = Progress::default();
+    let copy = c.open_file(A, &file("a.txt"), &p).unwrap();
+    assert_eq!(std::fs::read_to_string(&copy).unwrap(), "hello");
+    assert_eq!((p.done(), p.total()), (5, 5));
+    let p = Progress::default();
+    assert_eq!(c.open_file(A, &file("a.txt"), &p).unwrap(), copy);
+    assert_eq!(p.done(), 0, "nothing fetched again");
+
+    // Changed on the server: the copy is made again.
+    // The server keeps the ETag of a file rewritten within a moment of its last change.
+    std::thread::sleep(std::time::Duration::from_secs(3));
+    put("a.txt", "hello again");
+    let copy = c
+        .open_file(A, &file("a.txt"), &Progress::default())
+        .unwrap();
+    assert_eq!(std::fs::read_to_string(&copy).unwrap(), "hello again");
+
+    // Downloaded: a folder with what is in it; a second time under another name.
+    let dest = std::env::temp_dir().join(format!("foldav-it-download-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dest);
+    std::fs::create_dir_all(&dest).unwrap();
+    let both = [file("a.txt"), file("dir")];
+    c.download(A, &both, &dest, &Progress::default()).unwrap();
+    c.download(A, &both[1..], &dest, &Progress::default())
+        .unwrap();
+    let read = |p: &str| std::fs::read_to_string(dest.join(p)).unwrap();
+    assert_eq!(read("a.txt"), "hello again");
+    assert_eq!(read("dir/b.txt"), "inside");
+    assert_eq!(read("dir (copy)/b.txt"), "inside");
+
+    // Cancelled: nothing is left.
+    let p = Progress::default();
+    p.cancel();
+    let r = c.download(A, &both[1..], &dest, &p);
+    assert!(matches!(r, Err(Error::Cancelled)), "{r:?}");
+    assert!(!dest.join("dir (copy 2)").exists());
+    let _ = std::fs::remove_dir_all(&dest);
+}
