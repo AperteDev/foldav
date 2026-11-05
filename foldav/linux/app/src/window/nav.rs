@@ -26,6 +26,9 @@ pub enum Go {
     Keep,
     /// Another account's, the same folder, or the nearest one above it it has: in the history.
     Switch,
+    /// The same folder again, to see what it is now: not in the history, and not from what was
+    /// kept on disk (a file just deleted would show for a moment).
+    Reload,
 }
 
 /// The folders above `path`, the root ("") first: "a/b" has ["", "a"], the root has none.
@@ -65,7 +68,7 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
         return;
     }
     *ui.at.borrow_mut() = Some((id, path.clone()));
-    if how != Go::Keep {
+    if matches!(how, Go::Push | Go::Switch) {
         push(ui, id, &path);
     }
     // The tree opens down to it; and at the root, the first time (it can be closed after).
@@ -82,7 +85,18 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
             &gettext("Not connected. Sign in again in Preferences → Accounts."),
         );
     }
-    let cached = ui.dirs.borrow().get(&(id, path.clone())).cloned();
+    let mut cached = ui.dirs.borrow().get(&(id, path.clone())).cloned();
+    // A folder listed before shows at once, as it was; the server is asked after.
+    if cached.is_none()
+        && how != Go::Reload
+        && let Some(files) = core().cached(id, &path)
+    {
+        let files = Rc::new(files);
+        ui.dirs
+            .borrow_mut()
+            .insert((id, path.clone()), files.clone());
+        cached = Some(files);
+    }
     if cached.is_some() {
         show(ui);
     } else if ui.views.mode() == views::Mode::Columns {
@@ -190,6 +204,17 @@ fn load_around(ui: &Rc<Ui>) {
     if need.is_empty() {
         return refresh_around(ui);
     }
+    // What was kept of them shows at once; the server is asked after, by the folders' ETags.
+    let mut from_disk = false;
+    for p in &need {
+        if let Some(files) = core().cached(id, p) {
+            ui.dirs.borrow_mut().insert((id, p.clone()), Rc::new(files));
+            from_disk = true;
+        }
+    }
+    if from_disk {
+        refresh_around(ui);
+    }
     let weak = Rc::downgrade(ui);
     glib::spawn_future_local(async move {
         let found = gio::spawn_blocking(move || {
@@ -200,10 +225,17 @@ fn load_around(ui: &Rc<Ui>) {
         .await
         .unwrap_or_default();
         let Some(ui) = weak.upgrade() else { return };
+        let mut changed = !from_disk;
         for (p, files) in found {
-            ui.dirs.borrow_mut().insert((id, p), Rc::new(files));
+            let old = ui.dirs.borrow().get(&(id, p.clone())).cloned();
+            if old.as_deref() != Some(&files) {
+                ui.dirs.borrow_mut().insert((id, p), Rc::new(files));
+                changed = true;
+            }
         }
-        refresh_around(&ui);
+        if changed {
+            refresh_around(&ui);
+        }
     });
 }
 
@@ -228,7 +260,7 @@ pub fn reload(ui: &Rc<Ui>) {
     let at = ui.at.borrow().clone();
     if let Some((id, path)) = at {
         ui.dirs.borrow_mut().retain(|(a, _), _| *a != id);
-        go(ui, id, path, Go::Keep);
+        go(ui, id, path, Go::Reload);
     }
 }
 

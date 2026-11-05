@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Folders open at once: what was listed of each is kept on this device and shown first, then
+  the server is asked in the background; by the folder's ETag, so a folder that did not change
+  costs one small request, not a listing of everything in it. The tree and the columns fill
+  from it too, also after a restart
 - A window as Nautilus': the files as icons, a list (sorted by clicking a column's header) or
   columns, one per folder from the root, switched in the header or with Ctrl+1 to 3; back and
   forward (Alt+Left, Alt+Right) and the folder above (Alt+Up); a path bar with a segment for

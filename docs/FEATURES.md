@@ -10,6 +10,8 @@ What Foldav can do, in short. The details of each release are in the
 - Browse the folders of your Nextcloud Files as in Files: icons, list or columns, a path bar,
   back and forward, a sidebar with the accounts, bookmarks and a folder tree; hidden files
   shown on request.
+- Folders show at once from what was listed before (kept on this device), then are checked
+  against the server by their ETag.
 - New folder, rename, cut, copy, paste and delete on the server, one request each whatever the
   folder's size; deletions go to the trash bin; undo for renames, moves and deletions.
 - Settings synced between your devices, through the account you choose.

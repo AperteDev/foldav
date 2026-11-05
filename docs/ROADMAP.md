@@ -71,8 +71,8 @@ Once a third app copies the same code, a shared crate in its own repository beco
 
 1. **Browsing**, what is left of it (the Nautilus-like window with icons, list and columns,
    path bar, history, bookmarks, folder tree and accounts is done): thumbnails from the server's
-   previews (`/core/preview`, for files with `has-preview`), cached by ETag; listings cached on
-   disk by folder ETag (now only in memory, asked again at every visit); the web app's other
+   previews (`/core/preview`, for files with `has-preview`), cached by ETag; a limit to the
+   listing cache's size, and a long-offline mode that shows it without asking; the web app's other
    places in the sidebar (Recent, Favorites, Shared with me, Shared by me, Tags, Trash); the
    header's search; a zoom for the icons; sorting also in the icons and columns; bookmarks
    renamed and reordered, and synced between devices; the last folder and account restored at
