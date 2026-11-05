@@ -33,7 +33,8 @@ pub enum Go {
 
 /// The folders above `path`, the root ("") first: "a/b" has ["", "a"], the root has none.
 pub fn ancestors(path: &str) -> Vec<String> {
-    if path.is_empty() {
+    // A place has no folders above it.
+    if path.is_empty() || foldav_core::places::is_place(path) {
         return Vec::new();
     }
     let parts: Vec<&str> = path.split('/').collect();

@@ -281,6 +281,8 @@ pub fn refresh(ui: &Rc<Ui>) {
     }
     let at = ui.at.borrow().clone();
     let levels: Vec<String> = match &at {
+        // A place is a list of its own, with no folders above it.
+        Some((_, path)) if foldav_core::places::is_place(path) => vec![path.clone()],
         Some((_, path)) => {
             let mut l = nav::ancestors(path);
             l.push(path.clone());
