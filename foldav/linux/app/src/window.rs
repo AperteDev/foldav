@@ -34,6 +34,12 @@ const CSS: &str = "
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
 .favorite-star { color: #f5c211; }
+/* The window buttons are in a plain toolbar row, not a header bar: its buttons' own background
+   must not show behind their circles. */
+.toolbar windowcontrols button, .toolbar windowcontrols button:hover,
+.toolbar windowcontrols button:active { background: none; box-shadow: none; }
+.toolbar windowcontrols button:hover image { background-color: alpha(currentColor, 0.2); }
+.toolbar windowcontrols button:active image { background-color: alpha(currentColor, 0.3); }
 /* The columns, as the Files extension \"My Computer\" draws them: rows 36px high with a 9px
    radius, touching, the selection grey (the path through the columns) and in the column the
    user works in the accent colour; a divider at the edge of each column, the handle that
