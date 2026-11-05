@@ -281,15 +281,12 @@ pub fn target(
     // Files of the window move (Ctrl: copy; the compositor turns that into the action it
     // gives); what comes from another app is copied, to the server.
     let (weak, dest) = (ui.clone(), std::rc::Rc::new(dest));
-    // Ctrl held: a copy. The source offers both actions all the while (and the drop's actions say
-    // so), so the key itself is looked at; some compositors offer copying only then.
+    // Ctrl held: the compositor chooses copying, and the drop's actions say so. What this target
+    // prefers must stay a move all the while: a preference of copying would be chosen again
+    // after Ctrl is let go.
     let copy_only = |t: &gtk::DropTarget| {
-        t.current_drop().is_some_and(|d| {
-            !d.actions().contains(gdk::DragAction::MOVE)
-                || d.device()
-                    .modifier_state()
-                    .contains(gdk::ModifierType::CONTROL_MASK)
-        })
+        t.current_drop()
+            .is_some_and(|d| !d.actions().contains(gdk::DragAction::MOVE))
     };
     // What the window drags is no drop here when it makes no sense (on itself).
     let (w, d) = (weak.clone(), dest.clone());
@@ -300,7 +297,6 @@ pub fn target(
         if !ours {
             return gdk::DragAction::COPY;
         }
-        let copy = copy_only(t);
         // No place to drop on, or one that makes no sense: no drop.
         let refused = w
             .upgrade()
@@ -308,8 +304,6 @@ pub fn target(
             .is_none_or(|dest| refuses(&dest));
         if refused {
             gdk::DragAction::empty()
-        } else if copy {
-            gdk::DragAction::COPY
         } else {
             gdk::DragAction::MOVE
         }
