@@ -41,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   speed, and a way to cancel a transfer
 - Upload files and folders (Upload Files… with Ctrl+U, Upload Folder… in the right-click menu
   and the path bar's): a file in one request, a big one (32 MB or more) in chunks of 16 MB
-  that are sent again one at a time when the connection drops, with the file's date kept;
+  that are sent again one at a time when the connection drops, and small files (256 KB or
+  less) a hundred to a request with Nextcloud's bulk upload, with the files' dates kept;
   when a name is taken you choose Replace (the server keeps the old file as a version), Keep
   Both or Skip
 - The places of Nextcloud Files in the sidebar, as the web app has them (each only where the

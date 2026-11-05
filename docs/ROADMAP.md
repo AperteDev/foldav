@@ -87,9 +87,9 @@ Once a third app copies the same code, a shared crate in its own repository beco
    a name is taken in a move or copy (now a move refuses and a copy takes a free name); moving
    (not only copying) between accounts, and pasting between them.
 4. **Transfers**, what is left of them (downloads, a folder or several files as one ZIP,
-   uploads in one request or in chunks, drag and drop inside the window and to and from other
-   apps, copies between accounts, and the sidebar's rows for running actions and their cancel,
-   are done): Nextcloud's bulk upload for many small files; extracting a ZIP downloaded as
+   uploads in one request, in chunks or many small files in one bulk request, drag and drop
+   inside the window and to and from other apps, copies between accounts, and the sidebar's
+   rows for running actions and their cancel, are done): extracting a ZIP downloaded as
    folders (a folder dragged out of the window is still fetched file by file). Transfers queue,
    resume after a dropped connection (a chunk is sent again, a download starts over), and
    finish before the app quits (now closing the window stops them). A stalled connection is
@@ -133,9 +133,12 @@ Later (v2):
   backend would let apps open the server's paths directly but is much more work.
   The server may keep a file's ETag when it is rewritten within a second of its last change,
   so a copy can then be taken for current (the integration test waits for it).
-- **Bulk operations**: which Nextcloud versions have bulk upload (`/remote.php/dav/bulk`) and
-  ZIP downloads of folders over WebDAV, and what the fallbacks are; whether a server-side `COPY`
-  of a huge folder can time out on the client while the server is still working.
+- **Bulk operations**: bulk upload (`/remote.php/dav/bulk`, Nextcloud 28 and up: files up to
+  256 KB, up to 100 or 4 MB a request, each with its MD5) falls back to one request a file when
+  the server does not answer that every file was stored; which versions have ZIP downloads of
+  folders over WebDAV (this one, 35, has) and what Foldav does where they do not; whether a
+  server-side `COPY` of a huge folder can time out on the client while the server is still
+  working.
 - **Thumbnails**: the preview endpoint is not WebDAV; whether it takes an app password the same
   way, how many previews to ask for at once without loading the server, and the cache's size
   limit.

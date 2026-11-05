@@ -235,7 +235,7 @@ fn files_are_opened_from_a_kept_copy_and_downloaded_with_their_folders() {
 #[test]
 fn files_and_folders_are_uploaded_whole_or_in_chunks() {
     use foldav_core::{Progress, Taken};
-    let (c, _dav, root) = fixture("upload");
+    let (c, dav, root) = fixture("upload");
     let local = std::env::temp_dir().join(format!("foldav-it-upload-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&local);
     std::fs::create_dir_all(local.join("tree/sub")).unwrap();
@@ -288,17 +288,39 @@ fn files_and_folders_are_uploaded_whole_or_in_chunks() {
     assert_eq!(names(&c, &root).len(), 5);
     // The server keeps the ETag of a file rewritten within a moment of its last change.
     std::thread::sleep(std::time::Duration::from_secs(3));
+    std::fs::write(local.join("tree/b.txt"), "b changed").unwrap();
     c.upload(A, &root, again, Taken::Replace, &Progress::default())
         .unwrap();
     assert_eq!(names(&c, &root).len(), 5);
     assert_eq!(read("a.txt"), b"second");
+    // The small files of the tree went in one bulk request, replacing what was there.
+    let home = c.files_home(A).unwrap();
+    let on_server = |p: &str| {
+        dav.request("GET", &format!("{home}{root}/{p}"), &[], "")
+            .unwrap()
+            .body
+    };
+    assert_eq!(on_server("tree/b.txt"), "b changed");
+    assert_eq!(on_server("tree/sub/c ż.txt"), "c");
+
+    // Many small files, in several bulk requests (a hundred to a request).
+    std::fs::create_dir_all(local.join("many")).unwrap();
+    for i in 0..230 {
+        std::fs::write(local.join(format!("many/f{i:03}.txt")), format!("file {i}")).unwrap();
+    }
+    let p = Progress::default();
+    c.upload(A, &root, &[local.join("many")], Taken::KeepBoth, &p)
+        .unwrap();
+    assert_eq!(names(&c, &format!("{root}/many")).len(), 230);
+    assert_eq!((p.done(), p.total()), (p.total(), p.total()));
+    assert_eq!(on_server("many/f229.txt"), "file 229");
 
     // Cancelled: nothing is sent, and no half of a big file is left.
     let p = Progress::default();
     p.cancel();
     let r = c.upload(A, &root, &items[2..], Taken::KeepBoth, &p);
     assert!(matches!(r, Err(Error::Cancelled)), "{r:?}");
-    assert_eq!(names(&c, &root).len(), 5);
+    assert_eq!(names(&c, &root).len(), 6);
     let _ = std::fs::remove_dir_all(&local);
 }
 

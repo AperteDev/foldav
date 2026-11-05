@@ -4,6 +4,7 @@
 //! downloads.
 
 use crate::dav::Dav;
+use crate::json::Json;
 use crate::ops::{copy_name, join};
 use crate::{Client, Error, Progress, Result};
 use std::io::{Read, Seek, SeekFrom};
@@ -173,6 +174,9 @@ impl Client {
         p.set_total(total);
         let dav = self.dav(id)?;
         let home = self.files_home(id)?;
+        // Small files wait to go together, in one request.
+        let mut batch = Batch::default();
+        let mut bulk = true;
         for step in steps {
             if p.is_cancelled() {
                 return Err(Error::Cancelled);
@@ -186,13 +190,104 @@ impl Client {
                     }
                 }
                 Step::File { local, to, size } => {
-                    let href = format!("{home}{to}");
-                    unless_cancelled(p, put(&dav, &home, &href, &local, size, None, p))?;
+                    if bulk && size <= BULK_FILE {
+                        batch.add(local, to, size);
+                        if batch.full() {
+                            bulk = batch.send(&dav, &home, p)?;
+                        }
+                    } else {
+                        let href = format!("{home}{to}");
+                        unless_cancelled(p, put(&dav, &home, &href, &local, size, None, p))?;
+                    }
                 }
             }
         }
+        batch.send(&dav, &home, p)?;
         Ok(())
     }
+}
+
+/// Files up to this size go many in a request (Nextcloud's bulk upload).
+const BULK_FILE: u64 = 256 << 10;
+/// A request of them holds up to this many bytes and files.
+const BULK_BYTES: u64 = 4 << 20;
+const BULK_FILES: usize = 100;
+
+/// Small files waiting to be sent together.
+#[derive(Default)]
+struct Batch {
+    files: Vec<(PathBuf, String, u64)>,
+    bytes: u64,
+}
+
+impl Batch {
+    fn add(&mut self, local: PathBuf, to: String, size: u64) {
+        self.bytes += size;
+        self.files.push((local, to, size));
+    }
+
+    fn full(&self) -> bool {
+        self.bytes >= BULK_BYTES || self.files.len() >= BULK_FILES
+    }
+
+    /// Send what waits. False when the server has no bulk upload (the files were sent one by
+    /// one, and the rest should be).
+    fn send(&mut self, dav: &Dav, home: &str, p: &Progress) -> Result<bool> {
+        let files = std::mem::take(&mut self.files);
+        self.bytes = 0;
+        // A single file gains nothing from a multipart request.
+        if files.len() > 1 && bulk(dav, home, &files, p).is_ok() {
+            return Ok(true);
+        }
+        let several = files.len() > 1;
+        for (local, to, size) in files {
+            let href = format!("{home}{to}");
+            unless_cancelled(p, put(dav, home, &href, &local, size, None, p))?;
+        }
+        // One file is no sign of what the server can do: only a failed request is.
+        Ok(!several)
+    }
+}
+
+/// Upload `files` (their path on this device, below the Files root, size) in one request:
+/// `multipart/related`, each part a file with its path, date and MD5. Nothing is counted as
+/// sent unless the answer says every file was stored.
+fn bulk(dav: &Dav, home: &str, files: &[(PathBuf, String, u64)], p: &Progress) -> Result<()> {
+    let boundary = format!("foldav{:x}", std::process::id());
+    let mut body: Vec<u8> = Vec::new();
+    for (local, to, _) in files {
+        let data = std::fs::read(local).map_err(io)?;
+        body.extend(format!(
+            "--{boundary}\r\nX-File-Mtime: {}\r\nX-File-Path: /{to}\r\nX-File-MD5: {}\r\nContent-Length: {}\r\n\r\n",
+            mtime(local),
+            crate::md5::md5_hex(&data),
+            data.len()
+        ).into_bytes());
+        body.extend(data);
+        body.extend(b"\r\n");
+    }
+    body.extend(format!("--{boundary}--\r\n").into_bytes());
+    let root = home.split_once("/files/").map_or("", |(r, _)| r);
+    let content_type = format!("multipart/related; boundary={boundary}");
+    let len = body.len() as u64;
+    let r = dav.upload(
+        "POST",
+        &format!("{root}/bulk"),
+        &[("Content-Type", &content_type)],
+        len,
+        || Ok(Box::new(std::io::Cursor::new(body.clone()))),
+    )?;
+    let said = Json::parse(&r.body);
+    let all_stored = r.status == 200
+        && said.as_ref().is_some_and(|j| {
+            matches!(j, Json::Obj(m) if m.len() == files.len()
+                && m.values().all(|f| f.get("error") == Some(&Json::Bool(false))))
+        });
+    if !all_stored {
+        return Err(Error::Http(r.status, r.body));
+    }
+    p.add(files.iter().map(|f| f.2).sum());
+    Ok(())
 }
 
 /// Upload `local` as the file `href`, replacing what is there, if its ETag is `if_match` (when

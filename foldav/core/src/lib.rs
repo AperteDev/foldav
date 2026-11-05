@@ -7,6 +7,7 @@ mod favorites;
 mod files;
 pub mod json;
 mod login;
+mod md5;
 mod net;
 mod ops;
 pub mod places;
