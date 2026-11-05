@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Packages of each release: a Flatpak, a tarball, a `.deb`, Fedora RPMs on COPR and the AUR
+  packages `foldav`, `foldav-git` and `foldav-bin`; a new app icon
 - Folders open at once: what was listed of each is kept on this device and shown first, then
   the server is asked in the background; by the folder's ETag, so a folder that did not change
   costs one small request, not a listing of everything in it. The tree and the columns fill
@@ -38,3 +40,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   name and app password, with more than one account; the folders and files of each account's
   Nextcloud Files, opened by a click, with Alt+Up to the parent folder; Preferences (style,
   accounts, settings synced between devices); a Polish translation
+
+[Unreleased]: https://github.com/AperteDev/foldav/commits/HEAD
