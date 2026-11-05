@@ -6,10 +6,7 @@
 //! edge; Left and Right move between them; a click on a column's empty room closes the ones to
 //! its right.
 
-use super::views::{
-    activate, attach_menu, file_of, icon_with_star, parts, select_paths, selected_in, set_icon,
-    set_star,
-};
+use super::views::{activate, attach_menu, file_of, select_paths, selected_in, set_icon, star};
 use super::{Ui, nav, ops};
 use crate::core;
 use crate::i18n::gettext;
@@ -597,7 +594,12 @@ fn new_column(ui: &Rc<Ui>, path: &str, slide: bool) -> Column {
             .spacing(8)
             .css_classes(["miller-row"])
             .build();
-        b.append(&icon_with_star(24));
+        b.append(
+            &gtk::Image::builder()
+                .pixel_size(24)
+                .valign(gtk::Align::Center)
+                .build(),
+        );
         // A long name must not make the column wider than it is.
         b.append(
             &gtk::Label::builder()
@@ -607,7 +609,11 @@ fn new_column(ui: &Rc<Ui>, path: &str, slide: bool) -> Column {
                 .max_width_chars(1)
                 .build(),
         );
-        // The chevron keeps its room (unseen) in a file's row.
+        // The star is centred, and at the same place for a file and a folder: the chevron keeps
+        // its room (unseen) in a file's row.
+        let star = star(12);
+        star.set_valign(gtk::Align::Center);
+        b.append(&star);
         b.append(
             &gtk::Image::builder()
                 .icon_name("go-next-symbolic")
@@ -624,16 +630,16 @@ fn new_column(ui: &Rc<Ui>, path: &str, slide: bool) -> Column {
         let (Some(f), Some(b)) = (item.item().map(|o| file_of(&o)), item.child()) else {
             return;
         };
-        if let (Some((image, star)), Some(label), Some(chevron)) = (
-            b.first_child().as_ref().and_then(parts),
-            b.first_child()
-                .and_then(|c| c.next_sibling())
-                .and_downcast::<gtk::Label>(),
+        let label = b.first_child().and_then(|c| c.next_sibling());
+        if let (Some(image), Some(label), Some(star), Some(chevron)) = (
+            b.first_child().and_downcast::<gtk::Image>(),
+            label.clone().and_downcast::<gtk::Label>(),
+            label.and_then(|l| l.next_sibling()),
             b.last_child().and_downcast::<gtk::Image>(),
         ) {
             set_icon(&image, &f);
             label.set_label(&f.name);
-            set_star(&star, f.favorite, 24);
+            star.set_visible(f.favorite);
             chevron.set_opacity(if f.folder { 1.0 } else { 0.0 });
         }
     });

@@ -73,8 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   time while you scroll and kept on this device by the file's ETag (deleted after a month
   unused)
 - The star of a favorite as in Nextcloud's web app: filled, toned (a dark gold on light
-  themes, a soft yellow on dark), at the corner of the file's icon in the icons, the list and
-  the columns alike
+  themes, a soft yellow on dark), at the corner of the file's icon in the icons, after the name
+  in the list and the columns, in the same colour in all three
 - What is selected, said in a pill at the foot of the icons and the list, as in Files: a file
   by its name and size, several by their number and together size (folders and other items
   counted apart); a click on the room between the files selects none

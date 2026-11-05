@@ -289,7 +289,7 @@ pub fn connect(ui: &Rc<Ui>) {
             let item = item.downcast_ref::<gtk::ListItem>().expect("a list item");
             let b = gtk::Box::builder().spacing(8).build();
             if i == 0 {
-                b.append(&icon_with_star(16));
+                b.append(&gtk::Image::builder().pixel_size(16).build());
             }
             let label = gtk::Label::builder()
                 .xalign(if i == 1 { 1.0 } else { 0.0 })
@@ -300,6 +300,9 @@ pub fn connect(ui: &Rc<Ui>) {
                 label.add_css_class("dim-label");
             }
             b.append(&label);
+            if i == 0 {
+                b.append(&star(12));
+            }
             item.set_child(Some(&b));
             attach_menu(&w, item, b.upcast_ref());
         });
@@ -311,7 +314,7 @@ pub fn connect(ui: &Rc<Ui>) {
             else {
                 return;
             };
-            // The name's cell is the icon (with the star), the name; the others' just the text.
+            // The name's cell is the icon, the name, the star; the others' just the text.
             let label = if i == 0 {
                 b.first_child().and_then(|c| c.next_sibling())
             } else {
@@ -321,11 +324,12 @@ pub fn connect(ui: &Rc<Ui>) {
             let Some(label) = label else { return };
             match i {
                 0 => {
-                    if let Some((image, star)) = b.first_child().as_ref().and_then(parts) {
-                        let px = ui.options.list_px();
-                        image.set_pixel_size(px);
+                    if let Some(image) = b.first_child().and_downcast::<gtk::Image>() {
+                        image.set_pixel_size(ui.options.list_px());
                         set_icon(&image, &f);
-                        set_star(&star, f.favorite, px);
+                    }
+                    if let Some(star) = b.last_child() {
+                        star.set_visible(f.favorite);
                     }
                     label.set_label(&f.name);
                 }
@@ -546,8 +550,8 @@ pub fn set_mode(ui: &Rc<Ui>, mode: Mode) {
     options::update(ui);
 }
 
-/// A file's icon with the star of a favorite at its corner, the same in all the views (as
-/// Nextcloud's web app has it). `parts` gives the two back; `set_star` shows or hides the star.
+/// A file's icon with the star of a favorite at its corner, as the icons have it (the web app's
+/// too). `parts` gives the two back; `set_star` shows or hides the star.
 pub fn icon_with_star(icon_px: i32) -> gtk::Overlay {
     let overlay = gtk::Overlay::builder()
         .child(
@@ -574,7 +578,7 @@ pub fn parts(widget: &gtk::Widget) -> Option<(gtk::Image, gtk::Image)> {
 
 /// The star, as big as its icon's size says.
 fn star_px(icon_px: i32) -> i32 {
-    (icon_px / 6).clamp(10, 24)
+    (icon_px / 4).clamp(12, 32)
 }
 
 /// Show the star of `overlay` (from `icon_with_star`) if `favorite`, sized for the icon.

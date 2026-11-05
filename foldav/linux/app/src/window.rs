@@ -96,6 +96,8 @@ listview.miller-list > row:hover > .miller-row { background-color: alpha(current
 listview.miller-list:not(.miller-active) > row:selected { background: none; }
 listview.miller-list:not(.miller-active) > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
 .miller-list image { -gtk-icon-style: regular; }
+/* The star is a symbolic icon, drawn in its colour (regular style made it a dark blob). */
+.miller-list image.favorite-star { -gtk-icon-style: symbolic; }
 /* What is selected, a pill over the foot of the files. */
 .selection-status {
   background-color: mix(@window_bg_color, @window_fg_color, 0.1);
