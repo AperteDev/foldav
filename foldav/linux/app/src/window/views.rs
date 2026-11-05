@@ -95,6 +95,7 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
         None => image.set_from_gicon(&icon(f)),
     }
     image.set_opacity(if f.hidden() { 0.5 } else { 1.0 });
+    super::thumbs::apply(image, f, 128);
 }
 
 fn sorter(by: impl Fn(&File, &File) -> Ordering + 'static) -> gtk::CustomSorter {

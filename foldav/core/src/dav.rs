@@ -317,6 +317,12 @@ impl Dav {
         }
     }
 
+    /// The server's address up to where its own paths begin (`https://cloud.example`, with the
+    /// folder it is in when it is not at the root).
+    pub fn base(&self) -> &str {
+        self.root.split_once("/remote.php/").map_or("", |(b, _)| b)
+    }
+
     pub fn url(&self, href: &str) -> String {
         if href.starts_with("http") {
             href.to_string()

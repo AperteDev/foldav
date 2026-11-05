@@ -404,12 +404,12 @@ fn places_list_recent_favorites_searches_and_the_trash_bin() {
         .iter()
         .find(|f| f.name == "alpha-report.txt")
         .expect("in the bin");
-    c.trash_restore(A, &[gone.path.clone()]).unwrap();
+    c.trash_restore(A, std::slice::from_ref(&gone.path)).unwrap();
     assert!(names(&c, &root).contains(&"alpha-report.txt".to_string()));
     c.delete(A, &[here("alpha-report.txt")]).unwrap();
     let bin = c.list(A, TRASH).unwrap();
     let gone = bin.iter().find(|f| f.name == "alpha-report.txt").unwrap();
-    c.trash_delete(A, &[gone.path.clone()]).unwrap();
+    c.trash_delete(A, std::slice::from_ref(&gone.path)).unwrap();
     assert!(
         !c.list(A, TRASH)
             .unwrap()
@@ -431,4 +431,41 @@ fn the_server_says_what_it_offers_and_what_is_used() {
     assert!(f.trash && f.sharing, "{f:?}");
     let q = c.quota(A).unwrap();
     assert!(q.used > 0, "{q:?}");
+}
+
+#[test]
+fn previews_are_fetched_once_and_kept_by_etag() {
+    let (c, dav, root) = fixture("thumbs");
+    let home = c.files_home(A).unwrap();
+    // A 1×1 PNG.
+    let png: Vec<u8> = vec![
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d, 0x49, 0x48, 0x44, 0x52, 0,
+        0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 0x1f, 0x15, 0xc4, 0x89, 0, 0, 0, 0x0d, 0x49, 0x44,
+        0x41, 0x54, 0x78, 0x9c, 0x63, 0xf8, 0xcf, 0xc0, 0xf0, 0x1f, 0, 5, 0, 1, 0xff, 0x89, 0x99,
+        0x3d, 0x1d, 0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ];
+    let r = dav
+        .upload(
+            "PUT",
+            &format!("{home}{root}/dot.png"),
+            &[],
+            png.len() as u64,
+            || Ok(Box::new(std::io::Cursor::new(png.clone()))),
+        )
+        .unwrap();
+    assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    dav.request("PUT", &format!("{home}{root}/plain.bin"), &[], "x")
+        .unwrap();
+    let files = c.list(A, &root).unwrap();
+    let file = |n: &str| files.iter().find(|f| f.name == n).unwrap();
+    let path = c
+        .thumbnail(A, file("dot.png"), 64)
+        .unwrap()
+        .expect("a preview");
+    assert!(std::fs::metadata(&path).unwrap().len() > 0);
+    assert_eq!(c.thumbnail_path(A, file("dot.png"), 64), Some(path.clone()));
+    // Kept: the same path again, nothing fetched.
+    assert_eq!(c.thumbnail(A, file("dot.png"), 64).unwrap(), Some(path));
+    // A file the server has no preview for.
+    assert_eq!(c.thumbnail(A, file("plain.bin"), 64).unwrap(), None);
 }

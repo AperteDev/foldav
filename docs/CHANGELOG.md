@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server has it): Recent, Starred (all that is starred, files too), Shared with You, Shared
   with Others, Shared by Link, Tags (each tag opens the files that have it) and Deleted
   Files, and the storage used at the foot
+- Thumbnails: images, documents and videos show the preview the server made of them instead
+  of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
+  time while you scroll and kept on this device by the file's ETag (deleted after a month
+  unused)
 - The trash bin: Deleted Files lists what was deleted; Restore, Delete Permanently and
   Empty Trash, each asking first where it cannot be taken back
 - Search by name in the folder shown and below it (Ctrl+F or the magnifier in the header),

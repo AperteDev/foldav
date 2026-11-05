@@ -21,6 +21,7 @@ What Foldav can do, in short. The details of each release are in the
   of the sidebar with their progress and time left, transfers cancellable.
 - Upload files and folders, big files in chunks that survive a dropped connection; choose
   Replace, Keep Both or Skip when a name is taken.
+- Thumbnails of images, documents and videos, from the server's previews, kept on the device.
 - The web app's places: Recent, Starred, Shared with You and Others, Shared by Link, Tags;
   the trash bin with restore, delete for good and empty; the storage used.
 - Search by name (Ctrl+F), done by the server.

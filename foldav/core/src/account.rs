@@ -172,6 +172,7 @@ impl Client {
             params![prefix, prefix.len() as i64],
         )?;
         let _ = std::fs::remove_dir_all(self.cache_dir.join("files").join(id.to_string()));
+        let _ = std::fs::remove_dir_all(self.cache_dir.join("thumbs").join(id.to_string()));
         crate::cache::clear(&db, id)
     }
 

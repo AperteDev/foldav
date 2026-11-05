@@ -13,6 +13,7 @@ pub mod places;
 mod server;
 mod settings;
 pub mod store;
+mod thumbnails;
 mod transfer;
 mod undo;
 mod upload;

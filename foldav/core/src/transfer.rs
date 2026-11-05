@@ -173,6 +173,7 @@ impl Client {
                 }
             }
         }
+        self.prune_thumbnails(max_age);
     }
 
     /// A new, empty folder on this device for files to hand to another app at once (the files

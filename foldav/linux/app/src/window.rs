@@ -20,6 +20,7 @@ mod header;
 mod nav;
 mod ops;
 mod sidebar;
+mod thumbs;
 mod transfers;
 mod views;
 

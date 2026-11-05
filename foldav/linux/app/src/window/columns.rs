@@ -167,6 +167,7 @@ impl Preview {
 
     fn show(&self, f: &File) {
         set_icon(&self.icon, f);
+        super::thumbs::apply(&self.icon, f, PREVIEW_ICON_SIZE as u32);
         self.name.set_label(&f.name);
         let kind = gio::content_type_get_description(&f.mime);
         let size = f
