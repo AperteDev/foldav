@@ -25,8 +25,10 @@
 - The window follows Nautilus (Files): its sidebar, header, views and keys; when something
   about it is not decided, do as Nautilus does. Its code is in `foldav/linux/app/src/window/`:
   `nav` (the folder shown, history, the folders loaded), `sidebar` (accounts, bookmarks, tree),
-  `header` (path bar, view switcher), `views` (icons, list, columns) and `ops` (what is done to
-  files). The content header is a plain toolbar row, not an `AdwHeaderBar` (which keeps its
+  `header` (path bar, view switcher), `views` (icons, list), `columns` (the columns view,
+  modelled on the Column View of the Files extension "My Computer", MIT licence, installed at
+  `/usr/share/nautilus-python/extensions/nautilus_my_computer/`: its rules and geometry are
+  there when something about the columns is not decided) and `ops` (what is done to files). The content header is a plain toolbar row, not an `AdwHeaderBar` (which keeps its
   title centered, so the path bar could not fill the room between the buttons). Only the
   sandbox copy has the striped development header; a normal debug run looks as the release.
 - Not built yet, planned as in Notav: the CLI, the Android app and bindings (`ffi/`), the

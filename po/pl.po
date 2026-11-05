@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 00:58+0100\n"
+"POT-Creation-Date: 2026-11-05 01:03+0100\n"
 "PO-Revision-Date: 2026-11-04 23:52+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -197,19 +197,19 @@ msgstr "Usuń"
 msgid "{name} removed"
 msgstr "Usunięto {name}"
 
-#: foldav/linux/app/src/window.rs:46
+#: foldav/linux/app/src/window.rs:60
 msgid "Support on Ko-fi"
 msgstr "Wesprzyj na Ko-fi"
 
-#: foldav/linux/app/src/window.rs:50
+#: foldav/linux/app/src/window.rs:64
 msgid "Sponsor on GitHub"
 msgstr "Wesprzyj na GitHubie"
 
-#: foldav/linux/app/src/window.rs:54
+#: foldav/linux/app/src/window.rs:68
 msgid "Donate on Liberapay"
 msgstr "Przekaż darowiznę na Liberapay"
 
-#: foldav/linux/app/src/window.rs:204
+#: foldav/linux/app/src/window.rs:218
 msgid ""
 "Foldav is developed in my free time. If it helps you with your files, you "
 "can support its development."
@@ -218,57 +218,62 @@ msgstr ""
 "możesz wesprzeć jego rozwój."
 
 #. Translators: the About row that opens the page with the donation links.
-#: foldav/linux/app/src/window.rs:234
+#: foldav/linux/app/src/window.rs:248
 msgid "_Support"
 msgstr "_Wsparcie"
 
 #. Translators: title of About's page with the donation links.
-#: foldav/linux/app/src/window.rs:236
+#: foldav/linux/app/src/window.rs:250
 msgid "Support"
 msgstr "Wsparcie"
 
-#: foldav/linux/app/src/window.rs:410
+#: foldav/linux/app/src/window.rs:424
 msgid "Enter the Nextcloud server first"
 msgstr "Najpierw podaj serwer Nextcloud"
 
-#: foldav/linux/app/src/window.rs:445
+#: foldav/linux/app/src/window.rs:459
 msgid "Cannot start login"
 msgstr "Nie można rozpocząć logowania"
 
-#: foldav/linux/app/src/window.rs:446
+#: foldav/linux/app/src/window.rs:460
 #, rust-format
 msgid "Cannot start login: {error}"
 msgstr "Nie można rozpocząć logowania: {error}"
 
-#: foldav/linux/app/src/window.rs:454
+#: foldav/linux/app/src/window.rs:468
 msgid "Login link copied to clipboard"
 msgstr "Skopiowano odnośnik logowania do schowka"
 
-#: foldav/linux/app/src/window.rs:474
+#: foldav/linux/app/src/window.rs:488
 #, rust-format
 msgid "Login failed: {error}"
 msgstr "Logowanie nie powiodło się: {error}"
 
-#: foldav/linux/app/src/window.rs:476
+#: foldav/linux/app/src/window.rs:490
 msgid "Login failed"
 msgstr "Logowanie nie powiodło się"
 
-#: foldav/linux/app/src/window.rs:479
+#: foldav/linux/app/src/window.rs:493
 msgid "Login timed out"
 msgstr "Upłynął czas na zalogowanie"
 
-#: foldav/linux/app/src/window.rs:528
+#: foldav/linux/app/src/window.rs:542
 msgid "Wrong login name or password"
 msgstr "Błędna nazwa użytkownika lub hasło"
 
-#: foldav/linux/app/src/window.rs:529
+#: foldav/linux/app/src/window.rs:543
 #, rust-format
 msgid "Sign-in failed: {error}"
 msgstr "Logowanie nie powiodło się: {error}"
 
-#: foldav/linux/app/src/window.rs:530
+#: foldav/linux/app/src/window.rs:544
 msgid "Sign-in failed"
 msgstr "Logowanie nie powiodło się"
+
+#: foldav/linux/app/src/window/columns.rs:146
+#: foldav/linux/app/src/window/views.rs:129
+msgid "Modified"
+msgstr "Zmodyfikowano"
 
 #: foldav/linux/app/src/window/header.rs:126
 #: foldav/linux/app/src/window/sidebar.rs:170
@@ -354,17 +359,13 @@ msgstr "Usuń z zakładek"
 msgid "New Bookmark"
 msgstr "Nowa zakładka"
 
-#: foldav/linux/app/src/window/views.rs:122 foldav/linux/app/ui/account.blp:18
+#: foldav/linux/app/src/window/views.rs:124 foldav/linux/app/ui/account.blp:18
 msgid "Name"
 msgstr "Nazwa"
 
-#: foldav/linux/app/src/window/views.rs:125
+#: foldav/linux/app/src/window/views.rs:127
 msgid "Size"
 msgstr "Rozmiar"
-
-#: foldav/linux/app/src/window/views.rs:127
-msgid "Modified"
-msgstr "Zmodyfikowano"
 
 #: foldav/linux/app/ui/account.blp:13
 msgid "Use This Account"

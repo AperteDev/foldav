@@ -3,7 +3,7 @@
 //! again in the background; what the tree and the columns need above and below it is loaded
 //! after it.
 
-use super::{Ui, header, ops, sidebar, views};
+use super::{Ui, columns, header, ops, sidebar, views};
 use crate::core;
 use crate::i18n::gettext;
 use foldav_core::{Error, File};
@@ -87,7 +87,7 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
         show(ui);
     } else if ui.views.mode() == views::Mode::Columns {
         // The columns stay as they are, the new one filling when it is loaded.
-        views::refresh_columns(ui);
+        columns::refresh(ui);
     } else {
         ui.files_stack.set_visible_child_name("loading");
     }
@@ -162,7 +162,7 @@ pub fn show(ui: &Rc<Ui>) {
     let empty = shown.is_empty() && ui.views.mode() != views::Mode::Columns;
     ui.files_stack
         .set_visible_child_name(if empty { "empty" } else { "files" });
-    views::refresh_columns(ui);
+    columns::refresh(ui);
 }
 
 fn show_error(ui: &Ui, text: &str) {
@@ -209,7 +209,7 @@ fn load_around(ui: &Rc<Ui>) {
 
 fn refresh_around(ui: &Rc<Ui>) {
     sidebar::refresh_tree(ui);
-    views::refresh_columns(ui);
+    columns::refresh(ui);
 }
 
 /// Open or close folder `path` of account `id` in the sidebar's tree.

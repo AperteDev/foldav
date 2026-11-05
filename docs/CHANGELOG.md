@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   columns, one per folder from the root, switched in the header or with Ctrl+1 to 3; back and
   forward (Alt+Left, Alt+Right) and the folder above (Alt+Up); a path bar with a segment for
   each folder; Show Hidden Files (Ctrl+H)
+- The columns view as the Files extension "My Computer" has it: rows as there, the selection in
+  the column you work in in the accent colour and the way to it grey; a preview column for a
+  file (its icon, name, type, size and date); the columns resized by dragging their edge, and
+  the width kept; Left and Right between columns; a click on a column's empty room closes the
+  columns after it
 - A sidebar with the accounts (only with more than one; changing the account keeps the folder
   shown where the new one has it), the bookmarks of the account (a row, as in Files, bookmarks
   the folder shown; right click removes one) and a tree of its folders

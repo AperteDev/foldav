@@ -13,6 +13,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+mod columns;
 mod header;
 mod nav;
 mod ops;
@@ -22,17 +23,30 @@ mod views;
 /// The path bar and its segments, as Nautilus'; the dense tree (`.dense`, as Notav's); the row
 /// that bookmarks the folder; the columns' dividers.
 const CSS: &str = "
-.pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; padding: 0 2px 0 4px; }
-.pathbar button { min-height: 26px; }
+.pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; min-height: 34px;
+  padding: 0 2px 0 4px; }
+.pathbar button { min-height: 30px; }
 .pathbar button.path-segment { padding: 0 8px; border-radius: 6px; }
-.pathbar menubutton > button { min-width: 26px; padding: 0; }
+.pathbar menubutton > button { min-width: 30px; padding: 0; }
 .pathbar button.path-segment.current { font-weight: bold; }
 .pathbar .path-separator { opacity: 0.5; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
 .navigation-sidebar > row.new-bookmark { color: var(--accent-color);
   box-shadow: inset 0 0 0 1px alpha(var(--accent-color), 0.6); }
-scrolledwindow.miller { border-right: 1px solid alpha(currentColor, 0.12); }
+/* The columns, as the Files extension \"My Computer\" draws them: rows 36px high with a 9px
+   radius, touching, the selection grey (the path through the columns) and in the column the
+   user works in the accent colour; a divider at the edge of each column, the handle that
+   resizes it; the preview column padded. */
+.miller-handle { border-right: 1px solid alpha(currentColor, 0.12); }
+.miller-preview { padding: 12px; }
+listview.miller-list { padding: 6px; }
+listview.miller-list > row { padding: 0; border-radius: 9px; background: none; }
+listview.miller-list > row > .miller-row { padding: 6px 8px; border-radius: 9px; }
+listview.miller-list > row:hover > .miller-row { background-color: alpha(currentColor, 0.05); }
+listview.miller-list > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
+listview.miller-list.miller-active > row:selected { color: var(--accent-fg-color); }
+listview.miller-list.miller-active > row:selected > .miller-row { background-color: var(--accent-bg-color); }
 .miller-list image { -gtk-icon-style: regular; }
 /* The files on the window's own background, as in Files, not the view's darker one; the icons'
    tiles rounded and close, as there. */

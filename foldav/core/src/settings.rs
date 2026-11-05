@@ -17,6 +17,8 @@ pub const DEVICE_ONLY: &[&str] = &[
     "view_mode",
     "window_size",
     "window_maximized",
+    // How wide the columns view's columns are.
+    "column_width",
 ];
 
 /// key → (value, unix time of the last change)
