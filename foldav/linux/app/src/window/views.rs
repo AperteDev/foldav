@@ -301,7 +301,10 @@ pub fn connect(ui: &Rc<Ui>) {
             }
             b.append(&label);
             if i == 0 {
-                b.append(&star(12));
+                // In the middle of the row, as the icon is.
+                let star = star(16);
+                star.set_valign(gtk::Align::Center);
+                b.append(&star);
             }
             item.set_child(Some(&b));
             attach_menu(&w, item, b.upcast_ref());
@@ -328,7 +331,9 @@ pub fn connect(ui: &Rc<Ui>) {
                         image.set_pixel_size(ui.options.list_px());
                         set_icon(&image, &f);
                     }
-                    if let Some(star) = b.last_child() {
+                    if let Some(star) = b.last_child().and_downcast::<gtk::Image>() {
+                        // Bigger with the icon: the row is.
+                        star.set_pixel_size((ui.options.list_px() / 2).clamp(16, 24));
                         star.set_visible(f.favorite);
                     }
                     label.set_label(&f.name);
