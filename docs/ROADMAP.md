@@ -70,19 +70,20 @@ Once a third app copies the same code, a shared crate in its own repository beco
 ## Planned features
 
 1. **Browsing**, what is left of it (the Nautilus-like window with icons, list and columns,
-   path bar, history, bookmarks, folder tree and accounts is done): thumbnails from the server's
+   path bar, history, favorite folders, folder tree and accounts is done): thumbnails from the server's
    previews (`/core/preview`, for files with `has-preview`), cached by ETag; a limit to the
    listing cache's size, and a long-offline mode that shows it without asking; the header's
-   search; a zoom for the icons; sorting also in the icons and columns; bookmarks renamed and
-   reordered, and synced between devices; the last folder and account restored at start.
+   search; a zoom for the icons; sorting also in the icons and columns; the last folder and
+   account restored at start.
 2. **The web app's places in the sidebar**, for the account shown, as Nextcloud Files has them
-   (each only where the server has what it needs, from its capabilities), under the bookmarks
-   and above the folder tree, opening in the window's views like a folder:
+   (each only where the server has what it needs, from its capabilities), under the favorite
+   folders and above the folder tree, opening in the window's views like a folder:
    - *All files*: the Files root (now the tree's "Home"), and *Personal files*: only the
      user's own, without what is shared with them and external storage.
    - *Recent*: the latest changed files, newest first (WebDAV `SEARCH` by modification time).
-   - *Favorites*, with the favorite folders listed under it (WebDAV `REPORT filter-files`,
-     `oc:favorite`; `Dav::favorites` has it).
+   - *Favorites*, the place that lists all that is starred, files too, in the views (the
+     favorite folders are already listed under a heading in the sidebar, and the stars synced:
+     WebDAV `REPORT filter-files`, `oc:favorite`).
    - *Shares*, a group: *Shared with you* and *Shared with others* (OCS `files_sharing`:
      `shares?shared_with_me=true` and `shares`), *Shared by link* (shares of type link),
      *Pending shares* (`shares/pending`, to accept or decline), *File requests* (upload-only

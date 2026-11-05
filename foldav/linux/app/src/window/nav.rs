@@ -49,12 +49,22 @@ pub fn parent(path: &str) -> &str {
     path.rsplit_once('/').map_or("", |(p, _)| p)
 }
 
-/// What shows of `files`: hidden ones only when the user wants them.
+/// What shows of `files`: hidden ones only when the user wants them, and the favorites starred
+/// (as the favorites say, not as the listing did: starring changes no folder's ETag).
 pub fn visible(ui: &Ui, files: &[File]) -> Vec<File> {
+    let starred = ui
+        .at
+        .borrow()
+        .as_ref()
+        .map(|(id, _)| super::favorites::paths(ui, *id))
+        .unwrap_or_default();
     files
         .iter()
         .filter(|f| ui.hidden.get() || !f.hidden())
-        .cloned()
+        .map(|f| File {
+            favorite: starred.contains(&f.path),
+            ..f.clone()
+        })
         .collect()
 }
 
@@ -78,7 +88,15 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
     ui.expanded
         .borrow_mut()
         .extend(ancestors(&path).into_iter().map(|p| (id, p)));
+    // The favorites of the account: what is kept at once, the server's after.
+    let first = !ui.favorites.borrow().contains_key(&id);
+    if first {
+        super::favorites::load(ui, id);
+    }
     chrome(ui);
+    if first || how == Go::Reload {
+        super::favorites::sync(ui);
+    }
     if !core().connected(id) {
         return show_error(
             ui,

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Foldav\n"
 "Report-Msgid-Bugs-To: https://github.com/AperteDev/foldav/issues\n"
-"POT-Creation-Date: 2026-11-05 01:03+0100\n"
+"POT-Creation-Date: 2026-11-05 01:18+0100\n"
 "PO-Revision-Date: 2026-11-04 23:52+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -182,7 +182,7 @@ msgstr ""
 "Znika z tego urządzenia; jego pliki zostają na serwerze. Wyłącz je zamiast "
 "tego, aby tylko je ukryć."
 
-#: foldav/linux/app/src/settings.rs:565 foldav/linux/app/src/window/ops.rs:97
+#: foldav/linux/app/src/settings.rs:565 foldav/linux/app/src/window/ops.rs:98
 #: foldav/linux/app/ui/account.blp:34 foldav/linux/app/ui/add-account.blp:167
 #: foldav/linux/app/ui/password-login.blp:19
 msgid "Cancel"
@@ -197,19 +197,19 @@ msgstr "Usuń"
 msgid "{name} removed"
 msgstr "Usunięto {name}"
 
-#: foldav/linux/app/src/window.rs:60
+#: foldav/linux/app/src/window.rs:61
 msgid "Support on Ko-fi"
 msgstr "Wesprzyj na Ko-fi"
 
-#: foldav/linux/app/src/window.rs:64
+#: foldav/linux/app/src/window.rs:65
 msgid "Sponsor on GitHub"
 msgstr "Wesprzyj na GitHubie"
 
-#: foldav/linux/app/src/window.rs:68
+#: foldav/linux/app/src/window.rs:69
 msgid "Donate on Liberapay"
 msgstr "Przekaż darowiznę na Liberapay"
 
-#: foldav/linux/app/src/window.rs:218
+#: foldav/linux/app/src/window.rs:224
 msgid ""
 "Foldav is developed in my free time. If it helps you with your files, you "
 "can support its development."
@@ -218,55 +218,55 @@ msgstr ""
 "możesz wesprzeć jego rozwój."
 
 #. Translators: the About row that opens the page with the donation links.
-#: foldav/linux/app/src/window.rs:248
+#: foldav/linux/app/src/window.rs:254
 msgid "_Support"
 msgstr "_Wsparcie"
 
 #. Translators: title of About's page with the donation links.
-#: foldav/linux/app/src/window.rs:250
+#: foldav/linux/app/src/window.rs:256
 msgid "Support"
 msgstr "Wsparcie"
 
-#: foldav/linux/app/src/window.rs:424
+#: foldav/linux/app/src/window.rs:433
 msgid "Enter the Nextcloud server first"
 msgstr "Najpierw podaj serwer Nextcloud"
 
-#: foldav/linux/app/src/window.rs:459
+#: foldav/linux/app/src/window.rs:468
 msgid "Cannot start login"
 msgstr "Nie można rozpocząć logowania"
 
-#: foldav/linux/app/src/window.rs:460
+#: foldav/linux/app/src/window.rs:469
 #, rust-format
 msgid "Cannot start login: {error}"
 msgstr "Nie można rozpocząć logowania: {error}"
 
-#: foldav/linux/app/src/window.rs:468
+#: foldav/linux/app/src/window.rs:477
 msgid "Login link copied to clipboard"
 msgstr "Skopiowano odnośnik logowania do schowka"
 
-#: foldav/linux/app/src/window.rs:488
+#: foldav/linux/app/src/window.rs:497
 #, rust-format
 msgid "Login failed: {error}"
 msgstr "Logowanie nie powiodło się: {error}"
 
-#: foldav/linux/app/src/window.rs:490
+#: foldav/linux/app/src/window.rs:499
 msgid "Login failed"
 msgstr "Logowanie nie powiodło się"
 
-#: foldav/linux/app/src/window.rs:493
+#: foldav/linux/app/src/window.rs:502
 msgid "Login timed out"
 msgstr "Upłynął czas na zalogowanie"
 
-#: foldav/linux/app/src/window.rs:542
+#: foldav/linux/app/src/window.rs:551
 msgid "Wrong login name or password"
 msgstr "Błędna nazwa użytkownika lub hasło"
 
-#: foldav/linux/app/src/window.rs:543
+#: foldav/linux/app/src/window.rs:552
 #, rust-format
 msgid "Sign-in failed: {error}"
 msgstr "Logowanie nie powiodło się: {error}"
 
-#: foldav/linux/app/src/window.rs:544
+#: foldav/linux/app/src/window.rs:553
 msgid "Sign-in failed"
 msgstr "Logowanie nie powiodło się"
 
@@ -275,17 +275,20 @@ msgstr "Logowanie nie powiodło się"
 msgid "Modified"
 msgstr "Zmodyfikowano"
 
-#: foldav/linux/app/src/window/header.rs:126
-#: foldav/linux/app/src/window/sidebar.rs:170
-#: foldav/linux/app/src/window/sidebar.rs:218
+#: foldav/linux/app/src/window/favorites.rs:85
+msgid "Cannot change the favorites"
+msgstr "Nie można zmienić ulubionych"
+
+#: foldav/linux/app/src/window/header.rs:105
+#: foldav/linux/app/src/window/sidebar.rs:215
 msgid "Home"
 msgstr "Katalog domowy"
 
-#: foldav/linux/app/src/window/nav.rs:82
+#: foldav/linux/app/src/window/nav.rs:103
 msgid "Not connected. Sign in again in Preferences → Accounts."
 msgstr "Brak połączenia. Zaloguj się ponownie w Preferencje → Konta."
 
-#: foldav/linux/app/src/window/nav.rs:126
+#: foldav/linux/app/src/window/nav.rs:158
 msgid "Loading failed"
 msgstr "Nie udało się wczytać"
 
@@ -307,57 +310,53 @@ msgstr "Nie ma go już na serwerze"
 msgid "It is locked on the server"
 msgstr "Jest zablokowany na serwerze"
 
-#: foldav/linux/app/src/window/ops.rs:130
-#: foldav/linux/app/src/window/ops.rs:152
+#: foldav/linux/app/src/window/ops.rs:131
+#: foldav/linux/app/src/window/ops.rs:153
 msgid "The operation failed"
 msgstr "Operacja nie powiodła się"
 
-#: foldav/linux/app/src/window/ops.rs:137 foldav/linux/app/ui/shortcuts.blp:80
+#: foldav/linux/app/src/window/ops.rs:138 foldav/linux/app/ui/shortcuts.blp:80
 msgid "Undo"
 msgstr "Cofnij"
 
-#: foldav/linux/app/src/window/ops.rs:150
+#: foldav/linux/app/src/window/ops.rs:151
 msgid "Nothing to undo"
 msgstr "Nie ma czego cofnąć"
 
-#: foldav/linux/app/src/window/ops.rs:163
+#: foldav/linux/app/src/window/ops.rs:164
 msgid "Untitled Folder"
 msgstr "Folder bez nazwy"
 
-#: foldav/linux/app/src/window/ops.rs:166 foldav/linux/app/ui/shortcuts.blp:50
-#: foldav/linux/app/ui/window.blp:254 foldav/linux/app/ui/window.blp:286
+#: foldav/linux/app/src/window/ops.rs:167 foldav/linux/app/ui/shortcuts.blp:50
+#: foldav/linux/app/ui/window.blp:265 foldav/linux/app/ui/window.blp:312
 msgid "New Folder"
 msgstr "Nowy folder"
 
-#: foldav/linux/app/src/window/ops.rs:167
+#: foldav/linux/app/src/window/ops.rs:168
 msgid "Create"
 msgstr "Utwórz"
 
-#: foldav/linux/app/src/window/ops.rs:195
-#: foldav/linux/app/src/window/ops.rs:196 foldav/linux/app/ui/shortcuts.blp:55
+#: foldav/linux/app/src/window/ops.rs:196
+#: foldav/linux/app/src/window/ops.rs:197 foldav/linux/app/ui/shortcuts.blp:55
 msgid "Rename"
 msgstr "Zmień nazwę"
 
-#: foldav/linux/app/src/window/ops.rs:205
+#: foldav/linux/app/src/window/ops.rs:206
 msgid "Renamed"
 msgstr "Zmieniono nazwę"
 
-#: foldav/linux/app/src/window/ops.rs:236
+#: foldav/linux/app/src/window/ops.rs:237
 msgid "Moved"
 msgstr "Przeniesiono"
 
-#: foldav/linux/app/src/window/ops.rs:257
+#: foldav/linux/app/src/window/ops.rs:258
 msgid "Moved to Trash"
 msgstr "Przeniesiono do kosza"
 
-#: foldav/linux/app/src/window/sidebar.rs:179
-#: foldav/linux/app/ui/window.blp:279
-msgid "Remove from Bookmarks"
-msgstr "Usuń z zakładek"
-
-#: foldav/linux/app/src/window/sidebar.rs:196
-msgid "New Bookmark"
-msgstr "Nowa zakładka"
+#: foldav/linux/app/src/window/sidebar.rs:185
+#: foldav/linux/app/ui/window.blp:283 foldav/linux/app/ui/window.blp:305
+msgid "Remove from Favorites"
+msgstr "Usuń z ulubionych"
 
 #: foldav/linux/app/src/window/views.rs:124 foldav/linux/app/ui/account.blp:18
 msgid "Name"
@@ -530,32 +529,32 @@ msgstr "Lista"
 msgid "Columns"
 msgstr "Kolumny"
 
-#: foldav/linux/app/ui/shortcuts.blp:40 foldav/linux/app/ui/window.blp:273
-msgid "Add to Bookmarks"
-msgstr "Dodaj do zakładek"
+#: foldav/linux/app/ui/shortcuts.blp:40
+msgid "Add Folder to Favorites"
+msgstr "Dodaj folder do ulubionych"
 
-#: foldav/linux/app/ui/shortcuts.blp:45 foldav/linux/app/ui/window.blp:293
+#: foldav/linux/app/ui/shortcuts.blp:45 foldav/linux/app/ui/window.blp:319
 msgid "Show Hidden Files"
 msgstr "Pokaż ukryte pliki"
 
-#: foldav/linux/app/ui/shortcuts.blp:60 foldav/linux/app/ui/window.blp:258
+#: foldav/linux/app/ui/shortcuts.blp:60 foldav/linux/app/ui/window.blp:269
 msgid "Cut"
 msgstr "Wytnij"
 
-#: foldav/linux/app/ui/shortcuts.blp:65 foldav/linux/app/ui/window.blp:259
+#: foldav/linux/app/ui/shortcuts.blp:65 foldav/linux/app/ui/window.blp:270
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: foldav/linux/app/ui/shortcuts.blp:70 foldav/linux/app/ui/window.blp:260
-#: foldav/linux/app/ui/window.blp:287
+#: foldav/linux/app/ui/shortcuts.blp:70 foldav/linux/app/ui/window.blp:271
+#: foldav/linux/app/ui/window.blp:313
 msgid "Paste"
 msgstr "Wklej"
 
-#: foldav/linux/app/ui/shortcuts.blp:75 foldav/linux/app/ui/window.blp:265
+#: foldav/linux/app/ui/shortcuts.blp:75 foldav/linux/app/ui/window.blp:291
 msgid "Move to Trash"
 msgstr "Przenieś do kosza"
 
-#: foldav/linux/app/ui/shortcuts.blp:85 foldav/linux/app/ui/window.blp:297
+#: foldav/linux/app/ui/shortcuts.blp:85 foldav/linux/app/ui/window.blp:323
 msgid "Reload"
 msgstr "Odśwież"
 
@@ -563,15 +562,15 @@ msgstr "Odśwież"
 msgid "Toggle Sidebar"
 msgstr "Przełącz panel boczny"
 
-#: foldav/linux/app/ui/shortcuts.blp:95 foldav/linux/app/ui/window.blp:302
+#: foldav/linux/app/ui/shortcuts.blp:95 foldav/linux/app/ui/window.blp:328
 msgid "Preferences"
 msgstr "Preferencje"
 
-#: foldav/linux/app/ui/shortcuts.blp:100 foldav/linux/app/ui/window.blp:303
+#: foldav/linux/app/ui/shortcuts.blp:100 foldav/linux/app/ui/window.blp:329
 msgid "Keyboard Shortcuts"
 msgstr "Skróty klawiszowe"
 
-#: foldav/linux/app/ui/shortcuts.blp:105 foldav/linux/app/ui/window.blp:305
+#: foldav/linux/app/ui/shortcuts.blp:105 foldav/linux/app/ui/window.blp:331
 msgid "Quit"
 msgstr "Zakończ"
 
@@ -579,68 +578,76 @@ msgstr "Zakończ"
 msgid "Main Menu"
 msgstr "Menu główne"
 
-#: foldav/linux/app/ui/window.blp:89
+#: foldav/linux/app/ui/window.blp:64
+msgid "Favorites"
+msgstr "Ulubione"
+
+#: foldav/linux/app/ui/window.blp:100
 msgid "Toggle Sidebar (F9)"
 msgstr "Przełącz panel boczny (F9)"
 
-#: foldav/linux/app/ui/window.blp:99
+#: foldav/linux/app/ui/window.blp:110
 msgid "Back (Alt+Left)"
 msgstr "Wstecz (Alt+←)"
 
-#: foldav/linux/app/ui/window.blp:105
+#: foldav/linux/app/ui/window.blp:116
 msgid "Forward (Alt+Right)"
 msgstr "Dalej (Alt+→)"
 
-#: foldav/linux/app/ui/window.blp:112
+#: foldav/linux/app/ui/window.blp:122
 msgid "Parent Folder (Alt+Up)"
 msgstr "Folder nadrzędny (Alt+↑)"
 
-#: foldav/linux/app/ui/window.blp:135
+#: foldav/linux/app/ui/window.blp:146
 msgid "Folder Menu"
 msgstr "Menu folderu"
 
-#: foldav/linux/app/ui/window.blp:146
+#: foldav/linux/app/ui/window.blp:157
 msgid "Icons (Ctrl+1)"
 msgstr "Ikony (Ctrl+1)"
 
-#: foldav/linux/app/ui/window.blp:152
+#: foldav/linux/app/ui/window.blp:163
 msgid "List (Ctrl+2)"
 msgstr "Lista (Ctrl+2)"
 
-#: foldav/linux/app/ui/window.blp:158
+#: foldav/linux/app/ui/window.blp:169
 msgid "Columns (Ctrl+3)"
 msgstr "Kolumny (Ctrl+3)"
 
-#: foldav/linux/app/ui/window.blp:165
+#: foldav/linux/app/ui/window.blp:176
 msgid "View Options"
 msgstr "Opcje widoku"
 
-#: foldav/linux/app/ui/window.blp:178
+#: foldav/linux/app/ui/window.blp:189
 msgid "Foldav was updated: restart it to use the new version"
 msgstr ""
 "Foldav został zaktualizowany: uruchom go ponownie, aby używać nowej wersji"
 
-#: foldav/linux/app/ui/window.blp:179
+#: foldav/linux/app/ui/window.blp:190
 msgid "Restart"
 msgstr "Uruchom ponownie"
 
-#: foldav/linux/app/ui/window.blp:225
+#: foldav/linux/app/ui/window.blp:236
 msgid "Empty Folder"
 msgstr "Pusty folder"
 
-#: foldav/linux/app/ui/window.blp:233
+#: foldav/linux/app/ui/window.blp:244
 msgid "Cannot Load the Folder"
 msgstr "Nie można wczytać folderu"
 
-#: foldav/linux/app/ui/window.blp:236
+#: foldav/linux/app/ui/window.blp:247
 msgid "Try Again"
 msgstr "Spróbuj ponownie"
 
-#: foldav/linux/app/ui/window.blp:264
+#: foldav/linux/app/ui/window.blp:277 foldav/linux/app/ui/window.blp:299
+msgid "Add to Favorites"
+msgstr "Dodaj do ulubionych"
+
+#: foldav/linux/app/ui/window.blp:290
 msgid "Rename…"
 msgstr "Zmień nazwę…"
 
-#: foldav/linux/app/ui/window.blp:304
+#: foldav/linux/app/ui/window.blp:330
 msgid "About Foldav"
 msgstr "O programie Foldav"
 
@@ -674,6 +681,9 @@ msgid ""
 msgstr ""
 "Łączy się przez Konta online GNOME lub logowanie w przeglądarce, także z "
 "kilkoma kontami"
+
+#~ msgid "New Bookmark"
+#~ msgstr "Nowa zakładka"
 
 #~ msgid "New Folder (Ctrl+Shift+N)"
 #~ msgstr "Nowy folder (Ctrl+Shift+N)"

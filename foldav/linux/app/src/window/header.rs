@@ -32,8 +32,6 @@ pub fn connect(ui: &Rc<Ui>) {
     action(ui, "back", nav::back);
     action(ui, "forward", nav::forward);
     action(ui, "reload", nav::reload);
-    action(ui, "bookmark-add", |ui| bookmark(ui, true));
-    action(ui, "bookmark-remove", |ui| bookmark(ui, false));
     // The views, by key too (Ctrl+1 to 3): the switcher follows.
     action(ui, "view-icons", |ui| {
         ui.header.toggle.set_active_name(Some("icons"))
@@ -82,24 +80,9 @@ pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.view-list", &["<Control>2"]);
     app.set_accels_for_action("win.view-columns", &["<Control>3"]);
     app.set_accels_for_action("win.show-hidden", &["<Control>h"]);
-    app.set_accels_for_action("win.bookmark-add", &["<Control>d"]);
 }
 
-/// Bookmark (or stop bookmarking) the folder shown.
-fn bookmark(ui: &Rc<Ui>, add: bool) {
-    let Some((id, path)) = ui.at.borrow().clone() else {
-        return;
-    };
-    if add {
-        let _ = core().add_bookmark(id, &path);
-    } else if let Some(b) = core().bookmarks(id).into_iter().find(|b| b.path == path) {
-        let _ = core().remove_bookmark(b.id);
-    }
-    sidebar::refresh(ui);
-    update(ui);
-}
-
-/// The path bar and what depends on the folder shown: back, forward, up, bookmarking.
+/// The path bar and what depends on the folder shown: back, forward, up, favorites.
 pub fn update(ui: &Rc<Ui>) {
     let at = ui.at.borrow().clone();
     let set = |name: &str, on: bool| {
@@ -111,11 +94,7 @@ pub fn update(ui: &Rc<Ui>) {
     set("back", nav::can_back(ui));
     set("forward", nav::can_forward(ui));
     set("up", at.as_ref().is_some_and(|(_, p)| !p.is_empty()));
-    let bookmarked = at
-        .as_ref()
-        .is_some_and(|(id, p)| core().bookmarks(*id).iter().any(|b| b.path == *p));
-    set("bookmark-add", at.is_some() && !bookmarked);
-    set("bookmark-remove", bookmarked);
+    super::favorites::update_actions(ui);
 
     let bar = &ui.header.pathbar;
     while let Some(child) = bar.first_child() {

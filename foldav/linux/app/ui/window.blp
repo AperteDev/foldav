@@ -24,8 +24,8 @@ Adw.ApplicationWindow window {
           min-sidebar-width: 220;
           max-sidebar-width: 300;
 
-          // The accounts (only with more than one), the bookmarks of the account shown and the
-          // tree of its folders (src/window/sidebar.rs).
+          // The accounts (only with more than one), the favorite folders of the account shown
+          // and the tree of its folders (src/window/sidebar.rs).
           sidebar: Adw.ToolbarView {
             [top]
             Adw.HeaderBar {
@@ -58,11 +58,22 @@ Adw.ApplicationWindow window {
                   margin-bottom: 6;
                 }
 
-                Gtk.ListBox bookmarks {
+                // The favorite folders, as Nextcloud Files lists them; all of this is hidden
+                // while there are none.
+                Gtk.Label favorites_heading {
+                  label: _("Favorites");
+                  xalign: 0;
+                  margin-start: 12;
+                  margin-top: 6;
+                  margin-bottom: 2;
+                  styles ["caption-heading", "dim-label"]
+                }
+
+                Gtk.ListBox favorites {
                   styles ["navigation-sidebar"]
                 }
 
-                Gtk.Separator {
+                Gtk.Separator favorites_separator {
                   margin-top: 6;
                   margin-bottom: 6;
                 }
@@ -260,6 +271,21 @@ menu file_menu {
     item (_("Paste"), "win.paste")
   }
 
+  // Only the one that applies to what is selected (src/window/favorites.rs).
+  section {
+    item {
+      label: _("Add to Favorites");
+      action: "win.file-favorite";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Remove from Favorites");
+      action: "win.file-unfavorite";
+      hidden-when: "action-disabled";
+    }
+  }
+
   section {
     item (_("Rename…"), "win.rename")
     item (_("Move to Trash"), "win.delete")
@@ -270,14 +296,14 @@ menu file_menu {
 menu path_menu {
   section {
     item {
-      label: _("Add to Bookmarks");
-      action: "win.bookmark-add";
+      label: _("Add to Favorites");
+      action: "win.favorite-add";
       hidden-when: "action-disabled";
     }
 
     item {
-      label: _("Remove from Bookmarks");
-      action: "win.bookmark-remove";
+      label: _("Remove from Favorites");
+      action: "win.favorite-remove";
       hidden-when: "action-disabled";
     }
   }

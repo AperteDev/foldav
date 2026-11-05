@@ -78,6 +78,7 @@ pub fn update_actions(ui: &Ui) {
             .and_downcast::<gio::SimpleAction>()
             .inspect(|a| a.set_enabled(on));
     }
+    super::favorites::update_actions(ui);
 }
 
 /// The menu of a right click at `x`, `y` of `widget`; what is clicked is selected already.

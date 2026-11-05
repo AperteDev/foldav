@@ -1,5 +1,5 @@
 //! Main window: the welcome page (sign-in), and the files as Nautilus shows them: the sidebar
-//! (accounts, bookmarks, tree), the header and the views of a folder. Its parts are in
+//! (accounts, favorites, tree), the header and the views of a folder. Its parts are in
 //! `window/`: `nav` (where the window is, the history, what was loaded), `sidebar`, `header`,
 //! `views` and `ops` (what is done to files).
 
@@ -14,6 +14,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 mod columns;
+mod favorites;
 mod header;
 mod nav;
 mod ops;
@@ -21,7 +22,7 @@ mod sidebar;
 mod views;
 
 /// The path bar and its segments, as Nautilus'; the dense tree (`.dense`, as Notav's); the row
-/// that bookmarks the folder; the columns' dividers.
+/// the star of a favorite; the columns' dividers.
 const CSS: &str = "
 .pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; min-height: 34px;
   padding: 0 2px 0 4px; }
@@ -32,8 +33,7 @@ const CSS: &str = "
 .pathbar .path-separator { opacity: 0.5; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
-.navigation-sidebar > row.new-bookmark { color: var(--accent-color);
-  box-shadow: inset 0 0 0 1px alpha(var(--accent-color), 0.6); }
+.favorite-star { color: #f5c211; }
 /* The columns, as the Files extension \"My Computer\" draws them: rows 36px high with a 9px
    radius, touching, the selection grey (the path through the columns) and in the column the
    user works in the accent colour; a divider at the edge of each column, the handle that
@@ -97,6 +97,10 @@ struct Ui {
     /// The folders open in the sidebar's tree.
     expanded: RefCell<HashSet<(i64, String)>>,
     history: RefCell<nav::History>,
+    /// What is starred, by account (`favorites.rs`); the number changes with it, for what is
+    /// made from it (the columns) to be made again.
+    favorites: RefCell<HashMap<i64, Vec<foldav_core::Favorite>>>,
+    fav_version: Cell<u64>,
     /// Hidden files show (the device-only `show_hidden` setting).
     hidden: Cell<bool>,
     /// Cut or copied files, to paste (`ops`).
@@ -208,6 +212,7 @@ pub fn setup_actions(app: &adw::Application) {
     app.set_accels_for_action("win.toggle-sidebar", &["F9"]);
     header::accels(app);
     ops::accels(app);
+    favorites::accels(app);
 }
 
 /// Turns About's Details page into Support: a note and the donation links instead of the
@@ -400,6 +405,8 @@ fn build(app: &adw::Application) -> Rc<Ui> {
         dirs: RefCell::default(),
         expanded: RefCell::default(),
         history: RefCell::default(),
+        favorites: RefCell::default(),
+        fav_version: Cell::new(0),
         hidden: Cell::new(false),
         clipboard: RefCell::new(None),
         file_menu: get(&b, "file_menu"),
@@ -414,6 +421,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
     views::connect(&ui);
     sidebar::connect(&ui);
     ops::connect(&ui);
+    favorites::connect(&ui);
     header::connect(&ui);
     ui
 }

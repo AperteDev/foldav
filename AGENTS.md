@@ -24,7 +24,7 @@
   compiled by `build.rs`; dynamic UI stays in Rust code.
 - The window follows Nautilus (Files): its sidebar, header, views and keys; when something
   about it is not decided, do as Nautilus does. Its code is in `foldav/linux/app/src/window/`:
-  `nav` (the folder shown, history, the folders loaded), `sidebar` (accounts, bookmarks, tree),
+  `nav` (the folder shown, history, the folders loaded), `sidebar` (accounts, favorites, tree), `favorites` (stars, synced),
   `header` (path bar, view switcher), `views` (icons, list), `columns` (the columns view,
   modelled on the Column View of the Files extension "My Computer", MIT licence, installed at
   `/usr/share/nautilus-python/extensions/nautilus_my_computer/`: its rules and geometry are

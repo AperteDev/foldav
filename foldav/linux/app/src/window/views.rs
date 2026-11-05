@@ -191,7 +191,13 @@ pub fn connect(ui: &Rc<Ui>) {
             .halign(gtk::Align::Center)
             .width_request(108)
             .build();
-        b.append(&gtk::Image::builder().pixel_size(64).build());
+        // The icon, and the star of a favorite at its corner.
+        let overlay = gtk::Overlay::builder()
+            .child(&gtk::Image::builder().pixel_size(64).build())
+            .halign(gtk::Align::Center)
+            .build();
+        overlay.add_overlay(&star(16));
+        b.append(&overlay);
         b.append(
             &gtk::Label::builder()
                 .wrap(true)
@@ -210,11 +216,17 @@ pub fn connect(ui: &Rc<Ui>) {
         let (Some(f), Some(b)) = (item.item().map(|o| file_of(&o)), item.child()) else {
             return;
         };
-        if let (Some(image), Some(label)) = (
-            b.first_child().and_downcast::<gtk::Image>(),
+        let overlay = b.first_child().and_downcast::<gtk::Overlay>();
+        if let (Some(image), Some(star), Some(label)) = (
+            overlay
+                .as_ref()
+                .and_then(|o| o.child())
+                .and_downcast::<gtk::Image>(),
+            overlay.as_ref().and_then(|o| o.last_child()),
             b.last_child().and_downcast::<gtk::Label>(),
         ) {
             set_icon(&image, &f);
+            star.set_visible(f.favorite);
             label.set_label(&f.name);
         }
         b.set_tooltip_text(Some(&f.name));
@@ -244,6 +256,9 @@ pub fn connect(ui: &Rc<Ui>) {
                 label.add_css_class("dim-label");
             }
             b.append(&label);
+            if i == 0 {
+                b.append(&star(12));
+            }
             item.set_child(Some(&b));
             attach_menu(&w, item, b.upcast_ref());
         });
@@ -252,13 +267,21 @@ pub fn connect(ui: &Rc<Ui>) {
             let (Some(f), Some(b)) = (item.item().map(|o| file_of(&o)), item.child()) else {
                 return;
             };
-            let Some(label) = b.last_child().and_downcast::<gtk::Label>() else {
-                return;
-            };
+            // The name's cell is the icon, the name, the star; the others' just the text.
+            let label = if i == 0 {
+                b.first_child().and_then(|c| c.next_sibling())
+            } else {
+                b.last_child()
+            }
+            .and_downcast::<gtk::Label>();
+            let Some(label) = label else { return };
             match i {
                 0 => {
                     if let Some(image) = b.first_child().and_downcast::<gtk::Image>() {
                         set_icon(&image, &f);
+                    }
+                    if let Some(star) = b.last_child() {
+                        star.set_visible(f.favorite);
                     }
                     label.set_label(&f.name);
                 }
@@ -371,12 +394,45 @@ pub fn set_mode(ui: &Rc<Ui>, mode: Mode) {
     ops::update_actions(ui);
 }
 
-/// Show `files` in icons and list.
+/// The star of a favorite, hidden until a file is one.
+pub fn star(size: i32) -> gtk::Image {
+    gtk::Image::builder()
+        .icon_name("starred-symbolic")
+        .pixel_size(size)
+        .halign(gtk::Align::End)
+        .valign(gtk::Align::Start)
+        .visible(false)
+        .css_classes(["favorite-star"])
+        .build()
+}
+
+/// Show `files` in icons and list; what was selected, and is still there, stays selected.
 pub fn show(ui: &Ui, files: &[File]) {
+    let v = &ui.views;
+    let kept: Vec<String> = selected_in(&v.selection)
+        .into_iter()
+        .map(|f| f.path)
+        .collect();
     let items: Vec<glib::BoxedAnyObject> = files
         .iter()
         .cloned()
         .map(glib::BoxedAnyObject::new)
         .collect();
-    ui.views.store.splice(0, ui.views.store.n_items(), &items);
+    v.store.splice(0, v.store.n_items(), &items);
+    select_paths(&v.selection, &kept);
+}
+
+/// Select the files of `paths` in `selection`.
+pub fn select_paths(selection: &gtk::MultiSelection, paths: &[String]) {
+    if paths.is_empty() {
+        return;
+    }
+    for i in 0..selection.n_items() {
+        if selection
+            .item(i)
+            .is_some_and(|o| paths.contains(&file_of(&o).path))
+        {
+            selection.select_item(i, false);
+        }
+    }
 }

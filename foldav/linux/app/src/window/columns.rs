@@ -6,7 +6,7 @@
 //! edge; Left and Right move between them; a click on a column's empty room closes the ones to
 //! its right.
 
-use super::views::{activate, attach_menu, file_of, selected_in, set_icon};
+use super::views::{activate, attach_menu, file_of, select_paths, selected_in, set_icon, star};
 use super::{Ui, nav, ops};
 use crate::core;
 use crate::i18n::gettext;
@@ -28,8 +28,8 @@ const PREVIEW_ICON_SIZE: i32 = 256;
 /// One column: folder `path`, as it was filled.
 struct Column {
     path: String,
-    /// What it was filled from, and whether hidden files were in it.
-    filled: Option<(Rc<Vec<File>>, bool)>,
+    /// What it was filled from, whether hidden files were in it, and the favorites' number.
+    filled: Option<(Rc<Vec<File>>, bool, u64)>,
     store: gio::ListStore,
     selection: gtk::MultiSelection,
     view: gtk::ListView,
@@ -312,8 +312,11 @@ pub fn refresh(ui: &Rc<Ui>) {
         for (i, column) in columns.iter_mut().enumerate() {
             let data = ui.dirs.borrow().get(&(id, levels[i].clone())).cloned();
             let hidden = ui.hidden.get();
+            let stars = ui.fav_version.get();
             let same = match (&data, &column.filled) {
-                (Some(d), Some((f, h))) => (Rc::ptr_eq(d, f) || **d == **f) && *h == hidden,
+                (Some(d), Some((f, h, s))) => {
+                    (Rc::ptr_eq(d, f) || **d == **f) && *h == hidden && *s == stars
+                }
                 (None, None) => true,
                 _ => false,
             };
@@ -324,8 +327,14 @@ pub fn refresh(ui: &Rc<Ui>) {
                     .unwrap_or_default();
                 let items: Vec<glib::BoxedAnyObject> =
                     files.into_iter().map(glib::BoxedAnyObject::new).collect();
+                // What was selected, and is still there, stays.
+                let kept: Vec<String> = selected_in(&column.selection)
+                    .into_iter()
+                    .map(|f| f.path)
+                    .collect();
                 column.store.splice(0, column.store.n_items(), &items);
-                column.filled = data.map(|d| (d, hidden));
+                select_paths(&column.selection, &kept);
+                column.filled = data.map(|d| (d, hidden, stars));
             }
             // The folder the next column shows is the one selected here.
             if let Some(next) = levels.get(i + 1) {
@@ -441,6 +450,7 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
                 .max_width_chars(1)
                 .build(),
         );
+        b.append(&star(12));
         b.append(
             &gtk::Image::builder()
                 .icon_name("go-next-symbolic")
@@ -456,15 +466,16 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
         let (Some(f), Some(b)) = (item.item().map(|o| file_of(&o)), item.child()) else {
             return;
         };
-        if let (Some(image), Some(label), Some(chevron)) = (
+        let label = b.first_child().and_then(|c| c.next_sibling());
+        if let (Some(image), Some(label), Some(star), Some(chevron)) = (
             b.first_child().and_downcast::<gtk::Image>(),
-            b.first_child()
-                .and_then(|c| c.next_sibling())
-                .and_downcast::<gtk::Label>(),
+            label.clone().and_downcast::<gtk::Label>(),
+            label.and_then(|l| l.next_sibling()),
             b.last_child().and_downcast::<gtk::Image>(),
         ) {
             set_icon(&image, &f);
             label.set_label(&f.name);
+            star.set_visible(f.favorite);
             chevron.set_visible(f.folder);
         }
     });

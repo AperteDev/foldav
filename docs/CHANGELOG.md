@@ -22,9 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file (its icon, name, type, size and date); the columns resized by dragging their edge, and
   the width kept; Left and Right between columns; a click on a column's empty room closes the
   columns after it
+- Favorites, as in Nextcloud Files, in place of bookmarks: a star on files and folders (Add to
+  Favorites in the right-click menu, the path bar's menu for the folder shown, Ctrl+D), the
+  favorite folders listed in the sidebar (right click removes one). They are the server's, so
+  they show on all your devices and in the web app, kept here and sent when the server can be
+  reached; what is starred elsewhere shows when the window comes to the front or on a reload.
+  The folders bookmarked before become favorites
 - A sidebar with the accounts (only with more than one; changing the account keeps the folder
-  shown where the new one has it), the bookmarks of the account (a row, as in Files, bookmarks
-  the folder shown; right click removes one) and a tree of its folders
+  shown where the new one has it), the favorite folders of the account and a tree of its
+  folders
 - New folder (Ctrl+Shift+N), rename (F2), cut, copy and paste (a copy of a name taken is
   named "a (copy)"), and delete to the trash bin, each one request to the server whatever the
   size of the folder, from the keys, the header or a right click; several files selected at
