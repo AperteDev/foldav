@@ -117,9 +117,9 @@ gridview.files-view > child { border-radius: 12px; margin: 2px; padding: 0; }
 /* The list as Files has it: rows a little lower and apart, each a rounded pill (the selection and
    the hover too), the room kept at the sides so the pills do not touch the edges, and the header
    in line with the rows. */
-columnview.files-view > listview > row { border-radius: 8px; margin: 1px 6px; }
-columnview.files-view > listview > row > cell { padding: 6px 8px; }
-columnview.files-view > header { padding: 0 6px; }
+columnview.files-view { padding: 0 6px; }
+columnview.files-view > listview > row { border-radius: 8px; margin: 1px 0; }
+columnview.files-view > listview > row > cell { padding: 5px 8px; }
 columnview.files-view > header > button { padding: 6px 8px; }
 ";
 

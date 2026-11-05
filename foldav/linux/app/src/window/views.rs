@@ -79,6 +79,17 @@ pub fn icon(f: &File) -> gio::Icon {
     })
 }
 
+/// The symbolic icon of a file's type (a folder, a document, an image…), for the smallest size.
+fn symbolic_icon(f: &File) -> gio::Icon {
+    gio::content_type_get_symbolic_icon(if f.folder {
+        "inode/directory"
+    } else if f.mime.is_empty() {
+        "application/octet-stream"
+    } else {
+        &f.mime
+    })
+}
+
 /// A file's icon as every view draws it: the full-colour one, dimmed for a hidden file (as
 /// Files does). Looked up large and scaled down, as the extension "My Computer" does: at a
 /// small size the theme gives a monochrome one for some icons (a folder's).
@@ -91,7 +102,9 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
     }
     // Looked up larger for the big icons (and their thumbnails).
     let size = if image.pixel_size() > 128 { 256 } else { 128 };
-    match gtk::gdk::Display::default() {
+    // The smallest are the symbolic ones, in the text's colour, as Files draws the list.
+    let symbolic = image.pixel_size() <= 16;
+    match gtk::gdk::Display::default().filter(|_| !symbolic) {
         Some(display) => {
             let scale = image.scale_factor();
             let key = (
@@ -119,7 +132,7 @@ pub fn set_icon(image: &gtk::Image, f: &File) {
             });
             image.set_paintable(Some(&paintable));
         }
-        None => image.set_from_gicon(&icon(f)),
+        None => image.set_from_gicon(&if symbolic { symbolic_icon(f) } else { icon(f) }),
     }
     image.set_opacity(if f.hidden() { 0.5 } else { 1.0 });
     super::thumbs::apply(image, f, size as u32);
