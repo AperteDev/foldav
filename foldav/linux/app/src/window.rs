@@ -41,8 +41,8 @@ const CSS: &str = "
 .pathbar button.path-segment.current { font-weight: bold; }
 .pathbar .path-separator { opacity: 0.5; }
 /* The path to type takes the path bar's place and height. */
-entry.location-entry { min-height: 34px; border-radius: 8px 0 0 8px; }
-button.location-close { min-height: 34px; border-radius: 0 8px 8px 0; }
+entry.location-entry { border-radius: 8px 0 0 8px; }
+button.location-close { border-radius: 0 8px 8px 0; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
 .tree-arrow { min-width: 20px; min-height: 20px; padding: 0; }
 /* The star of a favorite, filled and toned (a dark gold on light, a soft yellow on dark), the same
