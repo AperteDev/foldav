@@ -33,6 +33,11 @@ thread_local! {
     static DRAGGING: std::cell::RefCell<Option<Drag>> = const { std::cell::RefCell::new(None) };
 }
 
+/// Files of the window are being dragged.
+fn dragging() -> bool {
+    DRAGGING.with_borrow(Option::is_some)
+}
+
 /// Dropping on `dest` makes no sense for what is dragged: on one of the files itself, in a
 /// folder dragged (it would go into itself), or, for a move (`copy_only` false), where the files
 /// are already.
@@ -253,6 +258,10 @@ pub fn attach(ui: &Weak<Ui>, item: &gtk::ListItem, w: &gtk::Widget) {
         // A folder takes what is dropped on it; a file's room is the folder it is in.
         match row.upgrade()?.item().map(|o| super::views::file_of(&o)) {
             Some(f) if f.folder => Some((at.0, f.path)),
+            // A file takes none of the window's own files (not even itself: a copy of it is
+            // dropped on the room around the files); what comes from another app goes to the
+            // folder it is in.
+            _ if dragging() => None,
             _ => Some(at),
         }
     }));
@@ -287,12 +296,16 @@ pub fn target(
         if !ours {
             return gdk::DragAction::COPY;
         }
+        let copy = copy_only(t);
+        // No place to drop on, or one that makes no sense: no drop.
         let refused = w
             .upgrade()
             .and_then(|ui| d(&ui))
-            .is_some_and(|dest| refuses(&dest, copy_only(t)));
+            .is_none_or(|dest| refuses(&dest, copy));
         if refused {
             gdk::DragAction::empty()
+        } else if copy {
+            gdk::DragAction::COPY
         } else {
             gdk::DragAction::MOVE
         }

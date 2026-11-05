@@ -52,6 +52,9 @@ const CSS: &str = "
   box-shadow: inset 0 0 0 1px alpha(currentColor, 0.4);
   border-radius: 10px;
 }
+/* The theme's own frame on what a drag is over is not wanted on the files (a file takes no drop;
+   a folder has the mark above). */
+.files-view *:drop(active):not(.drop-target) { box-shadow: none; outline: none; }
 /* What is dragged, by the pointer: a badge, with the number of files when there are several. */
 .drag-badge {
   background-color: @accent_bg_color;
