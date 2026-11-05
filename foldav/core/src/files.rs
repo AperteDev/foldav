@@ -31,19 +31,41 @@ impl File {
     }
 }
 
+/// Folders first, then by name, case ignored.
+pub(crate) fn sort(files: &mut [File]) {
+    files.sort_by_cached_key(|f| (!f.folder, f.name.to_lowercase()));
+}
+
 impl Client {
     /// What is directly in folder `path` of account `id` (empty: the Files root): folders first,
     /// then by name, case ignored; hidden files (`File::hidden`) included, the front-end
-    /// decides. Blocking: a request to the server.
-    // ponytail: no cache, a PROPFIND at every call; cache listings by folder ETag (roadmap, "Browsing").
+    /// decides. Blocking: a request to the server, a small one when the folder is the same as
+    /// when it was last listed (its ETag says so; `cached` has that listing without any).
     pub fn list(&self, id: i64, path: &str) -> Result<Vec<File>> {
         let home = self.files_home(id)?;
         let dir = format!("{home}{}", path.trim_matches('/'));
         let dir = format!("{}/", dir.trim_end_matches('/'));
-        let entries = self.dav(id)?.list(&dir, "1")?;
+        let dav = self.dav(id)?;
+        if let Some(known) = self.listing_etag(id, path) {
+            match dav.list(&dir, "0")?.first() {
+                None => {
+                    self.drop_listing(id, path);
+                    return Err(Error::NotFound(path.into()));
+                }
+                Some(head) if !head.etag.is_empty() && head.etag == known => {
+                    if let Some(files) = self.cached(id, path) {
+                        return Ok(files);
+                    }
+                }
+                Some(_) => {}
+            }
+        }
+        let entries = dav.list(&dir, "1")?;
         if entries.is_empty() {
+            self.drop_listing(id, path);
             return Err(Error::NotFound(path.into()));
         }
+        let etag = entries[0].etag.clone();
         // The listing's hrefs are percent-encoded; the folder's is the first (and the same
         // as `dir`, but for encoding).
         let mut files: Vec<File> = entries
@@ -66,7 +88,11 @@ impl Client {
                 })
             })
             .collect();
-        files.sort_by_cached_key(|f| (!f.folder, f.name.to_lowercase()));
+        sort(&mut files);
+        // A cache that cannot be written is no reason not to show the folder.
+        if !etag.is_empty() {
+            let _ = self.store_listing(id, path, &etag, &files);
+        }
         Ok(files)
     }
 }

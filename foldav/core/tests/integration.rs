@@ -105,3 +105,36 @@ fn folders_are_made_renamed_moved_copied_and_deleted_on_the_server() {
         "nothing left"
     );
 }
+
+#[test]
+fn listings_are_kept_and_follow_the_folders_etag() {
+    let (c, dav, root) = fixture("cache");
+    let home = c.files_home(A).unwrap();
+    let file = format!("{home}{root}/f.txt");
+    assert_eq!(c.cached(A, &root), None, "not listed yet");
+
+    assert!(c.list(A, &root).unwrap().is_empty());
+    assert_eq!(
+        c.cached(A, &root),
+        Some(vec![]),
+        "kept, an empty folder too"
+    );
+
+    // A change on the server changes the folder's ETag: the next listing has it.
+    let r = dav.request("PUT", &file, &[], "hello").unwrap();
+    assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    assert_eq!(c.cached(A, &root), Some(vec![]), "until it is asked again");
+    assert_eq!(names(&c, &root), ["f.txt"]);
+    assert_eq!(c.cached(A, &root).unwrap().len(), 1);
+
+    // Unchanged: the same, from the cache.
+    assert_eq!(names(&c, &root), ["f.txt"]);
+    dav.delete(&file, None).unwrap();
+    assert!(names(&c, &root).is_empty());
+
+    // A folder gone from the server is no listing any more.
+    assert!(matches!(
+        c.list(A, &format!("{root}/nope")),
+        Err(Error::NotFound(_))
+    ));
+}

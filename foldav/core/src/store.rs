@@ -28,6 +28,31 @@ CREATE TABLE bookmarks (
   UNIQUE (account, path)
 );
 "#,
+    r#"
+-- What was last listed of each folder (`cache.rs`): the folder's ETag, and what was in it.
+CREATE TABLE listings (
+  account INTEGER NOT NULL,
+  path TEXT NOT NULL,                   -- the folder, relative to the Files root, '' the root
+  etag TEXT NOT NULL,
+  PRIMARY KEY (account, path)
+);
+CREATE TABLE entries (
+  account INTEGER NOT NULL,
+  dir TEXT NOT NULL,                    -- the folder it is in
+  path TEXT NOT NULL,
+  name TEXT NOT NULL,
+  folder INTEGER NOT NULL,
+  size INTEGER,
+  modified INTEGER NOT NULL,
+  mime TEXT NOT NULL,
+  favorite INTEGER NOT NULL,
+  has_preview INTEGER NOT NULL,
+  etag TEXT NOT NULL,
+  fileid TEXT NOT NULL,
+  PRIMARY KEY (account, path)
+);
+CREATE INDEX entries_dir ON entries (account, dir);
+"#,
 ];
 
 pub fn open(path: &str) -> Result<Connection> {
@@ -93,6 +118,34 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM accounts", [], |r| r.get(0))
             .unwrap();
         assert_eq!(users, 1, "what the first step kept is still there");
+    }
+
+    #[test]
+    fn a_database_of_the_second_step_gets_the_listing_cache() {
+        let dir = std::env::temp_dir().join(format!("foldav-test-step3-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("foldav.sqlite").to_string_lossy().to_string();
+        let old = Connection::open(&path).unwrap();
+        old.execute_batch(MIGRATIONS[0]).unwrap();
+        old.execute_batch(MIGRATIONS[1]).unwrap();
+        old.pragma_update(None, "user_version", 2).unwrap();
+        old.execute(
+            "INSERT INTO bookmarks (account, path) VALUES (1, 'Photos')",
+            [],
+        )
+        .unwrap();
+        drop(old);
+        let db = open(&path).unwrap();
+        db.execute(
+            "INSERT INTO listings (account, path, etag) VALUES (1, '', 'x')",
+            [],
+        )
+        .unwrap();
+        let kept: i64 = db
+            .query_row("SELECT COUNT(*) FROM bookmarks", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(kept, 1, "what the second step kept is still there");
     }
 
     #[test]

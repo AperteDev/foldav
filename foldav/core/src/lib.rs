@@ -1,6 +1,7 @@
 mod account;
 pub mod accounts;
 mod bookmarks;
+mod cache;
 pub mod dav;
 mod files;
 pub mod json;

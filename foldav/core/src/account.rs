@@ -163,14 +163,15 @@ impl Client {
         Ok(())
     }
 
-    /// Forget what was learnt of account `id`'s server.
+    /// Forget what was learnt of account `id`'s server, the folders listed included.
     fn forget(&self, id: i64) -> Result<()> {
         let prefix = key(id, "");
-        self.db.lock().unwrap().execute(
+        let db = self.db.lock().unwrap();
+        db.execute(
             "DELETE FROM kv WHERE substr(key, 1, ?2) = ?1",
             params![prefix, prefix.len() as i64],
         )?;
-        Ok(())
+        crate::cache::clear(&db, id)
     }
 
     /// The account whose server synced settings go through (the device-only
