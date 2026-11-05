@@ -55,7 +55,11 @@ CREATE TABLE favorites (
 
 pub fn open(path: &str) -> Result<Connection> {
     let db = Connection::open(path)?;
-    db.execute_batch("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")?;
+    // WAL with NORMAL syncing: a commit does not wait for the disk. The app crashing loses
+    // nothing; a power cut can lose the last few commits (mostly listings, listed again).
+    db.execute_batch(
+        "PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;",
+    )?;
     let version: i64 = db.query_row("PRAGMA user_version", [], |r| r.get(0))?;
     // A newer Foldav's: its schema may not be what this one reads and writes.
     if version > MIGRATIONS.len() as i64 {

@@ -66,6 +66,24 @@ pub(crate) fn entry_file(home: &str, e: crate::dav::Entry) -> Option<File> {
 }
 
 impl Client {
+    /// Look whether folder `path` of account `id` changed since it was last listed: its listing
+    /// now if it did, None when its ETag is still the one kept (one small request, and nothing
+    /// is read from the disk).
+    pub fn changed(&self, id: i64, path: &str) -> Result<Option<Vec<File>>> {
+        if !crate::places::is_place(path)
+            && let Some(known) = self.listing_etag(id, path).filter(|e| !e.is_empty())
+        {
+            let home = self.files_home(id)?;
+            let dir = format!("{home}{}", path.trim_matches('/'));
+            let dir = format!("{}/", dir.trim_end_matches('/'));
+            let now = self.dav(id)?.list(&dir, "0")?;
+            if now.first().is_some_and(|h| h.etag == known) {
+                return Ok(None);
+            }
+        }
+        self.list(id, path).map(Some)
+    }
+
     /// What is directly in folder `path` of account `id` (empty: the Files root): folders first,
     /// then by name, case ignored; hidden files (`File::hidden`) included, the front-end
     /// decides. Blocking: a request to the server, a small one when the folder is the same as

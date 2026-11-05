@@ -93,7 +93,8 @@ Once a third app copies the same code, a shared crate in its own repository beco
    folders (a folder dragged out of the window is still fetched file by file). Transfers queue,
    resume after a dropped connection (a chunk is sent again, a download starts over), and
    finish before the app quits (now closing the window stops them). A stalled connection is
-   not given up on until the system does (`ureq` has no idle timeout). Dragging to and from
+   not given up on until the system does (`ureq` has no idle timeout). The chunks of a big file
+   go one after the other, where the server takes five at once (`max_parallel_count`). Dragging to and from
    other apps is not tested against Files itself, only between the window's own views.
 5. **Opening files**, what is left of it (a file opens in its default app from a copy kept in
    the cache folder, checked against the server's ETag, deleted after a month unused; a

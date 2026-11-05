@@ -83,7 +83,7 @@ impl Client {
             "DELETE FROM entries WHERE account = ? AND dir = ?",
             params![id, path],
         )?;
-        let mut insert = tx.prepare(
+        let mut insert = tx.prepare_cached(
             "INSERT INTO entries (account, dir, path, name, folder, size, modified, mime,
                 favorite, has_preview, etag, fileid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )?;
@@ -108,10 +108,12 @@ impl Client {
             "INSERT OR REPLACE INTO listings (account, path, etag) VALUES (?, ?, ?)",
             params![id, path, etag],
         )?;
-        for gone in old
+        let folders: std::collections::HashSet<&str> = files
             .iter()
-            .filter(|p| !files.iter().any(|f| f.folder && f.path == **p))
-        {
+            .filter(|f| f.folder)
+            .map(|f| f.path.as_str())
+            .collect();
+        for gone in old.iter().filter(|p| !folders.contains(p.as_str())) {
             drop_tree(&tx, id, gone)?;
         }
         tx.commit()?;

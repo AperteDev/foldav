@@ -290,7 +290,7 @@ pub fn poll(ui: &Rc<Ui>) {
     let weak = Rc::downgrade(ui);
     glib::spawn_future_local(async move {
         let p = path.clone();
-        let r = gio::spawn_blocking(move || core().list(id, &p)).await;
+        let r = gio::spawn_blocking(move || core().changed(id, &p)).await;
         // Another folder was gone to meanwhile: not this one's news.
         let Some(ui) = weak
             .upgrade()
@@ -298,7 +298,7 @@ pub fn poll(ui: &Rc<Ui>) {
         else {
             return;
         };
-        if let Ok(Ok(files)) = r {
+        if let Ok(Ok(Some(files))) = r {
             let old = ui.dirs.borrow().get(&(id, path.clone())).cloned();
             if old.as_deref() != Some(&files) {
                 ui.dirs.borrow_mut().insert((id, path), Rc::new(files));

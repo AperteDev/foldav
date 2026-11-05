@@ -81,15 +81,36 @@ pub fn icon(f: &File) -> gio::Icon {
 /// Files does). Looked up large and scaled down, as the extension "My Computer" does: at a
 /// small size the theme gives a monochrome one for some icons (a folder's).
 pub fn set_icon(image: &gtk::Image, f: &File) {
+    thread_local! {
+        /// The icons looked up, by type and scale: scrolling binds the same few over and over.
+        static ICONS: std::cell::RefCell<std::collections::HashMap<(String, i32), gtk::IconPaintable>> =
+            std::cell::RefCell::default();
+    }
     match gtk::gdk::Display::default() {
         Some(display) => {
-            let paintable = gtk::IconTheme::for_display(&display).lookup_by_gicon(
-                &icon(f),
-                128,
-                image.scale_factor(),
-                gtk::TextDirection::None,
-                gtk::IconLookupFlags::FORCE_REGULAR,
+            let scale = image.scale_factor();
+            let key = (
+                if f.folder {
+                    "inode/directory".to_string()
+                } else {
+                    f.mime.clone()
+                },
+                scale,
             );
+            let paintable = ICONS.with(|c| {
+                c.borrow_mut()
+                    .entry(key)
+                    .or_insert_with(|| {
+                        gtk::IconTheme::for_display(&display).lookup_by_gicon(
+                            &icon(f),
+                            128,
+                            scale,
+                            gtk::TextDirection::None,
+                            gtk::IconLookupFlags::FORCE_REGULAR,
+                        )
+                    })
+                    .clone()
+            });
             image.set_paintable(Some(&paintable));
         }
         None => image.set_from_gicon(&icon(f)),

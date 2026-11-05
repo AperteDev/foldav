@@ -68,7 +68,7 @@ pub(crate) fn save(mut dl: Download, target: &Path, p: &Progress) -> Result<()> 
     let copied = (|| {
         let mut out = std::fs::File::create(&part).map_err(io)?;
         let mut body = dl.reader();
-        let mut buf = vec![0; 64 * 1024];
+        let mut buf = vec![0; 256 * 1024];
         loop {
             if p.is_cancelled() {
                 return Err(Error::Cancelled);
