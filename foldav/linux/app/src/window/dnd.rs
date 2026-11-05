@@ -21,6 +21,66 @@ pub struct Dragged {
     files: Vec<File>,
 }
 
+/// The files being dragged inside the window, while they are.
+struct Drag {
+    account: i64,
+    paths: Vec<String>,
+    /// All of them are folders.
+    folder: bool,
+}
+
+thread_local! {
+    static DRAGGING: std::cell::RefCell<Option<Drag>> = const { std::cell::RefCell::new(None) };
+}
+
+/// Dropping on `dest` makes no sense for what is dragged: on one of the files itself, in a
+/// folder dragged (it would go into itself), or, for a move (`copy_only` false), where the files
+/// are already.
+fn refuses(dest: &(i64, String), copy_only: bool) -> bool {
+    DRAGGING.with_borrow(|d| {
+        d.as_ref().is_some_and(|d| {
+            d.account == dest.0
+                && (d
+                    .paths
+                    .iter()
+                    .any(|p| *p == dest.1 || dest.1.starts_with(&format!("{p}/")))
+                    || (!copy_only && d.paths.iter().all(|p| super::nav::parent(p) == dest.1)))
+        })
+    })
+}
+
+/// What shows by the pointer while files are dragged: a rounded badge with an icon for a file, a
+/// folder or several, and their number.
+fn drag_badge() -> Option<gtk::Widget> {
+    let (n, folder) = DRAGGING.with_borrow(|d| d.as_ref().map(|d| (d.paths.len(), d.folder)))?;
+    let icon = gtk::Image::builder()
+        .icon_name(match (n, folder) {
+            (1, true) => "folder-symbolic",
+            (1, false) => "text-x-generic-symbolic",
+            _ => "edit-copy-symbolic",
+        })
+        .pixel_size(32)
+        .css_classes(["drag-badge"])
+        .build();
+    let overlay = gtk::Overlay::builder()
+        .child(&icon)
+        // Beside the pointer, not under it.
+        .margin_start(10)
+        .margin_top(10)
+        .build();
+    if n > 1 {
+        overlay.add_overlay(
+            &gtk::Label::builder()
+                .label(n.to_string())
+                .halign(gtk::Align::End)
+                .valign(gtk::Align::Start)
+                .css_classes(["drag-count"])
+                .build(),
+        );
+    }
+    Some(overlay.upcast())
+}
+
 /// What was dropped (files of the window, or of another app) goes into folder `dest` of account
 /// `id`: moved or, with `cut` false, copied; from another app, uploaded. A place takes none.
 pub fn drop_value(ui: &Rc<Ui>, value: &glib::Value, id: i64, dest: String, cut: bool) -> bool {
@@ -158,7 +218,11 @@ pub fn attach(ui: &Weak<Ui>, item: &gtk::ListItem, w: &gtk::Widget) {
         if files.is_empty() {
             return None;
         }
-        source.set_icon(Some(&gtk::WidgetPaintable::new(Some(&widget))), 0, 0);
+        DRAGGING.set(Some(Drag {
+            account,
+            paths: files.iter().map(|f| f.path.clone()).collect(),
+            folder: files.iter().all(|f| f.folder),
+        }));
         Some(gdk::ContentProvider::new_union(&[
             gdk::ContentProvider::for_value(
                 &Dragged {
@@ -169,6 +233,17 @@ pub fn attach(ui: &Weak<Ui>, item: &gtk::ListItem, w: &gtk::Widget) {
             ),
             provider::RemoteFiles::new(account, files).upcast(),
         ]))
+    });
+    // What is dragged is a small badge by the pointer, as Files', not the row.
+    source.connect_drag_begin(|_, drag| {
+        if let Some(badge) = drag_badge()
+            && let Ok(icon) = gtk::DragIcon::for_drag(drag).downcast::<gtk::DragIcon>()
+        {
+            icon.set_child(Some(&badge));
+        }
+    });
+    source.connect_drag_end(|_, _, _| {
+        DRAGGING.take();
     });
     w.add_controller(source);
 
@@ -197,17 +272,31 @@ pub fn target(
     target.set_types(&[Dragged::static_type(), gdk::FileList::static_type()]);
     // Files of the window move (Ctrl: copy; the compositor turns that into the action it
     // gives); what comes from another app is copied, to the server.
-    target.connect_motion(|t, _, _| {
+    let (weak, dest) = (ui.clone(), std::rc::Rc::new(dest));
+    // Ctrl held: the drop offers copying only.
+    let copy_only = |t: &gtk::DropTarget| {
+        t.current_drop()
+            .is_some_and(|d| !d.actions().contains(gdk::DragAction::MOVE))
+    };
+    // What the window drags is no drop here when it makes no sense (on itself).
+    let (w, d) = (weak.clone(), dest.clone());
+    target.connect_motion(move |t, _, _| {
         let ours = t
             .current_drop()
             .is_some_and(|d| d.formats().contains_type(Dragged::static_type()));
-        if ours {
-            gdk::DragAction::MOVE
+        if !ours {
+            return gdk::DragAction::COPY;
+        }
+        let refused = w
+            .upgrade()
+            .and_then(|ui| d(&ui))
+            .is_some_and(|dest| refuses(&dest, copy_only(t)));
+        if refused {
+            gdk::DragAction::empty()
         } else {
-            gdk::DragAction::COPY
+            gdk::DragAction::MOVE
         }
     });
-    let (weak, dest) = (ui.clone(), std::rc::Rc::new(dest));
     let d = dest.clone();
     target.connect_drop(move |t, value, _, _| {
         let Some(ui) = weak.upgrade() else {
@@ -216,10 +305,10 @@ pub fn target(
         let Some((id, dest)) = d(&ui) else {
             return false;
         };
-        // Ctrl held: the drop offers copying only.
-        let cut = !t
-            .current_drop()
-            .is_some_and(|d| !d.actions().contains(gdk::DragAction::MOVE));
+        let cut = !copy_only(t);
+        if refuses(&(id, dest.clone()), !cut) {
+            return false;
+        }
         drop_value(&ui, value, id, dest, cut)
     });
     if highlight {
@@ -228,9 +317,11 @@ pub fn target(
         target.connect_current_drop_notify(move |t| {
             let Some(w) = t.widget() else { return };
             let over = t.current_drop().is_some()
-                && weak
-                    .upgrade()
-                    .is_some_and(|ui| d(&ui) != ui.at.borrow().clone());
+                && weak.upgrade().is_some_and(|ui| {
+                    d(&ui).is_some_and(|dest| {
+                        Some(&dest) != ui.at.borrow().as_ref() && !refuses(&dest, copy_only(t))
+                    })
+                });
             if over {
                 w.add_css_class("drop-target");
             } else {

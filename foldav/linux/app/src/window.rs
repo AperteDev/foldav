@@ -47,7 +47,27 @@ const CSS: &str = "
 .transfers menubutton > button { min-height: 28px; padding: 4px 8px; border-radius: 6px; }
 .transfers label { font-weight: normal; }
 /* The folder files would be dropped into. */
-.drop-target { background-color: alpha(@accent_bg_color, 0.3); border-radius: 8px; }
+.drop-target {
+  background-color: alpha(currentColor, 0.08);
+  box-shadow: inset 0 0 0 1px alpha(currentColor, 0.4);
+  border-radius: 10px;
+}
+/* What is dragged, by the pointer: a badge, with the number of files when there are several. */
+.drag-badge {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px alpha(black, 0.35);
+}
+.drag-count {
+  background-color: @accent_fg_color;
+  color: @accent_bg_color;
+  border-radius: 99px;
+  padding: 0 6px;
+  font-weight: bold;
+  font-size: 0.85em;
+}
 /* The window buttons are in a plain toolbar row, not a header bar: its buttons' own background
    must not show behind their circles. */
 .toolbar windowcontrols button, .toolbar windowcontrols button:hover,
