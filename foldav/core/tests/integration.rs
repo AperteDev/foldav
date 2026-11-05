@@ -138,3 +138,38 @@ fn listings_are_kept_and_follow_the_folders_etag() {
         Err(Error::NotFound(_))
     ));
 }
+
+#[test]
+fn favorites_go_up_and_come_down_and_changes_elsewhere_are_seen() {
+    let (c, dav, root) = fixture("favorites");
+    let home = c.files_home(A).unwrap();
+    c.new_folder(A, &root, "one").unwrap();
+    c.new_folder(A, &root, "two").unwrap();
+    let (one, two) = (format!("{root}/one"), format!("{root}/two"));
+    let on_server = |p: &str| {
+        dav.favorites(&home)
+            .unwrap()
+            .iter()
+            .any(|(href, _)| href.trim_end_matches('/') == format!("{home}{p}"))
+    };
+    let kept = |p: &str| c.favorites(A).iter().any(|f| f.path == p && f.folder);
+    c.sync_favorites(A).unwrap(); // what the account had already
+
+    // Starred here: kept at once, on the server as soon as it can be reached.
+    c.set_favorite(A, &one, true, true).unwrap();
+    assert!(kept(&one) && on_server(&one));
+    assert!(!c.sync_favorites(A).unwrap(), "nothing changed meanwhile");
+
+    // Starred on another device: seen by the next sync.
+    dav.set_favorite(&format!("{home}{two}"), true).unwrap();
+    assert!(!kept(&two));
+    assert!(c.sync_favorites(A).unwrap());
+    assert!(kept(&two));
+
+    // Unstarred here and there.
+    c.set_favorite(A, &one, true, false).unwrap();
+    assert!(!kept(&one) && !on_server(&one));
+    dav.set_favorite(&format!("{home}{two}"), false).unwrap();
+    assert!(c.sync_favorites(A).unwrap());
+    assert!(!kept(&two));
+}

@@ -53,6 +53,21 @@ CREATE TABLE entries (
 );
 CREATE INDEX entries_dir ON entries (account, dir);
 "#,
+    r#"
+-- Nextcloud's favorites in place of local bookmarks (`favorites.rs`): what the server last said,
+-- and the changes made here that it does not have yet. The folders bookmarked before go up to
+-- it as favorites.
+CREATE TABLE favorites (
+  account INTEGER NOT NULL,
+  path TEXT NOT NULL,                   -- relative to the Files root
+  folder INTEGER NOT NULL,
+  dirty INTEGER NOT NULL DEFAULT 0,     -- 0 as on the server, 1 starred here, 2 unstarred here
+  PRIMARY KEY (account, path)
+);
+INSERT INTO favorites (account, path, folder, dirty)
+  SELECT account, path, 1, 1 FROM bookmarks WHERE path != '';
+DROP TABLE bookmarks;
+"#,
 ];
 
 pub fn open(path: &str) -> Result<Connection> {
@@ -109,11 +124,6 @@ mod tests {
         .unwrap();
         drop(old);
         let db = open(&path).unwrap();
-        db.execute(
-            "INSERT INTO bookmarks (account, path) VALUES (1, 'Photos')",
-            [],
-        )
-        .unwrap();
         let users: i64 = db
             .query_row("SELECT COUNT(*) FROM accounts", [], |r| r.get(0))
             .unwrap();
@@ -130,11 +140,6 @@ mod tests {
         old.execute_batch(MIGRATIONS[0]).unwrap();
         old.execute_batch(MIGRATIONS[1]).unwrap();
         old.pragma_update(None, "user_version", 2).unwrap();
-        old.execute(
-            "INSERT INTO bookmarks (account, path) VALUES (1, 'Photos')",
-            [],
-        )
-        .unwrap();
         drop(old);
         let db = open(&path).unwrap();
         db.execute(
@@ -142,10 +147,43 @@ mod tests {
             [],
         )
         .unwrap();
-        let kept: i64 = db
-            .query_row("SELECT COUNT(*) FROM bookmarks", [], |r| r.get(0))
+    }
+
+    #[test]
+    fn the_bookmarks_of_the_third_step_become_favorites_to_send() {
+        let dir = std::env::temp_dir().join(format!("foldav-test-step4-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("foldav.sqlite").to_string_lossy().to_string();
+        let old = Connection::open(&path).unwrap();
+        for m in &MIGRATIONS[..3] {
+            old.execute_batch(m).unwrap();
+        }
+        old.pragma_update(None, "user_version", 3).unwrap();
+        old.execute(
+            "INSERT INTO bookmarks (account, path) VALUES (1, 'Photos'), (1, ''), (2, 'A/B')",
+            [],
+        )
+        .unwrap();
+        drop(old);
+        let db = open(&path).unwrap();
+        let mut st = db
+            .prepare("SELECT account, path, folder, dirty FROM favorites ORDER BY account")
             .unwrap();
-        assert_eq!(kept, 1, "what the second step kept is still there");
+        let rows: Vec<(i64, String, bool, i64)> = st
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
+            .unwrap()
+            .collect::<rusqlite::Result<_>>()
+            .unwrap();
+        // The root cannot be a favorite; the others wait to be sent.
+        assert_eq!(
+            rows,
+            [
+                (1, "Photos".to_string(), true, 1),
+                (2, "A/B".to_string(), true, 1)
+            ]
+        );
+        assert!(db.prepare("SELECT 1 FROM bookmarks").is_err(), "gone");
     }
 
     #[test]

@@ -154,7 +154,7 @@ impl Client {
         self.db
             .lock()
             .unwrap()
-            .execute("DELETE FROM bookmarks WHERE account = ?", [id])?;
+            .execute("DELETE FROM favorites WHERE account = ?", [id])?;
         if self.settings_account() == Some(id) {
             self.set_settings_account(None)?;
         }

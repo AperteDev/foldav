@@ -495,11 +495,11 @@ impl Dav {
         }
     }
 
-    /// The `oc:id`s of every file and folder the user starred, below Files root `home`: one
+    /// Every file and folder the user starred, below Files root `home`, as (href, folder): one
     /// REPORT, as the Files app lists its favorites (starring changes no ETag a pull sees).
-    pub fn favorites(&self, home: &str) -> Result<Vec<String>> {
+    pub fn favorites(&self, home: &str) -> Result<Vec<(String, bool)>> {
         let body = format!(
-            r#"<?xml version="1.0" encoding="utf-8"?><oc:filter-files xmlns:d="DAV:" xmlns:oc="{OC}"><d:prop><oc:id/></d:prop><oc:filter-rules><oc:favorite>1</oc:favorite></oc:filter-rules></oc:filter-files>"#
+            r#"<?xml version="1.0" encoding="utf-8"?><oc:filter-files xmlns:d="DAV:" xmlns:oc="{OC}"><d:prop><d:resourcetype/></d:prop><oc:filter-rules><oc:favorite>1</oc:favorite></oc:filter-rules></oc:filter-files>"#
         );
         let r = self.request("REPORT", home, &[], &body)?;
         if r.status != 207 {
@@ -508,7 +508,14 @@ impl Dav {
         Ok(multistatus(&r.body)?
             .0
             .into_iter()
-            .filter_map(|r| r.props.find_text(OC, "id"))
+            .filter(|r| r.status == 200)
+            .map(|r| {
+                let folder = r
+                    .props
+                    .child(DAV, "resourcetype")
+                    .is_some_and(|t| t.child(DAV, "collection").is_some());
+                (r.href, folder)
+            })
             .collect())
     }
 }
