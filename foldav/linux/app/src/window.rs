@@ -31,10 +31,11 @@ mod views;
 /// the star of a favorite; the columns' dividers.
 const CSS: &str = "
 .pathbar { background-color: alpha(currentColor, 0.08); border-radius: 8px; min-height: 34px;
-  padding: 0 2px 0 4px; }
-.pathbar button { min-height: 30px; }
-.pathbar button.path-segment { padding: 0 8px; border-radius: 6px; }
-.pathbar menubutton > button { min-width: 30px; padding: 0; }
+  padding: 0; }
+/* The buttons fill the bar from edge to edge, as Files' path bar does. */
+.pathbar button { min-height: 34px; margin: 0; }
+.pathbar button.path-segment { padding: 0 10px; border-radius: 8px; }
+.pathbar menubutton > button { min-width: 34px; padding: 0; border-radius: 8px; }
 .pathbar button.path-segment.current { font-weight: bold; }
 .pathbar .path-separator { opacity: 0.5; }
 .navigation-sidebar.dense > row { min-height: 28px; margin-bottom: 0; border-radius: 6px; }
