@@ -49,6 +49,8 @@ pub struct Views {
     list_scroll: gtk::ScrolledWindow,
     /// What is selected, at the foot of the files.
     status: gtk::Label,
+    /// "Searching…", while a search is on its way.
+    searching: gtk::Box,
     pub columns: Columns,
     mode: Cell<Mode>,
 }
@@ -187,6 +189,7 @@ impl Views {
             icons_scroll,
             list_scroll,
             status: super::get(b, "selection_status"),
+            searching: super::get(b, "searching_status"),
             columns: Columns::new(b),
             mode: Cell::new(Mode::Icons),
         }
@@ -312,7 +315,26 @@ pub fn connect(ui: &Rc<Ui>) {
             if i > 0 {
                 label.add_css_class("dim-label");
             }
-            b.append(&label);
+            if i == 0 {
+                // The name, and under it where the file is, in the places (a search's results).
+                let text = gtk::Box::builder()
+                    .orientation(gtk::Orientation::Vertical)
+                    .hexpand(true)
+                    .valign(gtk::Align::Center)
+                    .build();
+                text.append(&label);
+                text.append(
+                    &gtk::Label::builder()
+                        .xalign(0.0)
+                        .ellipsize(gtk::pango::EllipsizeMode::End)
+                        .css_classes(["dim-label", "caption"])
+                        .visible(false)
+                        .build(),
+                );
+                b.append(&text);
+            } else {
+                b.append(&label);
+            }
             if i == 0 {
                 // In the middle of the row, as the icon is.
                 let star = star(16);
@@ -331,8 +353,9 @@ pub fn connect(ui: &Rc<Ui>) {
                 return;
             };
             // The name's cell is the icon, the name, the star; the others' just the text.
+            let text = b.first_child().and_then(|c| c.next_sibling());
             let label = if i == 0 {
-                b.first_child().and_then(|c| c.next_sibling())
+                text.as_ref().and_then(|t| t.first_child())
             } else {
                 b.last_child()
             }
@@ -350,6 +373,15 @@ pub fn connect(ui: &Rc<Ui>) {
                         star.set_visible(f.favorite);
                     }
                     label.set_label(&f.name);
+                    // In a place (a search, Recent, Starred…) the folder the file is in.
+                    if let Some(place) = text
+                        .and_then(|t| t.last_child())
+                        .and_downcast::<gtk::Label>()
+                    {
+                        let here = location_of(&ui, &f);
+                        place.set_visible(here.is_some());
+                        place.set_label(&here.unwrap_or_default());
+                    }
                 }
                 1 => label.set_label(&size_text(&f)),
                 _ => label.set_label(&date(f.modified)),
@@ -435,6 +467,11 @@ fn on_room(scroll: &gtk::Widget, x: f64, y: f64) -> bool {
     true
 }
 
+/// Show or hide "Searching…" over the files.
+pub fn set_searching(ui: &Ui, on: bool) {
+    ui.views.searching.set_visible(on);
+}
+
 /// What is selected, said at the foot of the files as Files says it: one file by its name and
 /// size, several by their number and together size, folders apart.
 pub fn update_status(ui: &Ui) {
@@ -496,6 +533,24 @@ fn status_text(files: &[File]) -> Option<String> {
             .replace("{folders}", &folders_text)
             .replace("{others}", &others_text(false)),
     }))
+}
+
+/// Where `f` is, as "Photos/2026/" ("/" for the root), when the files shown are a place's (a
+/// search's results, Recent, Starred…) and so from all over; none in a folder or for what has
+/// no path of its own (the trash's, the tags').
+fn location_of(ui: &Ui, f: &File) -> Option<String> {
+    let in_place = ui
+        .at
+        .borrow()
+        .as_ref()
+        .is_some_and(|(_, p)| foldav_core::places::is_place(p));
+    if !in_place || foldav_core::places::is_place(&f.path) {
+        return None;
+    }
+    Some(match nav::parent(&f.path) {
+        "" => "/".to_string(),
+        parent => format!("{parent}/"),
+    })
 }
 
 /// What a file's size column says: its size, or for a tag how many files it is on; none where

@@ -166,12 +166,16 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
             .insert((id, path.clone()), files.clone());
         cached = Some(files);
     }
+    // A search keeps what is shown until its results are in (a pill says it is on): the folders
+    // of a search come with every key typed.
+    let searching = foldav_core::places::search_of(&path).is_some();
+    views::set_searching(ui, searching);
     if cached.is_some() {
         show(ui);
     } else if ui.views.mode() == views::Mode::Columns {
         // The columns stay as they are, the new one filling when it is loaded.
         columns::refresh(ui);
-    } else {
+    } else if !searching {
         ui.files_stack.set_visible_child_name("loading");
     }
     let load = ui.load.get() + 1;
@@ -183,6 +187,7 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
         let Some(ui) = weak.upgrade().filter(|u| u.load.get() == load) else {
             return;
         };
+        views::set_searching(&ui, false);
         match r {
             Ok(Ok((found, files))) => {
                 // What was loaded before stays when it is the same: what is made from it

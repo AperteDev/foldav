@@ -104,8 +104,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   oldest previews go when they take more than 256 MB
 - The trash bin: Deleted Files lists what was deleted; Restore, Delete Permanently and
   Empty Trash, each asking first where it cannot be taken back
-- Search by name in the folder shown and below it (Ctrl+F or the magnifier in the header),
-  searching on the server as you type; Escape leaves it
+- Search by name in the folder shown and below it, as in Files (Ctrl+F or the button with the
+  loupe and folder in the header): the field takes the path bar's place, the server is asked a
+  moment after each key (the results stay on screen with a "Searching…" pill meanwhile), each
+  result says under its name the folder it is in (so do Recent, Starred and the other places),
+  back, forward and up are off while the results show, and Escape or the button leaves it
 - A change another app saves to the copy of an opened file goes back to the server (also one
   made while Foldav was closed, at the next start), unless the file changed on the server
   meanwhile: then it stays, and your version is kept beside it as "name (conflicted

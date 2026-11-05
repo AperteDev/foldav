@@ -9,6 +9,7 @@ use crate::i18n::gettext;
 use adw::prelude::*;
 use foldav_core::places;
 use gtk::{gdk, gio, glib};
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -23,8 +24,10 @@ pub struct Header {
     location_box: gtk::Box,
     location_entry: gtk::Entry,
     location_close: gtk::Button,
-    search_bar: gtk::SearchBar,
-    search_entry: gtk::SearchEntry,
+    /// The search to type, in the path bar's place while shown.
+    search_box: gtk::Box,
+    search_entry: gtk::Entry,
+    search_toggle: gtk::ToggleButton,
 }
 
 impl Header {
@@ -38,67 +41,130 @@ impl Header {
             location_box: super::get(b, "location_box"),
             location_entry: super::get(b, "location_entry"),
             location_close: super::get(b, "location_close"),
-            search_bar: super::get(b, "search_bar"),
+            search_box: super::get(b, "search_box"),
             search_entry: super::get(b, "search_entry"),
+            search_toggle: super::get(b, "search_toggle"),
         }
     }
 
-    /// The search bar closed, and its query gone.
+    /// The search field closed in favour of the path bar, and its query gone; the place shown
+    /// is not changed.
     pub fn close_search(&self) {
-        self.search_bar.set_search_mode(false);
+        if self.search_box.is_visible() {
+            self.search_box.set_visible(false);
+            self.pathbar_box.set_visible(true);
+        }
+        self.search_toggle.set_active(false);
         self.search_entry.set_text("");
     }
 }
 
-/// Search the folder shown and below it as the query is typed; the results are a place, so
-/// back leaves them. An empty query, or Escape, leaves the search.
+/// Show the search field in the path bar's place, or leave the search: the path bar is back
+/// and, if results are shown, the folder they were searched in.
+fn show_search(ui: &Rc<Ui>, on: bool) {
+    let h = &ui.header;
+    if h.search_box.is_visible() == on {
+        return;
+    }
+    if on {
+        h.location_box.set_visible(false);
+        h.pathbar_box.set_visible(false);
+        h.search_box.set_visible(true);
+        fade_in(h.search_box.upcast_ref());
+        h.search_toggle.set_active(true);
+        let entry = h.search_entry.clone();
+        glib::idle_add_local_once(move || {
+            entry.grab_focus();
+        });
+        return;
+    }
+    let searching = ui
+        .at
+        .borrow()
+        .as_ref()
+        .is_some_and(|(_, p)| places::search_of(p).is_some());
+    h.close_search();
+    fade_in(h.pathbar_box.upcast_ref());
+    if searching && !ui.tabs.switching.get() {
+        nav::back(ui);
+    }
+}
+
+/// Search for `query` in the folder shown and below it (or, from a search, the folder it was
+/// made in); the results are a place, so back leaves them. Nothing typed: nothing changes.
+fn run_search(ui: &Rc<Ui>, query: &str) {
+    let (query, at) = (query.trim(), ui.at.borrow().clone());
+    let Some((id, path)) = at.filter(|_| !query.is_empty() && ui.header.search_box.is_visible())
+    else {
+        return;
+    };
+    let searching = places::search_of(&path).map(|(folder, _)| folder.to_string());
+    // From a place that is no search, all the files; from a search, the folder it was in.
+    let how = if searching.is_some() {
+        Go::Keep
+    } else {
+        Go::Push
+    };
+    let folder = match searching {
+        Some(folder) => folder,
+        None if places::is_place(&path) => String::new(),
+        None => path,
+    };
+    nav::go(ui, id, places::search_place(&folder, query), how);
+}
+
+/// Search the folder shown and below it as the query is typed (a moment after the last key);
+/// Escape, or the button again, leaves the search.
 fn connect_search(ui: &Rc<Ui>) {
     let h = &ui.header;
-    h.search_bar.connect_entry(&h.search_entry);
+    // Ctrl+F: the field, or back to it if it is open.
     action(ui, "search", |ui| {
-        let on = !ui.header.search_bar.is_search_mode();
-        ui.header.search_bar.set_search_mode(on);
+        if ui.header.search_box.is_visible() {
+            ui.header.search_entry.grab_focus();
+        } else {
+            show_search(ui, true);
+        }
     });
     let weak = Rc::downgrade(ui);
-    h.search_entry.connect_search_changed(move |entry| {
+    h.search_toggle.connect_toggled(move |t| {
+        if let Some(ui) = weak.upgrade() {
+            show_search(&ui, t.is_active());
+        }
+    });
+
+    let pending: Rc<RefCell<Option<glib::SourceId>>> = Rc::default();
+    let weak = Rc::downgrade(ui);
+    h.search_entry.connect_changed(move |entry| {
+        if let Some(id) = pending.borrow_mut().take() {
+            id.remove();
+        }
         let Some(ui) = weak.upgrade().filter(|ui| !ui.tabs.switching.get()) else {
             return;
         };
-        let (query, at) = (entry.text().trim().to_string(), ui.at.borrow().clone());
-        let Some((id, path)) = at else { return };
-        let searching = places::search_of(&path).map(|(folder, _)| folder.to_string());
-        if query.is_empty() {
-            if searching.is_some() {
-                nav::back(&ui);
-            }
-            return;
-        }
-        // From a place that is no search, all the files; from a search, the folder it was in.
-        let how = if searching.is_some() {
-            Go::Keep
-        } else {
-            Go::Push
-        };
-        let folder = match searching {
-            Some(folder) => folder,
-            None if places::is_place(&path) => String::new(),
-            None => path,
-        };
-        nav::go(&ui, id, places::search_place(&folder, &query), how);
+        let (done, entry) = (pending.clone(), entry.clone());
+        let id = glib::timeout_add_local_once(Duration::from_millis(250), move || {
+            done.borrow_mut().take();
+            run_search(&ui, &entry.text());
+        });
+        *pending.borrow_mut() = Some(id);
     });
-    let weak = Rc::downgrade(ui);
-    h.search_entry.connect_stop_search(move |_| {
-        let Some(ui) = weak.upgrade() else { return };
-        ui.header.search_bar.set_search_mode(false);
-    });
-    // Closed: the search is left, back to the folder.
-    let weak = Rc::downgrade(ui);
-    h.search_bar.connect_search_mode_enabled_notify(move |bar| {
-        let Some(ui) = weak.upgrade() else { return };
-        if !bar.is_search_mode() {
-            ui.header.search_entry.set_text("");
+    h.search_entry.connect_icon_press(|entry, position| {
+        if position == gtk::EntryIconPosition::Secondary {
+            entry.set_text("");
         }
     });
+    let key = gtk::EventControllerKey::new();
+    let weak = Rc::downgrade(ui);
+    key.connect_key_pressed(move |_, keyval, _, _| {
+        if keyval == gdk::Key::Escape
+            && let Some(ui) = weak.upgrade()
+        {
+            show_search(&ui, false);
+            return glib::Propagation::Stop;
+        }
+        glib::Propagation::Proceed
+    });
+    h.search_entry.add_controller(key);
 }
 
 /// The actions of the header and its menus, and the view the user left off with.
@@ -110,6 +176,8 @@ fn edit_location(ui: &Rc<Ui>) {
         Some((_, p)) if !places::is_place(p) => format!("/{p}"),
         _ => "/".to_string(),
     };
+    // The path replaces a search field too.
+    h.close_search();
     h.location_entry.set_text(&text);
     h.pathbar_box.set_visible(false);
     h.location_box.set_visible(true);
@@ -139,8 +207,10 @@ fn close_location(ui: &Ui) {
         return;
     }
     h.location_box.set_visible(false);
-    h.pathbar_box.set_visible(true);
-    fade_in(h.pathbar_box.upcast_ref());
+    if !h.search_box.is_visible() {
+        h.pathbar_box.set_visible(true);
+        fade_in(h.pathbar_box.upcast_ref());
+    }
 }
 
 fn connect_location(ui: &Rc<Ui>) {
@@ -338,9 +408,21 @@ pub fn update(ui: &Rc<Ui>) {
             .and_downcast::<gio::SimpleAction>()
             .inspect(|a| a.set_enabled(on));
     };
-    set("back", nav::can_back(ui));
-    set("forward", nav::can_forward(ui));
-    set("up", at.as_ref().is_some_and(|(_, p)| !p.is_empty()));
+    // Results of a search are no place to go back, forward or up from: the search is left by
+    // Escape or its button.
+    let searching = at
+        .as_ref()
+        .is_some_and(|(_, p)| places::search_of(p).is_some());
+    set("back", nav::can_back(ui) && !searching);
+    set("forward", nav::can_forward(ui) && !searching);
+    set(
+        "up",
+        !searching && at.as_ref().is_some_and(|(_, p)| !p.is_empty()),
+    );
+    // A search field left open by going elsewhere (a click in the sidebar) closes.
+    if !searching && ui.header.search_box.is_visible() && !ui.tabs.switching.get() {
+        ui.header.close_search();
+    }
     super::favorites::update_actions(ui);
 
     let bar = &ui.header.pathbar;

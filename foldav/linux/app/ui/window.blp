@@ -219,11 +219,27 @@ Adw.ApplicationWindow window {
                   }
                 }
 
-                Gtk.ToggleButton {
-                  icon-name: "system-search-symbolic";
+                // The search to type, in the place of the path bar (src/window/header.rs).
+                Gtk.Box search_box {
+                  hexpand: true;
+                  valign: center;
+                  visible: false;
+
+                  Gtk.Entry search_entry {
+                    hexpand: true;
+                    valign: center;
+                    primary-icon-name: "folder-saved-search-symbolic";
+                    secondary-icon-name: "edit-clear-symbolic";
+                    secondary-icon-tooltip-text: _("Clear");
+                    placeholder-text: _("Search here");
+                    styles ["search-field"]
+                  }
+                }
+
+                Gtk.ToggleButton search_toggle {
+                  icon-name: "folder-saved-search-symbolic";
                   tooltip-text: _("Search (Ctrl+F)");
                   valign: center;
-                  active: bind search_bar.search-mode-enabled bidirectional;
                 }
 
                 Adw.ToggleGroup view_toggle {
@@ -266,16 +282,6 @@ Adw.ApplicationWindow window {
             Adw.TabBar tab_bar {
               view: tab_view;
               autohide: true;
-            }
-
-            // Search by name in the folder shown and below it (src/window/header.rs).
-            [top]
-            Gtk.SearchBar search_bar {
-              Gtk.SearchEntry search_entry {
-                hexpand: true;
-                max-width-chars: 60;
-                placeholder-text: _("Search here");
-              }
             }
 
             // A newer version installed (src/update.rs, src/window.rs `update_banner`).
@@ -336,6 +342,28 @@ Adw.ApplicationWindow window {
                     can-target: false;
                     ellipsize: end;
                     styles ["selection-status"]
+                  }
+
+                  // While a search is on its way (src/window/views.rs `set_searching`).
+                  [overlay]
+                  Gtk.Box searching_status {
+                    halign: start;
+                    valign: end;
+                    margin-start: 12;
+                    margin-bottom: 12;
+                    spacing: 8;
+                    visible: false;
+                    can-target: false;
+                    styles ["selection-status"]
+
+                    Adw.Spinner {
+                      width-request: 16;
+                      height-request: 16;
+                    }
+
+                    Gtk.Label {
+                      label: _("Searching…");
+                    }
                   }
                 };
               }
