@@ -453,11 +453,16 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
                 .max_width_chars(1)
                 .build(),
         );
-        b.append(&star(12));
+        // The star is centred, and at the same place for a file and a folder: the chevron keeps
+        // its room (unseen) in a file's row.
+        let star = star(12);
+        star.set_valign(gtk::Align::Center);
+        b.append(&star);
         b.append(
             &gtk::Image::builder()
                 .icon_name("go-next-symbolic")
                 .pixel_size(12)
+                .valign(gtk::Align::Center)
                 .css_classes(["dim-label"])
                 .build(),
         );
@@ -479,7 +484,7 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
             set_icon(&image, &f);
             label.set_label(&f.name);
             star.set_visible(f.favorite);
-            chevron.set_visible(f.folder);
+            chevron.set_opacity(if f.folder { 1.0 } else { 0.0 });
         }
     });
     let view = gtk::ListView::new(Some(selection.clone()), Some(factory));
