@@ -15,7 +15,6 @@ use foldav_core::File;
 use gtk::{gdk, gio, glib};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-use std::time::Duration;
 
 /// A column is this wide to begin with, and as wide as the user drags it, between the limits.
 const COLUMN_WIDTH: i32 = 300;
@@ -26,6 +25,8 @@ const PREVIEW_WIDTH: i32 = 400;
 const PREVIEW_ICON_SIZE: i32 = 256;
 /// How long (ms) the preview takes to slide in and out.
 const PREVIEW_SLIDE_MS: u32 = 250;
+/// And a column.
+const COLUMN_SLIDE_MS: u32 = 200;
 
 /// One column: folder `path`, as it was filled.
 struct Column {
@@ -35,9 +36,8 @@ struct Column {
     store: gio::ListStore,
     selection: gtk::MultiSelection,
     view: gtk::ListView,
-    scroll: gtk::ScrolledWindow,
-    /// What is dragged to resize it, after it.
-    handle: gtk::Widget,
+    /// Slides in and out, with the column and the handle that resizes it (its edge) in it.
+    revealer: gtk::Revealer,
 }
 
 /// The file selected in the last column: its icon (the thumbnail, once there are any), name,
@@ -318,12 +318,18 @@ pub fn refresh(ui: &Rc<Ui>) {
             .count();
         while columns.len() > keep {
             if let Some(col) = columns.pop() {
-                c.outer.remove(&col.scroll);
-                c.outer.remove(&col.handle);
+                // It slides out and leaves when it is gone (`connect_child_revealed_notify`).
+                col.revealer.set_reveal_child(false);
+                if !col.revealer.is_child_revealed() {
+                    c.outer.remove(&col.revealer);
+                }
             }
         }
-        for path in &levels[keep..] {
-            columns.push(new_column(ui, path));
+        // Only the last of new columns slides in, and not the first ones of a folder shown.
+        let had_columns = !columns.is_empty() || keep > 0;
+        let new = levels.len() - keep;
+        for (n, path) in levels[keep..].iter().enumerate() {
+            columns.push(new_column(ui, path, had_columns && n + 1 == new));
         }
         c.updating.set(true);
         for (i, column) in columns.iter_mut().enumerate() {
@@ -375,7 +381,7 @@ pub fn refresh(ui: &Rc<Ui>) {
     }
     paint(c);
     update_preview(ui);
-    scroll_to_end(c);
+    follow_end(c);
 }
 
 /// The accent colour on the active column's selection, grey on the others'.
@@ -439,30 +445,7 @@ fn follow_end(c: &Columns) {
     });
 }
 
-/// The last column (or the preview) is the one to see.
-fn scroll_to_end(c: &Columns) {
-    let scroll = c.scroll.clone();
-    // After the new column has its place.
-    glib::timeout_add_local_once(Duration::from_millis(80), move || {
-        let a = scroll.hadjustment();
-        let target = (a.upper() - a.page_size()).max(0.0);
-        if (target - a.value()).abs() < 1.0 {
-            return;
-        }
-        let a2 = a.clone();
-        let animation = adw::TimedAnimation::new(
-            &scroll,
-            a.value(),
-            target,
-            200,
-            adw::CallbackAnimationTarget::new(move |v| a2.set_value(v)),
-        );
-        animation.set_easing(adw::Easing::EaseOutCubic);
-        animation.play();
-    });
-}
-
-fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
+fn new_column(ui: &Rc<Ui>, path: &str, slide: bool) -> Column {
     let c = &ui.views.columns;
     let store = gio::ListStore::new::<glib::BoxedAnyObject>();
     let selection = gtk::MultiSelection::new(Some(store.clone()));
@@ -542,8 +525,24 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
     } else {
         c.outer.last_child()
     };
-    c.outer.insert_child_after(&scroll, before.as_ref());
-    c.outer.insert_child_after(&handle, Some(&scroll));
+    let inside = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+    inside.append(&scroll);
+    inside.append(&handle);
+    let revealer = gtk::Revealer::builder()
+        .transition_type(gtk::RevealerTransitionType::SlideLeft)
+        .transition_duration(if slide { COLUMN_SLIDE_MS } else { 0 })
+        .child(&inside)
+        .build();
+    revealer.connect_child_revealed_notify(|r| {
+        if !r.is_child_revealed()
+            && !r.reveals_child()
+            && let Some(outer) = r.parent().and_downcast::<gtk::Box>()
+        {
+            outer.remove(r);
+        }
+    });
+    c.outer.insert_child_after(&revealer, before.as_ref());
+    revealer.set_reveal_child(true);
 
     let w = weak.clone();
     view.connect_activate(move |view, pos| activate(&w, view.model(), pos));
@@ -617,8 +616,7 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
         store,
         selection,
         view,
-        scroll,
-        handle: handle.upcast(),
+        revealer,
     }
 }
 
