@@ -72,33 +72,50 @@ Once a third app copies the same code, a shared crate in its own repository beco
 1. **Browsing**, what is left of it (the Nautilus-like window with icons, list and columns,
    path bar, history, bookmarks, folder tree and accounts is done): thumbnails from the server's
    previews (`/core/preview`, for files with `has-preview`), cached by ETag; a limit to the
-   listing cache's size, and a long-offline mode that shows it without asking; the web app's other
-   places in the sidebar (Recent, Favorites, Shared with me, Shared by me, Tags, Trash); the
-   header's search; a zoom for the icons; sorting also in the icons and columns; bookmarks
-   renamed and reordered, and synced between devices; the last folder and account restored at
-   start.
-2. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete
+   listing cache's size, and a long-offline mode that shows it without asking; the header's
+   search; a zoom for the icons; sorting also in the icons and columns; bookmarks renamed and
+   reordered, and synced between devices; the last folder and account restored at start.
+2. **The web app's places in the sidebar**, for the account shown, as Nextcloud Files has them
+   (each only where the server has what it needs, from its capabilities), under the bookmarks
+   and above the folder tree, opening in the window's views like a folder:
+   - *All files*: the Files root (now the tree's "Home"), and *Personal files*: only the
+     user's own, without what is shared with them and external storage.
+   - *Recent*: the latest changed files, newest first (WebDAV `SEARCH` by modification time).
+   - *Favorites*, with the favorite folders listed under it (WebDAV `REPORT filter-files`,
+     `oc:favorite`; `Dav::favorites` has it).
+   - *Shares*, a group: *Shared with you* and *Shared with others* (OCS `files_sharing`:
+     `shares?shared_with_me=true` and `shares`), *Shared by link* (shares of type link),
+     *Pending shares* (`shares/pending`, to accept or decline), *File requests* (upload-only
+     links, Nextcloud 32), *Deleted shares* (`deletedshares`, to restore).
+   - *Tags*: the tags (`systemtags`), each opening the files that have it
+     (`systemtags-relations`).
+   - At the foot: *Deleted files* (the trash bin, see "Nextcloud's features"), the storage
+     used and available (`d:quota-used-bytes` and `d:quota-available-bytes` of the Files
+     root, as "10,7 TB used"), and *Files settings* (Preferences: sorting, hidden files, the
+     web app's own settings in the browser).
+3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete
    and Ctrl+Z are done): dragging files inside the window to a folder or the sidebar; a
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
    server's capabilities (`Features`, as in Notav) and ask first where it has none; progress
    for long operations (a toast or a panel); a choice between replacing and keeping both when
    a name is taken (now a move refuses and a copy takes a free name); copies between accounts.
-3. **Transfers**: uploads (chunked for big files, Nextcloud's bulk upload for many small ones)
+4. **Transfers**: uploads (chunked for big files, Nextcloud's bulk upload for many small ones)
    and downloads, dragged to and from Nautilus or the desktop; a folder downloaded as one ZIP
    where the server offers it. Transfers queue, resume after a dropped connection, and finish
    before the app quits.
-4. **Opening files**: a file opens in its default app from a local copy; a change saved there
+5. **Opening files**: a file opens in its default app from a local copy; a change saved there
    is uploaded back (with the ETag checked first: a conflict keeps both, as the desktop client
    does).
-5. **Nextcloud's features**:
+6. **Nextcloud's features** on files (the places that list them are above):
    - Trash: restore, delete for good, empty it.
    - Versions: list a file's versions, restore one, open one.
    - Sharing: public links (password, expiry, permissions), shares with users, groups and
      federated users; copy the link (OCS `files_sharing` API).
-   - Favorites, tags (`systemtags`), recent files, search by name and content (WebDAV `SEARCH`,
-     the unified search for content).
+   - Favorites and tags: star a file, tag it (`systemtags`).
+   - Search by name and content (WebDAV `SEARCH`, the unified search for content), the
+     header's "Search here".
    - "Open in the browser" for what Foldav does not do (comments, activity, apps' own views).
-6. **Change notifications**: Nextcloud's Client Push (`notify_push`) refreshes an open folder
+7. **Change notifications**: Nextcloud's Client Push (`notify_push`) refreshes an open folder
    when its files change elsewhere; polling of folder ETags otherwise (as Notav plans).
 
 Later (v2):
@@ -122,6 +139,18 @@ Later (v2):
   limit.
 - **Search**: WebDAV `SEARCH` covers names, types and dates; content search needs the full-text
   search app or the unified search, which not every server has.
+- **Places that are not folders** (Recent, Shares, Tags, Favorites): their files come from
+  searches and the sharing API, not from a folder's listing, so they have no folder ETag to
+  cache by and no path to bookmark or to go up from; what the views, the path bar, the
+  operations and the history do there (a path bar with one segment, "Shared with you", and
+  Delete and Rename working on the files as they are), and how a share's file is opened when
+  it is on another user's storage (its path as the sharer's, its id as ours).
+- **Personal files and All files**: how the two differ on the servers Foldav is used with (a
+  user's own files against everything mounted: shares, external storage, group folders), and
+  whether one root is enough when the server has no difference.
+- **File requests and Deleted shares**: the OCS calls behind them are newer than the rest of
+  `files_sharing` (Nextcloud 32 for requests), so which versions have them and what the
+  capabilities say about each.
 - **Large folders**: listing thousands of files with `PROPFIND` (`Depth: 1`) at once versus in
   pages, and a view (`GtkGridView`, `GtkColumnView`) that stays fast with them.
 - **Several accounts**: whether one window shows all accounts in the sidebar (as Notav's tree)
