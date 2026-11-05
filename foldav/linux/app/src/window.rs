@@ -69,6 +69,10 @@ listview.miller-list > row:hover > .miller-row { background-color: alpha(current
 listview.miller-list:not(.miller-active) > row:selected { background: none; }
 listview.miller-list:not(.miller-active) > row:selected > .miller-row { background-color: alpha(currentColor, 0.1); }
 .miller-list image { -gtk-icon-style: regular; }
+/* The storage used, a thin bar, red when little is left. */
+progressbar.quota-bar trough, progressbar.quota-bar progress { min-height: 4px; }
+progressbar.quota-bar trough { background-color: alpha(currentColor, 0.1); }
+progressbar.quota-bar.low progress { background-color: @error_color; }
 /* The files on the window's own background, as in Files, not the view's darker one; the icons'
    tiles rounded and close, as there. */
 .files-view, .files-view listview { background: none; }

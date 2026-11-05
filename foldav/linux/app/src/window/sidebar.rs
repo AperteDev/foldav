@@ -24,7 +24,9 @@ pub struct Sidebar {
     tree: gtk::ListBox,
     places: gtk::ListBox,
     places_separator: gtk::Separator,
+    quota_box: gtk::Box,
     quota: gtk::Label,
+    quota_bar: gtk::ProgressBar,
     /// The place (path) of each row of `places`.
     place_paths: RefCell<Vec<String>>,
     /// The account of each row of `accounts`.
@@ -46,7 +48,9 @@ impl Sidebar {
             tree: super::get(b, "tree"),
             places: super::get(b, "places"),
             places_separator: super::get(b, "places_separator"),
+            quota_box: super::get(b, "quota_box"),
             quota: super::get(b, "quota"),
+            quota_bar: super::get(b, "quota_bar"),
             place_paths: RefCell::default(),
             account_ids: RefCell::default(),
             favorite_rows: RefCell::default(),
@@ -264,15 +268,27 @@ pub fn refresh_places(ui: &Rc<Ui>) {
     s.places_separator.set_visible(true);
     *s.place_paths.borrow_mut() = list.into_iter().map(|(p, _, _)| p).collect();
     let quota = ui.server.borrow().get(&id).and_then(|s| s.quota);
-    s.quota.set_visible(quota.is_some());
+    s.quota_box.set_visible(quota.is_some());
     if let Some(q) = quota {
         let used = glib::format_size(q.used);
         s.quota.set_label(&match q.total {
-            Some(total) => gettext("{used} of {total} used")
+            Some(total) => gettext("Used {used} out of {total}")
                 .replace("{used}", &used)
                 .replace("{total}", &glib::format_size(total)),
-            None => gettext("{used} used").replace("{used}", &used),
+            None => gettext("Used {used}").replace("{used}", &used),
         });
+        // A bar only where there is a limit; red when a tenth or less is left.
+        let share = q
+            .total
+            .filter(|&t| t > 0)
+            .map(|t| (q.used as f64 / t as f64).min(1.0));
+        s.quota_bar.set_visible(share.is_some());
+        s.quota_bar.set_fraction(share.unwrap_or(0.0));
+        if share.is_some_and(|s| s >= 0.9) {
+            s.quota_bar.add_css_class("low");
+        } else {
+            s.quota_bar.remove_css_class("low");
+        }
     }
 }
 

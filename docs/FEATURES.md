@@ -33,7 +33,7 @@ What Foldav can do, in short. The details of each release are in the
   (up to 256 MB, the oldest going first); the columns view's preview shows an image or a PDF's
   first page large and a text file's start (Preferences can turn it off).
 - The web app's places: Recent, Starred, Shared with You and Others, Shared by Link, Tags;
-  the trash bin with restore, delete for good and empty; the storage used.
+  the trash bin with restore, delete for good and empty; the storage used, with a bar.
 - Search by name (Ctrl+F), done by the server.
 - Edit a file in another app: what you save goes back to the server; a file changed there
   meanwhile is not overwritten, your version is kept as a "conflicted copy".

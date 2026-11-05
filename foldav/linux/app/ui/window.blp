@@ -105,13 +105,25 @@ Adw.ApplicationWindow window {
                 }
 
                 // What the account uses of its storage.
-                Gtk.Label quota {
-                  xalign: 0;
+                Gtk.Box quota_box {
+                  orientation: vertical;
+                  spacing: 6;
                   margin-start: 12;
+                  margin-end: 12;
                   margin-top: 12;
                   margin-bottom: 8;
                   visible: false;
-                  styles ["caption", "dim-label"]
+
+                  Gtk.Label quota {
+                    xalign: 0;
+                    styles ["caption", "dim-label"]
+                  }
+
+                  // How much of it (src/window/sidebar.rs `refresh_places`); red when little is
+                  // left.
+                  Gtk.ProgressBar quota_bar {
+                    styles ["quota-bar"]
+                  }
                 }
               }
             };

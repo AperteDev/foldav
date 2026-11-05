@@ -48,7 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The places of Nextcloud Files in the sidebar, as the web app has them (each only where the
   server has it): Recent, Starred (all that is starred, files too), Shared with You, Shared
   with Others, Shared by Link, Tags (each tag opens the files that have it) and Deleted
-  Files, and the storage used at the foot
+  Files, and the storage used at the foot ("Used x out of y", with a thin bar that turns red
+  when a tenth or less is left)
 - Open in Browser (right-click menu): the file in Nextcloud's web app, for what Foldav does not
   do (comments, activity, apps' own views)
 - Open With… (right-click menu) picks the app for a file; Enter opens all the files selected
