@@ -45,9 +45,6 @@ of Nextcloud:
   copies of folders, Foldav browses and manages all of them. Only what makes browsing fast is
   kept locally (listings, thumbnails), and the files opened in other apps (see
   [Open questions](#open-questions-and-risks)).
-- Tooling and releases as in Todav and Notav: CI on every push (fmt, clippy with warnings as
-  errors, unit tests, packages), the manual Release workflow, Keep a Changelog, the lowest
-  supported GNOME 49.
 
 ## Code from Todav and Notav
 

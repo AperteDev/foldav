@@ -31,8 +31,7 @@
   there when something about the columns is not decided) and `ops` (what is done to files). The content header is a plain toolbar row, not an `AdwHeaderBar` (which keeps its
   title centered, so the path bar could not fill the room between the buttons). Only the
   sandbox copy has the striped development header; a normal debug run looks as the release.
-- Not built yet, planned as in Notav: the CLI, the Android app and bindings (`ffi/`), the
-  packaging (Flatpak, RPM, AUR), CI and the Release workflow.
+- Not built yet, planned as in Notav: the CLI, the Android app and bindings (`ffi/`).
 
 ## Dependencies
 
@@ -46,8 +45,23 @@
 
 - Add user-visible changes to `docs/CHANGELOG.md` under `## [Unreleased]` ([Keep a
   Changelog](https://keepachangelog.com/en/1.1.0/)), in the same commit as the change, and keep
-  `docs/FEATURES.md` in step. Don't bump versions by hand (the Release workflow will, as in
-  Notav).
+  `docs/FEATURES.md` in step.
+- Don't bump versions by hand: releases are cut by the manual Release workflow
+  (`.github/workflows/release.yml`), as in Notav: `scripts/release.py` sets the version in
+  `Cargo.toml`, `Cargo.lock`, the metainfo and the RPM spec and moves the `[Unreleased]`
+  changes under it (the metainfo gets them as the release's notes, untranslated). The release
+  has the Flatpak bundle, the tarball and the `.deb`; COPR (`selfref/foldav`) builds the tag's
+  RPMs (AperteDev secret `COPR_CONFIG`, shared with Todav and Notav, an API token that expires
+  after 180 days). After publishing, `scripts/aur.sh` moves the AUR packages `foldav` and
+  `foldav-bin` to the release, pushed by the AURomatic account (a co-maintainer; AperteDev
+  secret `AUR_SSH_KEY`) as commits by SelfRef; `foldav-git` follows on its own, and a packaging
+  change to any of them goes in by hand. The metainfo must pass `appstreamcli validate`
+  without warnings (Flathub treats them as errors).
+- CI (`.github/workflows/ci.yml`) runs on every push: `cargo fmt --check`, clippy with
+  warnings as errors, the unit tests, and the packages (Flatpak, tarball, `.deb`). The
+  lowest supported GNOME is 49 (libadwaita 1.8, which `Adw.ShortcutsDialog` needs): move on
+  when it reaches its end of life.
+- The default branch is `master`.
 - Run `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` and
   `cargo test --workspace` before committing.
 
