@@ -38,18 +38,17 @@ fn dragging() -> bool {
     DRAGGING.with_borrow(Option::is_some)
 }
 
-/// Dropping on `dest` makes no sense for what is dragged: on one of the files itself, in a
-/// folder dragged (it would go into itself), or, for a move (`copy_only` false), where the files
-/// are already.
-fn refuses(dest: &(i64, String), copy_only: bool) -> bool {
+/// Dropping on `dest` makes no sense for what is dragged: on one of the files itself, or in a
+/// folder dragged (it would go into itself). A move to where the files are already is no
+/// refusal: it is accepted and does nothing, and the drop stays open to a copy (Ctrl), which a
+/// refusal would shut out: the source and the compositor are told nothing more then.
+fn refuses(dest: &(i64, String)) -> bool {
     DRAGGING.with_borrow(|d| {
         d.as_ref().is_some_and(|d| {
             d.account == dest.0
-                && (d
-                    .paths
+                && d.paths
                     .iter()
                     .any(|p| *p == dest.1 || dest.1.starts_with(&format!("{p}/")))
-                    || (!copy_only && d.paths.iter().all(|p| super::nav::parent(p) == dest.1)))
         })
     })
 }
@@ -306,7 +305,7 @@ pub fn target(
         let refused = w
             .upgrade()
             .and_then(|ui| d(&ui))
-            .is_none_or(|dest| refuses(&dest, copy));
+            .is_none_or(|dest| refuses(&dest));
         if refused {
             gdk::DragAction::empty()
         } else if copy {
@@ -324,7 +323,7 @@ pub fn target(
             return false;
         };
         let cut = !copy_only(t);
-        if refuses(&(id, dest.clone()), !cut) {
+        if refuses(&(id, dest.clone())) {
             return false;
         }
         drop_value(&ui, value, id, dest, cut)
@@ -337,7 +336,7 @@ pub fn target(
             let over = t.current_drop().is_some()
                 && weak.upgrade().is_some_and(|ui| {
                     d(&ui).is_some_and(|dest| {
-                        Some(&dest) != ui.at.borrow().as_ref() && !refuses(&dest, copy_only(t))
+                        Some(&dest) != ui.at.borrow().as_ref() && !refuses(&dest)
                     })
                 });
             if over {
