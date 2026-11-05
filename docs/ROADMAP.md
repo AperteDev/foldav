@@ -116,7 +116,6 @@ Once a third app copies the same code, a shared crate in its own repository beco
      account is alone on its server), only by link.
    - Tags: removing a tag (the server lets only an administrator), tags in the columns' preview.
    - Search by content (the unified search).
-   - "Open in the browser" for what Foldav does not do (comments, activity, apps' own views).
 7. **Change notifications**, what is left (the folder shown is polled by its ETag every 30
    seconds and when the window comes to the front): Nextcloud's Client Push (`notify_push`,
    which this server has) for an instant refresh, and for the places and the sidebar's tree.

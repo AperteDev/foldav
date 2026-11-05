@@ -513,6 +513,8 @@ fn files_are_shared_by_link_tagged_and_keep_versions() {
             .unwrap()
     };
 
+    assert!(c.web_url(A, &file()).unwrap().contains("/index.php/f/"));
+
     // A public link, changed and taken down.
     assert!(c.file_shares(A, &path).unwrap().is_empty());
     let link = c

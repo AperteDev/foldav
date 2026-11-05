@@ -66,6 +66,19 @@ pub(crate) fn entry_file(home: &str, e: crate::dav::Entry) -> Option<File> {
 }
 
 impl Client {
+    /// The address of `file` in Nextcloud's web app (its Files, with the file's sidebar for what
+    /// Foldav does not do: comments, activity, apps' own views).
+    pub fn web_url(&self, id: i64, file: &File) -> Result<String> {
+        if file.number().is_empty() {
+            return Err(Error::Invalid(file.name.clone()));
+        }
+        Ok(format!(
+            "{}/index.php/f/{}",
+            self.dav(id)?.base(),
+            file.number()
+        ))
+    }
+
     /// Look whether folder `path` of account `id` changed since it was last listed: its listing
     /// now if it did, None when its ETag is still the one kept (one small request, and nothing
     /// is read from the disk).

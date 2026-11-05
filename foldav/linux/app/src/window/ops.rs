@@ -56,6 +56,18 @@ pub fn connect(ui: &Rc<Ui>) {
     action(ui, "copy", |ui| copy(ui, false));
     action(ui, "paste", paste);
     action(ui, "delete", delete);
+    action(ui, "open-browser", |ui| {
+        with_file(ui, |ui, id, file| match core().web_url(id, &file) {
+            Ok(url) => {
+                gtk::UriLauncher::new(&url).launch(
+                    Some(&ui.window),
+                    gio::Cancellable::NONE,
+                    |_| {},
+                );
+            }
+            Err(e) => ui.toasts.add_toast(note(&error_text(&e))),
+        });
+    });
     action(ui, "share", |ui| with_file(ui, super::share::present));
     action(ui, "versions", |ui| with_file(ui, super::versions::present));
     action(ui, "tags", |ui| with_file(ui, super::tags::present));
@@ -118,6 +130,7 @@ pub fn update_actions(ui: &Ui) {
         ("copy", n > 0 && !trash),
         ("delete", n > 0 && !trash),
         ("paste", paste && !place),
+        ("open-browser", n == 1 && !trash),
         ("share", n == 1 && !trash && server.sharing),
         ("versions", one_file && !trash && server.versions),
         ("tags", n == 1 && !trash && server.tags),
