@@ -54,6 +54,9 @@ pub fn connect(ui: &Rc<Ui>) {
     action(ui, "copy", |ui| copy(ui, false));
     action(ui, "paste", paste);
     action(ui, "delete", delete);
+    action(ui, "share", |ui| with_file(ui, super::share::present));
+    action(ui, "versions", |ui| with_file(ui, super::versions::present));
+    action(ui, "tags", |ui| with_file(ui, super::tags::present));
     action(ui, "restore", restore);
     action(ui, "delete-forever", delete_forever);
     action(ui, "empty-trash", empty_trash);
@@ -89,6 +92,11 @@ pub fn update_actions(ui: &Ui) {
         .borrow()
         .as_ref()
         .is_some_and(|(_, p)| p == places::TRASH);
+    // What the server has: sharing, versions of a file, tags.
+    let server = at
+        .and_then(|id| ui.server.borrow().get(&id).map(|s| s.features.clone()))
+        .unwrap_or_default();
+    let one_file = n == 1 && selected(ui).first().is_some_and(|f| !f.folder);
     let paste = ui
         .clipboard
         .borrow()
@@ -105,6 +113,9 @@ pub fn update_actions(ui: &Ui) {
         ("copy", n > 0 && !trash),
         ("delete", n > 0 && !trash),
         ("paste", paste && !place),
+        ("share", n == 1 && !trash && server.sharing),
+        ("versions", one_file && !trash && server.versions),
+        ("tags", n == 1 && !trash && server.tags),
         ("restore", n > 0 && trash),
         ("delete-forever", n > 0 && trash),
         ("empty-trash", trash),
@@ -255,7 +266,7 @@ pub fn open(ui: &Rc<Ui>, file: File) {
     });
 }
 
-fn launch(ui: &Ui, path: &Path) {
+pub(super) fn launch(ui: &Ui, path: &Path) {
     gtk::FileLauncher::new(Some(&gio::File::for_path(path))).launch(
         Some(&ui.window),
         gio::Cancellable::NONE,
@@ -586,6 +597,14 @@ pub fn drop_files(
         put(ui, id, paths, dest, cut);
     }
     true
+}
+
+/// Run `f` for the one file selected, with its account.
+fn with_file(ui: &Rc<Ui>, f: impl FnOnce(&Rc<Ui>, i64, File)) {
+    let (at, mut files) = (ui.at.borrow().clone(), selected(ui));
+    if let (Some((id, _)), Some(file), 1) = (at, files.pop(), files.len() + 1) {
+        f(ui, id, file);
+    }
 }
 
 /// Ask before something that cannot be taken back; true when the user agrees.

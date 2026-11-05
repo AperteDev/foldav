@@ -25,6 +25,17 @@ pub struct File {
 }
 
 impl File {
+    /// The number of `fileid` that the server's APIs (versions, tags, previews) take: it is
+    /// that padded with zeros and followed by the server's instance id ("00000123ocabc").
+    pub fn number(&self) -> &str {
+        let digits = self
+            .fileid
+            .split(|c: char| !c.is_ascii_digit())
+            .next()
+            .unwrap_or("");
+        digits.trim_start_matches('0')
+    }
+
     /// Hidden (a dot first), as in the web app and Files.
     pub fn hidden(&self) -> bool {
         self.name.starts_with('.')

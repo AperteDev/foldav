@@ -48,6 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server has it): Recent, Starred (all that is starred, files too), Shared with You, Shared
   with Others, Shared by Link, Tags (each tag opens the files that have it) and Deleted
   Files, and the storage used at the foot
+- Share… in the right-click menu (where the server has sharing): the file's public links to
+  copy or take down, made with an optional password, an expiry date and editing allowed (a new
+  link is copied at once), and the users and groups it is shared with, found by name, who
+  can be allowed to edit or removed
+- Versions… (where the server keeps them): a file's earlier versions with their date and
+  size, each opened in its app or put back as the file
+- Tags… (where the server has them): check the tags a file has, search the tags, make a new one
 - Thumbnails: images, documents and videos show the preview the server made of them instead
   of the type's icon, in the icons, the list and the columns' preview, fetched a few at a
   time while you scroll and kept on this device by the file's ETag (deleted after a month

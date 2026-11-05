@@ -100,14 +100,16 @@ Once a third app copies the same code, a shared crate in its own repository beco
    kept beside the file): Open With…; several files opened at once; a limit to the copies'
    total size; a copy of a file renamed or moved on the server meanwhile is sent to its old
    path (as a conflicted copy, the ETag check fails there).
-6. **Nextcloud's features** on files (the places that list them are above; the trash bin,
-   restoring, deleting for good and emptying it are built):
-   - Versions: list a file's versions, restore one, open one.
-   - Sharing: public links (password, expiry, permissions), shares with users, groups and
-     federated users; copy the link (OCS `files_sharing` API).
-   - Tags: tag a file, make and remove tags (`systemtags`); the tags and their files are
-     listed already.
-   - Search by content (the unified search); by name is built (Ctrl+F, WebDAV `SEARCH`).
+6. **Nextcloud's features** on files, what is left of them (the places that list them are
+   above; the trash bin, versions, sharing by link and with users and groups, tags on a file,
+   and search by name are built):
+   - Versions: a label for a version, deleting one.
+   - Sharing: shares with federated users and by email, a share's note and label, the
+     permissions of a folder share beyond editing, accepting pending shares, the share
+     sheet for several files at once; sharing is untested with a second user (the Test
+     account is alone on its server), only by link.
+   - Tags: removing a tag (the server lets only an administrator), tags in the columns' preview.
+   - Search by content (the unified search).
    - "Open in the browser" for what Foldav does not do (comments, activity, apps' own views).
 7. **Change notifications**: Nextcloud's Client Push (`notify_push`) refreshes an open folder
    when its files change elsewhere; polling of folder ETags otherwise (as Notav plans).

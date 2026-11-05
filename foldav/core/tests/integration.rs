@@ -404,7 +404,8 @@ fn places_list_recent_favorites_searches_and_the_trash_bin() {
         .iter()
         .find(|f| f.name == "alpha-report.txt")
         .expect("in the bin");
-    c.trash_restore(A, std::slice::from_ref(&gone.path)).unwrap();
+    c.trash_restore(A, std::slice::from_ref(&gone.path))
+        .unwrap();
     assert!(names(&c, &root).contains(&"alpha-report.txt".to_string()));
     c.delete(A, &[here("alpha-report.txt")]).unwrap();
     let bin = c.list(A, TRASH).unwrap();
@@ -468,4 +469,77 @@ fn previews_are_fetched_once_and_kept_by_etag() {
     assert_eq!(c.thumbnail(A, file("dot.png"), 64).unwrap(), Some(path));
     // A file the server has no preview for.
     assert_eq!(c.thumbnail(A, file("plain.bin"), 64).unwrap(), None);
+}
+
+#[test]
+fn files_are_shared_by_link_tagged_and_keep_versions() {
+    use foldav_core::{ShareKind, places};
+    let (c, dav, root) = fixture("nextcloud");
+    let home = c.files_home(A).unwrap();
+    let url = format!("{home}{root}/a.txt");
+    let put = |body: &str| {
+        let r = dav.request("PUT", &url, &[], body).unwrap();
+        assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    };
+    put("one");
+    let path = format!("{root}/a.txt");
+    let file = || {
+        c.list(A, &root)
+            .unwrap()
+            .into_iter()
+            .find(|f| f.name == "a.txt")
+            .unwrap()
+    };
+
+    // A public link, changed and taken down.
+    assert!(c.file_shares(A, &path).unwrap().is_empty());
+    let link = c
+        .share_link(A, &path, false, Some("s3cret-Passw0rd!"), None)
+        .unwrap();
+    assert_eq!(link.kind, ShareKind::Link);
+    assert!(
+        link.url.as_deref().is_some_and(|u| u.starts_with("http")),
+        "{link:?}"
+    );
+    assert!(link.has_password);
+    let listed = c.file_shares(A, &path).unwrap();
+    assert_eq!(listed.len(), 1);
+    let changed = c
+        .update_share(A, &link.id, None, Some(""), Some("2099-01-01"))
+        .unwrap();
+    assert!(!changed.has_password);
+    assert_eq!(changed.expires.as_deref(), Some("2099-01-01"));
+    c.delete_share(A, &link.id).unwrap();
+    assert!(c.file_shares(A, &path).unwrap().is_empty());
+    assert!(c.find_sharees(A, "zzzz-nobody").unwrap().is_empty());
+
+    // A tag: made, put on the file, listed with its files, taken off.
+    let tag = c.create_tag(A, "foldav-it-tag-2").unwrap();
+    assert_eq!(c.create_tag(A, "foldav-it-tag-2").unwrap(), tag);
+    c.set_file_tag(A, &file(), &tag.id, true).unwrap();
+    assert_eq!(c.file_tags(A, &file()).unwrap(), std::slice::from_ref(&tag));
+    let tagged: Vec<_> = c.list(A, &places::tag_place(&tag.id)).unwrap();
+    assert_eq!(
+        tagged.iter().map(|f| f.path.as_str()).collect::<Vec<_>>(),
+        [path.as_str()]
+    );
+    c.set_file_tag(A, &file(), &tag.id, false).unwrap();
+    assert!(c.file_tags(A, &file()).unwrap().is_empty());
+    // Only an administrator may delete a tag: the Test user gets "forbidden", and the tag stays.
+    let deleted = c.delete_tag(A, &tag.id);
+    assert!(
+        matches!(deleted, Ok(()) | Err(Error::Http(403, _))),
+        "{deleted:?}"
+    );
+
+    // Versions: the file as it was before it was rewritten, put back.
+    std::thread::sleep(std::time::Duration::from_secs(2));
+    put("two");
+    let f = file();
+    let versions = c.versions(A, &f).unwrap();
+    assert!(!versions.is_empty(), "{versions:?}");
+    assert_eq!(versions[0].size, 3);
+    let oldest = versions.last().unwrap();
+    c.restore_version(A, &f, oldest).unwrap();
+    assert_eq!(dav.request("GET", &url, &[], "").unwrap().body, "one");
 }

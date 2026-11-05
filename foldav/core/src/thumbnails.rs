@@ -43,7 +43,7 @@ impl Client {
         let url = format!(
             "{}/index.php/core/preview?fileId={}&x={size}&y={size}&a=true",
             dav.base(),
-            file.fileid
+            file.number()
         );
         let mut dl = match dav.get(&url, None) {
             Ok(Some(dl)) => dl,

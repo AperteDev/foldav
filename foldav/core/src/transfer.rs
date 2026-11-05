@@ -61,7 +61,7 @@ pub(crate) fn io(e: std::io::Error) -> Error {
 
 /// Write what `dl` brings to `target`, by way of a part file next to it, so what is there is
 /// whole or not there at all.
-fn save(mut dl: Download, target: &Path, p: &Progress) -> Result<()> {
+pub(crate) fn save(mut dl: Download, target: &Path, p: &Progress) -> Result<()> {
     static PARTS: AtomicU64 = AtomicU64::new(0);
     let name = target.file_name().unwrap_or_default().to_string_lossy();
     let part = target.with_file_name(format!(".{name}.{}.part", PARTS.fetch_add(1, Relaxed)));
@@ -110,7 +110,7 @@ pub(crate) fn older(p: &Path, age: Duration) -> bool {
 }
 
 /// `name` in `dir`, or the first of its copy names ("a (copy).txt") that is free.
-fn free_path(dir: &Path, name: &str, folder: bool) -> PathBuf {
+pub(crate) fn free_path(dir: &Path, name: &str, folder: bool) -> PathBuf {
     let free = |p: &Path| std::fs::symlink_metadata(p).is_err();
     let first = dir.join(name);
     if free(&first) {

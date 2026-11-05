@@ -380,6 +380,27 @@ menu file_menu {
     }
   }
 
+  // What the server has (src/window/share.rs, versions.rs, tags.rs).
+  section {
+    item {
+      label: _("Share…");
+      action: "win.share";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Versions…");
+      action: "win.versions";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Tags…");
+      action: "win.tags";
+      hidden-when: "action-disabled";
+    }
+  }
+
   section {
     item {
       label: _("Rename…");

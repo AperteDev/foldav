@@ -12,11 +12,14 @@ mod ops;
 pub mod places;
 mod server;
 mod settings;
+mod sharing;
 pub mod store;
+mod tags;
 mod thumbnails;
 mod transfer;
 mod undo;
 mod upload;
+mod versions;
 
 use dav::Dav;
 use rusqlite::Connection;
@@ -31,8 +34,10 @@ pub use login::{Credentials, LoginFlow, login_flow_poll, login_flow_start, passw
 pub use ops::valid_name;
 pub use server::{Features, Quota};
 pub use settings::DEVICE_ONLY;
+pub use sharing::{ShareInfo, ShareKind, Sharee, perm};
 pub use transfer::Progress;
 pub use upload::Taken;
+pub use versions::Version;
 
 pub trait ChangeListener: Send + Sync {
     /// Settings changed by another device arrived.

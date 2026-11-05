@@ -19,9 +19,12 @@ mod favorites;
 mod header;
 mod nav;
 mod ops;
+mod share;
 mod sidebar;
+mod tags;
 mod thumbs;
 mod transfers;
+mod versions;
 mod views;
 
 /// The path bar and its segments, as Nautilus'; the dense tree (`.dense`, as Notav's); the row
