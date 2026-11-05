@@ -24,6 +24,8 @@ const COLUMN_MAX_WIDTH: i32 = 580;
 /// The preview column at least; it takes the room that is left.
 const PREVIEW_WIDTH: i32 = 400;
 const PREVIEW_ICON_SIZE: i32 = 256;
+/// How long (ms) the preview takes to slide in and out.
+const PREVIEW_SLIDE_MS: u32 = 250;
 
 /// One column: folder `path`, as it was filled.
 struct Column {
@@ -41,7 +43,8 @@ struct Column {
 /// The file selected in the last column: its icon (the thumbnail, once there are any), name,
 /// and details.
 struct Preview {
-    root: gtk::Box,
+    /// Slides in and out at the end of the columns, with the preview in it.
+    revealer: gtk::Revealer,
     icon: gtk::Image,
     name: gtk::Label,
     detail: gtk::Label,
@@ -102,7 +105,7 @@ impl Columns {
     }
 
     fn preview_shown(&self) -> bool {
-        self.preview.root.parent().is_some()
+        self.preview.revealer.parent().is_some()
     }
 }
 
@@ -156,8 +159,23 @@ impl Preview {
         ] {
             root.append(w);
         }
+        let revealer = gtk::Revealer::builder()
+            .transition_type(gtk::RevealerTransitionType::SlideLeft)
+            .transition_duration(PREVIEW_SLIDE_MS)
+            .hexpand(true)
+            .child(&root)
+            .build();
+        // Once it has slid away, it leaves the columns (what shows again meanwhile stays).
+        revealer.connect_child_revealed_notify(|r| {
+            if !r.is_child_revealed()
+                && !r.reveals_child()
+                && let Some(outer) = r.parent().and_downcast::<gtk::Box>()
+            {
+                outer.remove(r);
+            }
+        });
         Preview {
-            root,
+            revealer,
             icon,
             name,
             detail,
@@ -291,10 +309,6 @@ pub fn refresh(ui: &Rc<Ui>) {
         None => Vec::new(),
     };
     let id = at.map_or(0, |(id, _)| id);
-    // Taken out for now, to be put back after the last column.
-    if c.preview_shown() {
-        c.outer.remove(&c.preview.root);
-    }
     {
         let mut columns = c.columns.borrow_mut();
         let keep = columns
@@ -391,13 +405,38 @@ fn update_preview(ui: &Rc<Ui>) {
         Some(f) => {
             c.preview.show(&f);
             if !c.preview_shown() {
-                c.outer.append(&c.preview.root);
-                scroll_to_end(c);
+                c.outer.append(&c.preview.revealer);
+            }
+            if !c.preview.revealer.reveals_child() {
+                c.preview.revealer.set_reveal_child(true);
+                follow_end(c);
             }
         }
-        None if c.preview_shown() => c.outer.remove(&c.preview.root),
+        // It slides out, the columns following it (`follow_end`), and leaves when it is gone.
+        None if c.preview.revealer.reveals_child() => {
+            c.preview.revealer.set_reveal_child(false);
+            follow_end(c);
+        }
         None => {}
     }
+}
+
+/// While the preview slides in or out, the view stays at the end of the columns.
+fn follow_end(c: &Columns) {
+    let started = std::cell::Cell::new(None::<i64>);
+    c.scroll.add_tick_callback(move |scroll, clock| {
+        let now = clock.frame_time();
+        let start = started.get().unwrap_or(now);
+        started.set(Some(start));
+        let a = scroll.hadjustment();
+        a.set_value((a.upper() - a.page_size()).max(0.0));
+        // A little longer than the slide itself.
+        if now - start < i64::from(PREVIEW_SLIDE_MS + 100) * 1000 {
+            glib::ControlFlow::Continue
+        } else {
+            glib::ControlFlow::Break
+        }
+    });
 }
 
 /// The last column (or the preview) is the one to see.
@@ -497,8 +536,14 @@ fn new_column(ui: &Rc<Ui>, path: &str) -> Column {
         .hexpand(false)
         .build();
     let handle = new_handle(ui, &scroll);
-    c.outer.append(&scroll);
-    c.outer.append(&handle);
+    // Before the preview, which stays last.
+    let before = if c.preview_shown() {
+        c.preview.revealer.prev_sibling()
+    } else {
+        c.outer.last_child()
+    };
+    c.outer.insert_child_after(&scroll, before.as_ref());
+    c.outer.insert_child_after(&handle, Some(&scroll));
 
     let w = weak.clone();
     view.connect_activate(move |view, pos| activate(&w, view.model(), pos));
