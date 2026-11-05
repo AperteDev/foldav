@@ -96,7 +96,13 @@
 - The app: `make -C foldav/linux sandbox` runs a separate copy (`FOLDAV_SANDBOX`, data in
   `target/sandbox`). To see and drive it, use the `waydriver` MCP server with
   `scripts/waydriver-app.sh` and `app_name` `foldav-waydriver` (build first); keyboard
-  navigation works where OCR-based clicking does not (it needs a model download).
+  navigation works where OCR-based clicking does not (it needs a model download). The script
+  turns portals off (`GTK_USE_PORTAL=0`) so dialogs and apps stay off your desktop, yet a
+  file dialog still does not show in the session: to try the Upload actions, put the paths (`:`
+  between) in `/tmp/foldav-pick` before starting it and they are picked without a dialog.
+  The menu items of a right click are not in the accessibility tree: click them by position
+  (`move_pointer_absolute`, `pointer_click`) after a screenshot, and never `dump_tree` (it
+  is huge).
 - Against the server: `cargo test -p foldav-core --features integration`, with the Test
   account from the gitignored `.env` (`FOLDAV_URL`, `FOLDAV_USER`, `FOLDAV_PASS`); each test
   works in its own `it-foldav/<name>/` folder.
