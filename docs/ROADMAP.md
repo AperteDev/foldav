@@ -72,25 +72,14 @@ Once a third app copies the same code, a shared crate in its own repository beco
    listing cache's size, and a long-offline mode that shows it without asking; the header's
    search; a zoom for the icons; sorting also in the icons and columns; the last folder and
    account restored at start.
-2. **The web app's places in the sidebar**, for the account shown, as Nextcloud Files has them
-   (each only where the server has what it needs, from its capabilities), under the favorite
-   folders and above the folder tree, opening in the window's views like a folder:
-   - *All files*: the Files root (now the tree's "Home"), and *Personal files*: only the
-     user's own, without what is shared with them and external storage.
-   - *Recent*: the latest changed files, newest first (WebDAV `SEARCH` by modification time).
-   - *Favorites*, the place that lists all that is starred, files too, in the views (the
-     favorite folders are already listed under a heading in the sidebar, and the stars synced:
-     WebDAV `REPORT filter-files`, `oc:favorite`).
-   - *Shares*, a group: *Shared with you* and *Shared with others* (OCS `files_sharing`:
-     `shares?shared_with_me=true` and `shares`), *Shared by link* (shares of type link),
-     *Pending shares* (`shares/pending`, to accept or decline), *File requests* (upload-only
-     links, Nextcloud 32), *Deleted shares* (`deletedshares`, to restore).
-   - *Tags*: the tags (`systemtags`), each opening the files that have it
-     (`systemtags-relations`).
-   - At the foot: *Deleted files* (the trash bin, see "Nextcloud's features"), the storage
-     used and available (`d:quota-used-bytes` and `d:quota-available-bytes` of the Files
-     root, as "10,7 TB used"), and *Files settings* (Preferences: sorting, hidden files, the
-     web app's own settings in the browser).
+2. **The web app's places in the sidebar**, what is left of them (All files is the tree's
+   "Home"; Recent, Starred, Shared with you, Shared with others, Shared by link, Tags and
+   Deleted files are built, each shown where the server's capabilities have it, and the
+   storage used): *Personal files*: only the user's own, without what is shared with them and
+   external storage; *Pending shares* (`shares/pending`, to accept or decline), *File
+   requests* (upload-only links, Nextcloud 32), *Deleted shares* (`deletedshares`, to
+   restore); *Files settings* (Preferences: sorting, hidden files, the web app's own settings
+   in the browser). The places' files come in the server's order, whatever the view sorts by.
 3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete,
    Ctrl+Z and dragging files inside the window are done): a
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
@@ -112,14 +101,14 @@ Once a third app copies the same code, a shared crate in its own repository beco
    kept beside the file): Open With…; several files opened at once; a limit to the copies'
    total size; a copy of a file renamed or moved on the server meanwhile is sent to its old
    path (as a conflicted copy, the ETag check fails there).
-6. **Nextcloud's features** on files (the places that list them are above):
-   - Trash: restore, delete for good, empty it.
+6. **Nextcloud's features** on files (the places that list them are above; the trash bin,
+   restoring, deleting for good and emptying it are built):
    - Versions: list a file's versions, restore one, open one.
    - Sharing: public links (password, expiry, permissions), shares with users, groups and
      federated users; copy the link (OCS `files_sharing` API).
-   - Favorites and tags: star a file, tag it (`systemtags`).
-   - Search by name and content (WebDAV `SEARCH`, the unified search for content), the
-     header's "Search here".
+   - Tags: tag a file, make and remove tags (`systemtags`); the tags and their files are
+     listed already.
+   - Search by content (the unified search); by name is built (Ctrl+F, WebDAV `SEARCH`).
    - "Open in the browser" for what Foldav does not do (comments, activity, apps' own views).
 7. **Change notifications**: Nextcloud's Client Push (`notify_push`) refreshes an open folder
    when its files change elsewhere; polling of folder ETags otherwise (as Notav plans).

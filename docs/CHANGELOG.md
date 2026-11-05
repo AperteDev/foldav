@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that are sent again one at a time when the connection drops, with the file's date kept;
   when a name is taken you choose Replace (the server keeps the old file as a version), Keep
   Both or Skip
+- The places of Nextcloud Files in the sidebar, as the web app has them (each only where the
+  server has it): Recent, Starred (all that is starred, files too), Shared with You, Shared
+  with Others, Shared by Link, Tags (each tag opens the files that have it) and Deleted
+  Files, and the storage used at the foot
+- The trash bin: Deleted Files lists what was deleted; Restore, Delete Permanently and
+  Empty Trash, each asking first where it cannot be taken back
+- Search by name in the folder shown and below it (Ctrl+F or the magnifier in the header),
+  searching on the server as you type; Escape leaves it
 - A change another app saves to the copy of an opened file goes back to the server (also one
   made while Foldav was closed, at the next start), unless the file changed on the server
   meanwhile: then it stays, and your version is kept beside it as "name (conflicted

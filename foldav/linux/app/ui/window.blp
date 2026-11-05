@@ -89,8 +89,29 @@ Adw.ApplicationWindow window {
                   margin-bottom: 6;
                 }
 
+                // The places of Nextcloud Files that are not folders: Recent, Favorites, what
+                // is shared, the tags, the trash bin (src/window/sidebar.rs).
+                Gtk.ListBox places {
+                  styles ["navigation-sidebar", "dense"]
+                }
+
+                Gtk.Separator places_separator {
+                  margin-top: 6;
+                  margin-bottom: 6;
+                }
+
                 Gtk.ListBox tree {
                   styles ["navigation-sidebar", "dense"]
+                }
+
+                // What the account uses of its storage.
+                Gtk.Label quota {
+                  xalign: 0;
+                  margin-start: 12;
+                  margin-top: 12;
+                  margin-bottom: 8;
+                  visible: false;
+                  styles ["caption", "dim-label"]
                 }
               }
             };
@@ -159,6 +180,13 @@ Adw.ApplicationWindow window {
                   }
                 }
 
+                Gtk.ToggleButton {
+                  icon-name: "system-search-symbolic";
+                  tooltip-text: _("Search (Ctrl+F)");
+                  valign: center;
+                  active: bind search_bar.search-mode-enabled bidirectional;
+                }
+
                 Adw.ToggleGroup view_toggle {
                   valign: center;
 
@@ -191,6 +219,16 @@ Adw.ApplicationWindow window {
                 Gtk.WindowControls {
                   side: end;
                 }
+              }
+            }
+
+            // Search by name in the folder shown and below it (src/window/header.rs).
+            [top]
+            Gtk.SearchBar search_bar {
+              Gtk.SearchEntry search_entry {
+                hexpand: true;
+                max-width-chars: 60;
+                placeholder-text: _("Search here");
               }
             }
 
@@ -270,23 +308,61 @@ Adw.ApplicationWindow window {
   };
 }
 
-// A right click on the files (src/window/ops.rs, `context_menu`).
+// A right click on the files (src/window/ops.rs, `context_menu`); what does not apply to
+// the place or the selection is left out.
 menu file_menu {
   section {
-    item (_("Open"), "win.open")
-    item (_("Download…"), "win.download")
+    item {
+      label: _("Open");
+      action: "win.open";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Download…");
+      action: "win.download";
+      hidden-when: "action-disabled";
+    }
   }
 
   section {
-    item (_("New Folder"), "win.new-folder")
-    item (_("Upload Files…"), "win.upload-files")
-    item (_("Upload Folder…"), "win.upload-folder")
+    item {
+      label: _("New Folder");
+      action: "win.new-folder";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Upload Files…");
+      action: "win.upload-files";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Upload Folder…");
+      action: "win.upload-folder";
+      hidden-when: "action-disabled";
+    }
   }
 
   section {
-    item (_("Cut"), "win.cut")
-    item (_("Copy"), "win.copy")
-    item (_("Paste"), "win.paste")
+    item {
+      label: _("Cut");
+      action: "win.cut";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Copy");
+      action: "win.copy";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Paste");
+      action: "win.paste";
+      hidden-when: "action-disabled";
+    }
   }
 
   // Only the one that applies to what is selected (src/window/favorites.rs).
@@ -305,8 +381,35 @@ menu file_menu {
   }
 
   section {
-    item (_("Rename…"), "win.rename")
-    item (_("Move to Trash"), "win.delete")
+    item {
+      label: _("Rename…");
+      action: "win.rename";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Move to Trash");
+      action: "win.delete";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Restore");
+      action: "win.restore";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Delete Permanently…");
+      action: "win.delete-forever";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Empty Trash…");
+      action: "win.empty-trash";
+      hidden-when: "action-disabled";
+    }
   }
 }
 
@@ -327,10 +430,35 @@ menu path_menu {
   }
 
   section {
-    item (_("New Folder"), "win.new-folder")
-    item (_("Upload Files…"), "win.upload-files")
-    item (_("Upload Folder…"), "win.upload-folder")
-    item (_("Paste"), "win.paste")
+    item {
+      label: _("New Folder");
+      action: "win.new-folder";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Upload Files…");
+      action: "win.upload-files";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Upload Folder…");
+      action: "win.upload-folder";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Paste");
+      action: "win.paste";
+      hidden-when: "action-disabled";
+    }
+
+    item {
+      label: _("Empty Trash…");
+      action: "win.empty-trash";
+      hidden-when: "action-disabled";
+    }
   }
 }
 

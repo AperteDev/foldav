@@ -236,6 +236,43 @@ pub struct Entry {
     pub has_preview: bool,
 }
 
+/// What a listing asks of each file.
+const FILE_PROPS: &str = "<d:getetag/><oc:id/><d:resourcetype/><d:getlastmodified/>\
+    <d:getcontentlength/><oc:size/><d:getcontenttype/><oc:favorite/><nc:has-preview/>";
+
+fn entries(resps: Vec<DavResponse>) -> Vec<Entry> {
+    resps
+        .into_iter()
+        .filter(|r| r.status == 200)
+        .map(|r| Entry {
+            etag: r
+                .props
+                .find_text(DAV, "getetag")
+                .map(|e| strong(&e).to_string())
+                .unwrap_or_default(),
+            fileid: r.props.find_text(OC, "id").unwrap_or_default(),
+            folder: r
+                .props
+                .child(DAV, "resourcetype")
+                .is_some_and(|t| t.child(DAV, "collection").is_some()),
+            size: r
+                .props
+                .find_text(DAV, "getcontentlength")
+                .or_else(|| r.props.find_text(OC, "size"))
+                .and_then(|s| s.parse().ok()),
+            modified: r
+                .props
+                .find_text(DAV, "getlastmodified")
+                .and_then(|d| http_date(&d))
+                .unwrap_or(0),
+            mime: r.props.find_text(DAV, "getcontenttype").unwrap_or_default(),
+            favorite: r.props.find_text(OC, "favorite").as_deref() == Some("1"),
+            has_preview: r.props.find_text(NC, "has-preview").as_deref() == Some("true"),
+            href: r.href,
+        })
+        .collect()
+}
+
 pub struct Dav {
     agent: ureq::Agent,
     /// For file contents: no limit on how long a transfer takes.
@@ -453,6 +490,30 @@ impl Dav {
         server_info(&r.body).ok_or_else(|| Error::Parse("not a Nextcloud status".into()))
     }
 
+    /// A call of Nextcloud's OCS API (`path` below `/ocs/v2.php/`, its query percent-encoded
+    /// already; `form` the body of a POST or PUT, as `a=b&c=d`): the answer's `ocs.data`.
+    pub fn ocs(&self, method: &str, path: &str, form: &str) -> Result<crate::json::Json> {
+        let base = self.root.split_once("/remote.php/").map_or("", |(b, _)| b);
+        let sep = if path.contains('?') { '&' } else { '?' };
+        let href = format!("{base}/ocs/v2.php/{path}{sep}format=json");
+        let mut headers = vec![("OCS-APIRequest", "true"), ("Accept", "application/json")];
+        if !form.is_empty() {
+            headers.push(("Content-Type", "application/x-www-form-urlencoded"));
+        }
+        let r = self.request(method, &href, &headers, form)?;
+        if !(200..300).contains(&r.status) {
+            return Err(match r.status {
+                404 => Error::NotFound(path.into()),
+                s => Error::Http(s, ocs_message(&r.body)),
+            });
+        }
+        let j = crate::json::Json::parse(&r.body).ok_or_else(|| Error::Parse("OCS".into()))?;
+        Ok(j.get("ocs")
+            .and_then(|o| o.get("data"))
+            .cloned()
+            .unwrap_or(crate::json::Json::Null))
+    }
+
     pub fn principal(&self) -> Result<String> {
         let p = self.propfind(&self.root, "0", "<d:current-user-principal/>")?;
         p.first()
@@ -463,42 +524,39 @@ impl Dav {
     /// Folder `href` and what is directly in it (`depth` "1"), or only itself ("0"); the folder
     /// first. Empty if it does not exist.
     pub fn list(&self, href: &str, depth: &str) -> Result<Vec<Entry>> {
-        let props = "<d:getetag/><oc:id/><d:resourcetype/><d:getlastmodified/>\
-            <d:getcontentlength/><oc:size/><d:getcontenttype/><oc:favorite/><nc:has-preview/>";
-        let resps = match self.propfind(href, depth, props) {
+        let resps = match self.propfind(href, depth, FILE_PROPS) {
             Err(Error::Http(404, _)) => return Ok(Vec::new()),
             r => r?,
         };
-        Ok(resps
-            .into_iter()
-            .filter(|r| r.status == 200)
-            .map(|r| Entry {
-                etag: r
-                    .props
-                    .find_text(DAV, "getetag")
-                    .map(|e| strong(&e).to_string())
-                    .unwrap_or_default(),
-                fileid: r.props.find_text(OC, "id").unwrap_or_default(),
-                folder: r
-                    .props
-                    .child(DAV, "resourcetype")
-                    .is_some_and(|t| t.child(DAV, "collection").is_some()),
-                size: r
-                    .props
-                    .find_text(DAV, "getcontentlength")
-                    .or_else(|| r.props.find_text(OC, "size"))
-                    .and_then(|s| s.parse().ok()),
-                modified: r
-                    .props
-                    .find_text(DAV, "getlastmodified")
-                    .and_then(|d| http_date(&d))
-                    .unwrap_or(0),
-                mime: r.props.find_text(DAV, "getcontenttype").unwrap_or_default(),
-                favorite: r.props.find_text(OC, "favorite").as_deref() == Some("1"),
-                has_preview: r.props.find_text(NC, "has-preview").as_deref() == Some("true"),
-                href: r.href,
-            })
-            .collect())
+        Ok(entries(resps))
+    }
+
+    /// The server's own search (WebDAV `SEARCH`, as the web app's search and Recent): the files
+    /// below `scope` (a path below the DAV root, "/files/<user>/Docs") for which `condition`
+    /// (the XML of a `d:where`) holds, newest first, `limit` at most.
+    pub fn search(&self, scope: &str, condition: &str, limit: u32) -> Result<Vec<Entry>> {
+        let body = format!(
+            r#"<?xml version="1.0" encoding="utf-8"?><d:searchrequest xmlns:d="DAV:" xmlns:oc="{OC}" xmlns:nc="{NC}"><d:basicsearch><d:select><d:prop>{FILE_PROPS}</d:prop></d:select><d:from><d:scope><d:href>{}</d:href><d:depth>infinity</d:depth></d:scope></d:from><d:where>{condition}</d:where><d:orderby><d:order><d:prop><d:getlastmodified/></d:prop><d:descending/></d:order></d:orderby><d:limit><d:nresults>{limit}</d:nresults></d:limit></d:basicsearch></d:searchrequest>"#,
+            xml_escape(scope)
+        );
+        let r = self.request("SEARCH", &self.root, &[], &body)?;
+        if r.status != 207 {
+            return Err(Error::Http(r.status, r.body));
+        }
+        Ok(entries(multistatus(&r.body)?.0))
+    }
+
+    /// The files below Files root `home` for which `rules` (the XML of an `oc:filter-rules`:
+    /// favorites, tags) hold, with everything a listing has.
+    pub fn filter_files(&self, home: &str, rules: &str) -> Result<Vec<Entry>> {
+        let body = format!(
+            r#"<?xml version="1.0" encoding="utf-8"?><oc:filter-files xmlns:d="DAV:" xmlns:oc="{OC}" xmlns:nc="{NC}"><d:prop>{FILE_PROPS}</d:prop><oc:filter-rules>{rules}</oc:filter-rules></oc:filter-files>"#
+        );
+        let r = self.request("REPORT", home, &[], &body)?;
+        if r.status != 207 {
+            return Err(Error::Http(r.status, r.body));
+        }
+        Ok(entries(multistatus(&r.body)?.0))
     }
 
     /// DELETE, if the ETag still matches (when given); gone already counts as done.
@@ -638,6 +696,33 @@ pub fn http_date(s: &str) -> Option<i64> {
 /// weak one (412 every time); the value under it is the resource's own, strong ETag.
 fn strong(etag: &str) -> &str {
     etag.strip_prefix("W/").unwrap_or(etag)
+}
+
+/// The message of an OCS error answer (`ocs.meta.message`), else the answer.
+fn ocs_message(body: &str) -> String {
+    crate::json::Json::parse(body)
+        .and_then(|j| {
+            j.get("ocs")?
+                .get("meta")?
+                .get("message")?
+                .str()
+                .filter(|m| !m.is_empty())
+                .map(str::to_string)
+        })
+        .unwrap_or_else(|| body.to_string())
+}
+
+/// `s` for a query or a form: everything but letters, digits and `-._~` percent-encoded.
+pub fn form_encode(s: &str) -> String {
+    s.bytes()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || b"-._~".contains(&c) {
+                (c as char).to_string()
+            } else {
+                format!("%{c:02X}")
+            }
+        })
+        .collect()
 }
 
 pub fn xml_escape(s: &str) -> String {

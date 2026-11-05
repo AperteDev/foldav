@@ -36,12 +36,33 @@ pub(crate) fn sort(files: &mut [File]) {
     files.sort_by_cached_key(|f| (!f.folder, f.name.to_lowercase()));
 }
 
+/// The file of a listing's entry, below Files root `home`; None for what is not below it.
+pub(crate) fn entry_file(home: &str, e: crate::dav::Entry) -> Option<File> {
+    let href = percent_decode(&e.href);
+    let rel = href.strip_prefix(home)?.trim_matches('/').to_string();
+    Some(File {
+        name: rel.rsplit('/').next()?.to_string(),
+        path: rel,
+        folder: e.folder,
+        size: e.size,
+        modified: e.modified,
+        mime: e.mime,
+        favorite: e.favorite,
+        has_preview: e.has_preview,
+        etag: e.etag,
+        fileid: e.fileid,
+    })
+}
+
 impl Client {
     /// What is directly in folder `path` of account `id` (empty: the Files root): folders first,
     /// then by name, case ignored; hidden files (`File::hidden`) included, the front-end
     /// decides. Blocking: a request to the server, a small one when the folder is the same as
     /// when it was last listed (its ETag says so; `cached` has that listing without any).
     pub fn list(&self, id: i64, path: &str) -> Result<Vec<File>> {
+        if crate::places::is_place(path) {
+            return self.place(id, path);
+        }
         let home = self.files_home(id)?;
         let dir = format!("{home}{}", path.trim_matches('/'));
         let dir = format!("{}/", dir.trim_end_matches('/'));
@@ -71,22 +92,7 @@ impl Client {
         let mut files: Vec<File> = entries
             .into_iter()
             .skip(1)
-            .filter_map(|e| {
-                let href = percent_decode(&e.href);
-                let rel = href.strip_prefix(&home)?.trim_matches('/').to_string();
-                Some(File {
-                    name: rel.rsplit('/').next()?.to_string(),
-                    path: rel,
-                    folder: e.folder,
-                    size: e.size,
-                    modified: e.modified,
-                    mime: e.mime,
-                    favorite: e.favorite,
-                    has_preview: e.has_preview,
-                    etag: e.etag,
-                    fileid: e.fileid,
-                })
-            })
+            .filter_map(|e| entry_file(&home, e))
             .collect();
         sort(&mut files);
         // A cache that cannot be written is no reason not to show the folder.

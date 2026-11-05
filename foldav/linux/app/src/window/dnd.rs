@@ -194,7 +194,8 @@ pub fn target(
         let Some(ui) = weak.upgrade() else {
             return false;
         };
-        let Some((id, dest)) = d(&ui) else {
+        // A place has no folder to put files in.
+        let Some((id, dest)) = d(&ui).filter(|(_, d)| !foldav_core::places::is_place(d)) else {
             return false;
         };
         if let Ok(dragged) = value.get::<Dragged>() {

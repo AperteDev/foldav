@@ -9,6 +9,7 @@ use super::{Ui, action, nav, note, popup_menu, toast, transfers, ui};
 use crate::core;
 use crate::i18n::{gettext, ngettext};
 use adw::prelude::*;
+use foldav_core::places;
 use foldav_core::{Client, Error, File, Saved, Taken};
 use gtk::{gio, glib};
 use std::path::{Path, PathBuf};
@@ -53,6 +54,9 @@ pub fn connect(ui: &Rc<Ui>) {
     action(ui, "copy", |ui| copy(ui, false));
     action(ui, "paste", paste);
     action(ui, "delete", delete);
+    action(ui, "restore", restore);
+    action(ui, "delete-forever", delete_forever);
+    action(ui, "empty-trash", empty_trash);
     action(ui, "undo", |_| undo(None));
     update_actions(ui);
 }
@@ -73,22 +77,37 @@ pub fn accels(app: &adw::Application) {
 pub fn update_actions(ui: &Ui) {
     let n = selected(ui).len();
     let at = ui.at.borrow().as_ref().map(|(id, _)| *id);
+    // A place is a list of files, no folder to put files in; in the trash bin they cannot be
+    // used, only restored or deleted for good.
+    let place = ui
+        .at
+        .borrow()
+        .as_ref()
+        .is_some_and(|(_, p)| places::is_place(p));
+    let trash = ui
+        .at
+        .borrow()
+        .as_ref()
+        .is_some_and(|(_, p)| p == places::TRASH);
     let paste = ui
         .clipboard
         .borrow()
         .as_ref()
         .is_some_and(|c| Some(c.account) == at);
     for (name, on) in [
-        ("open", n == 1),
-        ("download", n > 0),
-        ("upload-files", at.is_some()),
-        ("upload-folder", at.is_some()),
-        ("new-folder", at.is_some()),
-        ("rename", n == 1),
-        ("cut", n > 0),
-        ("copy", n > 0),
-        ("delete", n > 0),
-        ("paste", paste),
+        ("open", n == 1 && !trash),
+        ("download", n > 0 && !trash),
+        ("upload-files", at.is_some() && !place),
+        ("upload-folder", at.is_some() && !place),
+        ("new-folder", at.is_some() && !place),
+        ("rename", n == 1 && !trash),
+        ("cut", n > 0 && !trash),
+        ("copy", n > 0 && !trash),
+        ("delete", n > 0 && !trash),
+        ("paste", paste && !place),
+        ("restore", n > 0 && trash),
+        ("delete-forever", n > 0 && trash),
+        ("empty-trash", trash),
     ] {
         ui.window
             .lookup_action(name)
@@ -567,6 +586,82 @@ pub fn drop_files(
         put(ui, id, paths, dest, cut);
     }
     true
+}
+
+/// Ask before something that cannot be taken back; true when the user agrees.
+async fn confirm(ui: &Ui, heading: &str, body: &str, ok: &str) -> bool {
+    let alert = adw::AlertDialog::new(Some(heading), Some(body));
+    alert.add_responses(&[("cancel", &gettext("Cancel")), ("ok", ok)]);
+    alert.set_response_appearance("ok", adw::ResponseAppearance::Destructive);
+    alert.set_close_response("cancel");
+    alert.choose_future(Some(&ui.window)).await == "ok"
+}
+
+/// The files selected in the trash bin: their account and paths.
+fn in_trash(ui: &Ui) -> Option<(i64, Vec<String>)> {
+    let (id, path) = ui.at.borrow().clone()?;
+    let paths: Vec<String> = selected(ui).into_iter().map(|f| f.path).collect();
+    (path == places::TRASH && !paths.is_empty()).then_some((id, paths))
+}
+
+fn restore(ui: &Rc<Ui>) {
+    if let Some((id, paths)) = in_trash(ui) {
+        run(ui, gettext("Restoring"), String::new(), move |c| {
+            c.trash_restore(id, &paths).map(|()| None)
+        });
+    }
+}
+
+fn delete_forever(ui: &Rc<Ui>) {
+    let Some((id, paths)) = in_trash(ui) else {
+        return;
+    };
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        let heading = ngettext(
+            "Delete {n} item permanently?",
+            "Delete {n} items permanently?",
+            paths.len() as u64,
+        )
+        .replace("{n}", &paths.len().to_string());
+        if confirm(
+            &ui,
+            &heading,
+            &gettext("It cannot be restored."),
+            &gettext("Delete"),
+        )
+        .await
+        {
+            run(&ui, gettext("Deleting"), String::new(), move |c| {
+                c.trash_delete(id, &paths).map(|()| None)
+            });
+        }
+    });
+}
+
+fn empty_trash(ui: &Rc<Ui>) {
+    let Some((id, _)) = ui.at.borrow().clone() else {
+        return;
+    };
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        let body = gettext("All the items in the trash will be deleted permanently.");
+        if confirm(
+            &ui,
+            &gettext("Empty the trash?"),
+            &body,
+            &gettext("Empty Trash"),
+        )
+        .await
+        {
+            run(
+                &ui,
+                gettext("Emptying the trash"),
+                String::new(),
+                move |c| c.trash_empty(id).map(|()| None),
+            );
+        }
+    });
 }
 
 fn delete(ui: &Rc<Ui>) {

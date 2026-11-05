@@ -1,11 +1,13 @@
 //! The header, as Nautilus': back and forward, the path bar, the view switcher and the menus;
 //! and the folder above. Its actions are made here.
 
+use super::nav::Go;
 use super::views::Mode;
 use super::{Ui, action, nav, sidebar, views};
 use crate::core;
 use crate::i18n::gettext;
 use adw::prelude::*;
+use foldav_core::places;
 use gtk::{gio, glib};
 use std::rc::Rc;
 use std::time::Duration;
@@ -14,6 +16,8 @@ pub struct Header {
     pathbar: gtk::Box,
     scroll: gtk::ScrolledWindow,
     toggle: adw::ToggleGroup,
+    search_bar: gtk::SearchBar,
+    search_entry: gtk::SearchEntry,
 }
 
 impl Header {
@@ -22,8 +26,59 @@ impl Header {
             pathbar: super::get(b, "pathbar"),
             scroll: super::get(b, "pathbar_scroll"),
             toggle: super::get(b, "view_toggle"),
+            search_bar: super::get(b, "search_bar"),
+            search_entry: super::get(b, "search_entry"),
         }
     }
+}
+
+/// Search the folder shown and below it as the query is typed; the results are a place, so
+/// back leaves them. An empty query, or Escape, leaves the search.
+fn connect_search(ui: &Rc<Ui>) {
+    let h = &ui.header;
+    h.search_bar.connect_entry(&h.search_entry);
+    action(ui, "search", |ui| {
+        let on = !ui.header.search_bar.is_search_mode();
+        ui.header.search_bar.set_search_mode(on);
+    });
+    let weak = Rc::downgrade(ui);
+    h.search_entry.connect_search_changed(move |entry| {
+        let Some(ui) = weak.upgrade() else { return };
+        let (query, at) = (entry.text().trim().to_string(), ui.at.borrow().clone());
+        let Some((id, path)) = at else { return };
+        let searching = places::search_of(&path).map(|(folder, _)| folder.to_string());
+        if query.is_empty() {
+            if searching.is_some() {
+                nav::back(&ui);
+            }
+            return;
+        }
+        // From a place that is no search, all the files; from a search, the folder it was in.
+        let how = if searching.is_some() {
+            Go::Keep
+        } else {
+            Go::Push
+        };
+        let folder = match searching {
+            Some(folder) => folder,
+            None if places::is_place(&path) => String::new(),
+            None => path,
+        };
+        nav::go(&ui, id, places::search_place(&folder, &query), how);
+    });
+    let weak = Rc::downgrade(ui);
+    h.search_entry.connect_stop_search(move |_| {
+        let Some(ui) = weak.upgrade() else { return };
+        ui.header.search_bar.set_search_mode(false);
+    });
+    // Closed: the search is left, back to the folder.
+    let weak = Rc::downgrade(ui);
+    h.search_bar.connect_search_mode_enabled_notify(move |bar| {
+        let Some(ui) = weak.upgrade() else { return };
+        if !bar.is_search_mode() {
+            ui.header.search_entry.set_text("");
+        }
+    });
 }
 
 /// The actions of the header and its menus, and the view the user left off with.
@@ -32,6 +87,7 @@ pub fn connect(ui: &Rc<Ui>) {
     action(ui, "back", nav::back);
     action(ui, "forward", nav::forward);
     action(ui, "reload", nav::reload);
+    connect_search(ui);
     // The views, by key too (Ctrl+1 to 3): the switcher follows.
     action(ui, "view-icons", |ui| {
         ui.header.toggle.set_active_name(Some("icons"))
@@ -76,6 +132,7 @@ pub fn accels(app: &adw::Application) {
     app.set_accels_for_action("win.back", &["<Alt>Left"]);
     app.set_accels_for_action("win.forward", &["<Alt>Right"]);
     app.set_accels_for_action("win.reload", &["F5", "<Control>r"]);
+    app.set_accels_for_action("win.search", &["<Control>f"]);
     app.set_accels_for_action("win.view-icons", &["<Control>1"]);
     app.set_accels_for_action("win.view-list", &["<Control>2"]);
     app.set_accels_for_action("win.view-columns", &["<Control>3"]);
@@ -101,6 +158,16 @@ pub fn update(ui: &Rc<Ui>) {
         bar.remove(&child);
     }
     let Some((id, path)) = at else { return };
+    // A place is one segment after the root, with its own title.
+    if foldav_core::places::is_place(&path) {
+        segment(ui, &gettext("Home"), id, "", false);
+        let separator = gtk::Label::new(Some("/"));
+        separator.add_css_class("path-separator");
+        bar.append(&separator);
+        let title = super::sidebar::place_title(ui, id, &path).unwrap_or_default();
+        segment(ui, &title, id, &path, true);
+        return;
+    }
     let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
     segment(ui, &gettext("Home"), id, "", segments.is_empty());
     let mut at_path = String::new();

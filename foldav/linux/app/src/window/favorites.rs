@@ -126,17 +126,22 @@ pub fn update_actions(ui: &Ui) {
         Some((id, path)) => {
             let starred = paths(ui, *id);
             (
-                (!path.is_empty()).then(|| starred.contains(path)),
+                (!path.is_empty() && !foldav_core::places::is_place(path))
+                    .then(|| starred.contains(path)),
                 !selected.is_empty() && selected.iter().all(|f| starred.contains(&f.path)),
             )
         }
         None => (None, false),
     };
+    // What is in the trash bin cannot be starred.
+    let in_trash = at
+        .as_ref()
+        .is_some_and(|(_, p)| p == foldav_core::places::TRASH);
     for (name, on) in [
         ("favorite-add", folder == Some(false)),
         ("favorite-remove", folder == Some(true)),
-        ("file-favorite", !selected.is_empty() && !all),
-        ("file-unfavorite", all),
+        ("file-favorite", !selected.is_empty() && !all && !in_trash),
+        ("file-unfavorite", all && !in_trash),
     ] {
         ui.window
             .lookup_action(name)

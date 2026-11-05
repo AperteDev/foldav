@@ -354,3 +354,81 @@ fn a_change_saved_to_an_opened_copy_goes_back_unless_the_server_changed() {
     let copy = c.open_file(A, &file(), &Progress::default()).unwrap();
     assert_eq!(std::fs::read_to_string(copy).unwrap(), "v3 server");
 }
+
+#[test]
+fn places_list_recent_favorites_searches_and_the_trash_bin() {
+    use foldav_core::places::{self, FAVORITES, RECENT, TRASH};
+    let (c, dav, root) = fixture("places");
+    let home = c.files_home(A).unwrap();
+    let put = |p: &str| {
+        let r = dav
+            .request("PUT", &format!("{home}{root}/{p}"), &[], "x")
+            .unwrap();
+        assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    };
+    c.new_folder(A, &root, "sub").unwrap();
+    put("alpha-report.txt");
+    put("sub/beta.txt");
+    let here = |p: &str| format!("{root}/{p}");
+    let in_place = |place: &str| -> Vec<String> {
+        c.list(A, place)
+            .unwrap()
+            .into_iter()
+            .map(|f| f.path)
+            .collect()
+    };
+
+    // The latest changed files, folders left out.
+    let recent = in_place(RECENT);
+    assert!(recent.contains(&here("alpha-report.txt")), "{recent:?}");
+    assert!(!recent.contains(&here("sub")));
+
+    dav.set_favorite(&format!("{home}{}", here("sub/beta.txt")), true)
+        .unwrap();
+    assert!(in_place(FAVORITES).contains(&here("sub/beta.txt")));
+
+    // By name, in a folder and below.
+    assert_eq!(
+        in_place(&places::search_place(&root, "ALPHA")),
+        [here("alpha-report.txt")]
+    );
+    assert_eq!(
+        in_place(&places::search_place(&here("sub"), "alpha")).len(),
+        0
+    );
+
+    // Deleted: in the bin, restored, deleted again and removed from it for good.
+    c.delete(A, &[here("alpha-report.txt")]).unwrap();
+    let bin = c.list(A, TRASH).unwrap();
+    let gone = bin
+        .iter()
+        .find(|f| f.name == "alpha-report.txt")
+        .expect("in the bin");
+    c.trash_restore(A, &[gone.path.clone()]).unwrap();
+    assert!(names(&c, &root).contains(&"alpha-report.txt".to_string()));
+    c.delete(A, &[here("alpha-report.txt")]).unwrap();
+    let bin = c.list(A, TRASH).unwrap();
+    let gone = bin.iter().find(|f| f.name == "alpha-report.txt").unwrap();
+    c.trash_delete(A, &[gone.path.clone()]).unwrap();
+    assert!(
+        !c.list(A, TRASH)
+            .unwrap()
+            .iter()
+            .any(|f| f.name == "alpha-report.txt")
+    );
+
+    // Tags the server has, and the shares of the user (nothing shared by this test).
+    c.tags(A).unwrap();
+    c.list(A, places::SHARED_WITH_YOU).unwrap();
+    c.list(A, places::SHARED_WITH_OTHERS).unwrap();
+    c.list(A, places::SHARED_BY_LINK).unwrap();
+}
+
+#[test]
+fn the_server_says_what_it_offers_and_what_is_used() {
+    let (c, _dav, _root) = fixture("server");
+    let f = c.features(A).unwrap();
+    assert!(f.trash && f.sharing, "{f:?}");
+    let q = c.quota(A).unwrap();
+    assert!(q.used > 0, "{q:?}");
+}

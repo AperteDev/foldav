@@ -6,7 +6,8 @@ use super::{Ui, nav, popup_menu};
 use crate::core;
 use crate::i18n::gettext;
 use adw::prelude::*;
-use foldav_core::Favorite;
+use foldav_core::places::{self, Tag};
+use foldav_core::{Favorite, Features, Quota};
 use gtk::{gio, glib};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -21,6 +22,11 @@ pub struct Sidebar {
     favorites: gtk::ListBox,
     favorites_separator: gtk::Separator,
     tree: gtk::ListBox,
+    places: gtk::ListBox,
+    places_separator: gtk::Separator,
+    quota: gtk::Label,
+    /// The place (path) of each row of `places`.
+    place_paths: RefCell<Vec<String>>,
     /// The account of each row of `accounts`.
     account_ids: RefCell<Vec<i64>>,
     /// The favorite folder of each row of `favorites`.
@@ -38,6 +44,10 @@ impl Sidebar {
             favorites: super::get(b, "favorites"),
             favorites_separator: super::get(b, "favorites_separator"),
             tree: super::get(b, "tree"),
+            places: super::get(b, "places"),
+            places_separator: super::get(b, "places_separator"),
+            quota: super::get(b, "quota"),
+            place_paths: RefCell::default(),
             account_ids: RefCell::default(),
             favorite_rows: RefCell::default(),
             tree_paths: RefCell::default(),
@@ -90,6 +100,21 @@ pub fn connect(ui: &Rc<Ui>) {
         }
     });
 
+    let weak = Rc::downgrade(ui);
+    ui.sidebar.places.connect_row_activated(move |_, row| {
+        let Some(ui) = weak.upgrade() else { return };
+        let path = ui
+            .sidebar
+            .place_paths
+            .borrow()
+            .get(row.index() as usize)
+            .cloned();
+        let id = ui.at.borrow().as_ref().map(|(id, _)| *id);
+        if let (Some(path), Some(id)) = (path, id) {
+            nav::open(&ui, id, path);
+        }
+    });
+
     // Unstarring a favorite, from its right-click menu.
     let remove = gio::SimpleAction::new("favorite-delete", Some(glib::VariantTy::STRING));
     let weak = Rc::downgrade(ui);
@@ -108,7 +133,145 @@ pub fn connect(ui: &Rc<Ui>) {
 pub fn refresh(ui: &Rc<Ui>) {
     accounts(ui);
     refresh_favorites(ui);
+    refresh_places(ui);
     refresh_tree(ui);
+}
+
+/// What the server of an account offers, and what is on it besides folders.
+#[derive(Default)]
+pub struct Server {
+    pub features: Features,
+    pub tags: Vec<Tag>,
+    pub quota: Option<Quota>,
+}
+
+/// Ask account `id`'s server what it offers, its tags and its quota (the places and the storage
+/// used show once they are known).
+pub fn load_server(ui: &Rc<Ui>, id: i64) {
+    let weak = Rc::downgrade(ui);
+    glib::spawn_future_local(async move {
+        let r = gio::spawn_blocking(move || {
+            let features = core().features(id).ok()?;
+            let tags = if features.tags {
+                core().tags(id).unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+            Some(Server {
+                features,
+                tags,
+                quota: core().quota(id).ok(),
+            })
+        })
+        .await;
+        if let (Some(ui), Ok(Some(server))) = (weak.upgrade(), r) {
+            ui.server.borrow_mut().insert(id, server);
+            refresh_places(&ui);
+        }
+    });
+}
+
+/// The places of the account shown: (path, title, icon).
+fn place_list(ui: &Ui, id: i64) -> Vec<(String, String, &'static str)> {
+    let server = ui.server.borrow();
+    let known = server.get(&id);
+    let mut list = vec![
+        (
+            places::RECENT.to_string(),
+            gettext("Recent"),
+            "document-open-recent-symbolic",
+        ),
+        (
+            places::FAVORITES.to_string(),
+            gettext("Starred"),
+            "starred-symbolic",
+        ),
+    ];
+    let Some(s) = known else { return list };
+    if s.features.sharing {
+        list.extend([
+            (
+                places::SHARED_WITH_YOU.to_string(),
+                gettext("Shared with You"),
+                "folder-publicshare-symbolic",
+            ),
+            (
+                places::SHARED_WITH_OTHERS.to_string(),
+                gettext("Shared with Others"),
+                "folder-publicshare-symbolic",
+            ),
+            (
+                places::SHARED_BY_LINK.to_string(),
+                gettext("Shared by Link"),
+                "insert-link-symbolic",
+            ),
+        ]);
+    }
+    if s.features.tags {
+        list.push((places::TAGS.to_string(), gettext("Tags"), "tag-symbolic"));
+    }
+    if s.features.trash {
+        list.push((
+            places::TRASH.to_string(),
+            gettext("Deleted Files"),
+            "user-trash-symbolic",
+        ));
+    }
+    list
+}
+
+/// The title of place `path` of account `id`, as the path bar shows it.
+pub fn place_title(ui: &Ui, id: i64, path: &str) -> Option<String> {
+    if let Some((_, query)) = places::search_of(path) {
+        return Some(gettext("Search: {query}").replace("{query}", query));
+    }
+    if let Some(tag) = path.strip_prefix(places::TAG_PREFIX) {
+        let server = ui.server.borrow();
+        return server
+            .get(&id)?
+            .tags
+            .iter()
+            .find(|t| t.id == tag)
+            .map(|t| t.name.clone());
+    }
+    place_list(ui, id)
+        .into_iter()
+        .find(|(p, _, _)| p == path)
+        .map(|(_, title, _)| title)
+}
+
+/// The rows of the places, and the storage used.
+pub fn refresh_places(ui: &Rc<Ui>) {
+    let s = &ui.sidebar;
+    s.places.remove_all();
+    let at = ui.at.borrow().clone();
+    let Some((id, path)) = at else {
+        s.places.set_visible(false);
+        s.places_separator.set_visible(false);
+        return;
+    };
+    let list = place_list(ui, id);
+    for (p, title, icon) in &list {
+        let r = row(icon, title);
+        s.places.append(&r);
+        if *p == path {
+            s.places.select_row(Some(&r));
+        }
+    }
+    s.places.set_visible(true);
+    s.places_separator.set_visible(true);
+    *s.place_paths.borrow_mut() = list.into_iter().map(|(p, _, _)| p).collect();
+    let quota = ui.server.borrow().get(&id).and_then(|s| s.quota);
+    s.quota.set_visible(quota.is_some());
+    if let Some(q) = quota {
+        let used = glib::format_size(q.used);
+        s.quota.set_label(&match q.total {
+            Some(total) => gettext("{used} of {total} used")
+                .replace("{used}", &used)
+                .replace("{total}", &glib::format_size(total)),
+            None => gettext("{used} used").replace("{used}", &used),
+        });
+    }
 }
 
 /// A row: an icon and a name.

@@ -116,6 +116,8 @@ struct Ui {
     /// made from it (the columns) to be made again.
     favorites: RefCell<HashMap<i64, Vec<foldav_core::Favorite>>>,
     fav_version: Cell<u64>,
+    /// What each account's server offers, its tags and its quota (`sidebar::load_server`).
+    server: RefCell<HashMap<i64, sidebar::Server>>,
     /// Hidden files show (the device-only `show_hidden` setting).
     hidden: Cell<bool>,
     /// Cut or copied files, to paste (`ops`).
@@ -423,6 +425,7 @@ fn build(app: &adw::Application) -> Rc<Ui> {
         history: RefCell::default(),
         favorites: RefCell::default(),
         fav_version: Cell::new(0),
+        server: RefCell::default(),
         hidden: Cell::new(false),
         clipboard: RefCell::new(None),
         file_menu: get(&b, "file_menu"),

@@ -97,6 +97,9 @@ pub fn go(ui: &Rc<Ui>, id: i64, path: String, how: Go) {
     if first || how == Go::Reload {
         super::favorites::sync(ui);
     }
+    if first || how == Go::Reload || !ui.server.borrow().contains_key(&id) {
+        sidebar::load_server(ui, id);
+    }
     if !core().connected(id) {
         return show_error(
             ui,
