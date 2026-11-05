@@ -2,9 +2,9 @@
 //! folder. Paths are relative to the Files root, as in `File::path`. A move or deletion is kept
 //! in the journal, to undo (`Client::undo`); the ones that fail midway keep what went through.
 
-use crate::dav::{NC, percent_decode};
+use crate::dav::{Dav, NC, percent_decode};
 use crate::undo::Change;
-use crate::{Client, Error, Result};
+use crate::{Client, Error, Result, Taken};
 use std::collections::HashSet;
 
 /// Whether `name` can be given to a file or folder.
@@ -174,6 +174,76 @@ impl Client {
             names.insert(to);
         }
         Ok(())
+    }
+
+    /// Move (`cut`) or copy files and folders into folder `dest` of the same account; for those
+    /// whose name is there already `taken` says what to do (a copy into the folder it is in
+    /// is named "a (copy).txt" whatever it says). One step to undo a move.
+    pub fn paste_into(
+        &self,
+        id: i64,
+        paths: &[String],
+        dest: &str,
+        cut: bool,
+        taken: Taken,
+    ) -> Result<Option<u64>> {
+        let dav = self.dav(id)?;
+        let mut names = self.names_in(id, dest)?;
+        self.run(|done| {
+            for path in paths {
+                let name = name_of(path);
+                if inside(dest, path) {
+                    return Err(Error::Invalid(name.into()));
+                }
+                if cut && parent(path) == dest {
+                    continue;
+                }
+                let (from, mut to, mut over) = (self.href(id, path)?, name.to_string(), false);
+                if names.contains(&to) {
+                    match taken {
+                        _ if !cut && parent(path) == dest => {
+                            over = false;
+                            to = self.free_name(&dav, &from, name, &names)?;
+                        }
+                        Taken::Skip => continue,
+                        Taken::Replace => over = true,
+                        Taken::KeepBoth => to = self.free_name(&dav, &from, name, &names)?,
+                    }
+                }
+                let target = self.href(id, &join(dest, &to))?;
+                match (cut, over) {
+                    (true, false) => dav.mv(&from, &target),
+                    (true, true) => dav.mv_over(&from, &target),
+                    (false, false) => dav.copy(&from, &target),
+                    (false, true) => dav.copy_over(&from, &target),
+                }
+                .map_err(|e| self::taken(e, &to))?;
+                if cut {
+                    done.push(Change::Moved {
+                        account: id,
+                        from: path.clone(),
+                        to: join(dest, &to),
+                    });
+                }
+                names.insert(to);
+            }
+            Ok(())
+        })
+    }
+
+    /// The first copy name of `name` (the file or folder at `href`) that `names` does not have.
+    fn free_name(
+        &self,
+        dav: &Dav,
+        href: &str,
+        name: &str,
+        names: &HashSet<String>,
+    ) -> Result<String> {
+        let folder = dav.list(href, "0")?.first().is_some_and(|e| e.folder);
+        Ok((1..)
+            .map(|n| copy_name(name, n, folder))
+            .find(|n| !names.contains(n))
+            .unwrap_or_default())
     }
 
     /// Delete files and folders: to Nextcloud's trash bin where the server has one, and one

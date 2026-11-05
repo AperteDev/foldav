@@ -124,7 +124,7 @@ fn open_version(ui: &Rc<Ui>, account: i64, file: File, version: Version) {
         })
         .await;
         match r {
-            Some(Ok(path)) => ops::launch(&ui, &path),
+            Some(Ok(path)) => ops::launch(&ui, &path, false),
             Some(Err(foldav_core::Error::Cancelled)) => {}
             Some(Err(e)) => ui.toasts.add_toast(note(&e.to_string())),
             None => {}

@@ -605,3 +605,54 @@ fn folders_come_as_one_zip_and_files_are_copied_through_this_device() {
     assert_eq!(names(&c, &format!("{to}/dir")), ["b.txt"]);
     let _ = std::fs::remove_dir_all(&dest);
 }
+
+#[test]
+fn a_name_taken_in_a_move_or_copy_is_replaced_kept_both_or_skipped() {
+    use foldav_core::Taken;
+    let (c, dav, root) = fixture("paste");
+    let home = c.files_home(A).unwrap();
+    let at = |p: &str| format!("{root}/{p}");
+    let put = |p: &str, body: &str| {
+        let r = dav
+            .request("PUT", &format!("{home}{}", at(p)), &[], body)
+            .unwrap();
+        assert!((200..300).contains(&r.status), "PUT {}", r.status);
+    };
+    let body = |p: &str| {
+        dav.request("GET", &format!("{home}{}", at(p)), &[], "")
+            .unwrap()
+            .body
+    };
+    c.new_folder(A, &root, "from").unwrap();
+    c.new_folder(A, &root, "to").unwrap();
+    put("from/a.txt", "new");
+    put("to/a.txt", "old");
+    let src = [at("from/a.txt")];
+
+    // Skipped: nothing changes. Kept both: a copy name. Replaced: the content of the new.
+    c.paste_into(A, &src, &at("to"), false, Taken::Skip)
+        .unwrap();
+    assert_eq!(
+        (names(&c, &at("to")), body("to/a.txt")),
+        (["a.txt"].map(String::from).to_vec(), "old".into())
+    );
+    c.paste_into(A, &src, &at("to"), false, Taken::KeepBoth)
+        .unwrap();
+    assert_eq!(names(&c, &at("to")), ["a (copy).txt", "a.txt"]);
+    c.paste_into(A, &src, &at("to"), false, Taken::Replace)
+        .unwrap();
+    assert_eq!(body("to/a.txt"), "new");
+
+    // A move replaces too, and the source is gone; a copy into the folder it is in is named.
+    put("from/a.txt", "newer");
+    c.paste_into(A, &src, &at("to"), true, Taken::Replace)
+        .unwrap();
+    assert_eq!(body("to/a.txt"), "newer");
+    assert_eq!(names(&c, &at("from")), Vec::<String>::new());
+    c.paste_into(A, &[at("to/a.txt")], &at("to"), false, Taken::Replace)
+        .unwrap();
+    assert_eq!(
+        names(&c, &at("to")),
+        ["a (copy 2).txt", "a (copy).txt", "a.txt"]
+    );
+}

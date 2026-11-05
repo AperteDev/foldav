@@ -40,9 +40,10 @@ fn error_text(e: &Error) -> String {
 
 /// The actions (keys in `accels`).
 pub fn connect(ui: &Rc<Ui>) {
-    action(ui, "open", |ui| {
+    action(ui, "open", open_selected);
+    action(ui, "open-with", |ui| {
         if let [file] = selected(ui).as_slice() {
-            open(ui, file.clone());
+            open_in(ui, file.clone(), true);
         }
     });
     action(ui, "download", |ui| download(ui, false));
@@ -98,13 +99,15 @@ pub fn update_actions(ui: &Ui) {
         .and_then(|id| ui.server.borrow().get(&id).map(|s| s.features.clone()))
         .unwrap_or_default();
     let one_file = n == 1 && selected(ui).first().is_some_and(|f| !f.folder);
+    let any_file = selected(ui).iter().any(|f| !f.folder);
     let paste = ui
         .clipboard
         .borrow()
         .as_ref()
         .is_some_and(|c| Some(c.account) == at);
     for (name, on) in [
-        ("open", n == 1 && !trash),
+        ("open", (n == 1 || any_file) && !trash),
+        ("open-with", one_file && !trash),
         ("download", n > 0 && !trash),
         ("download-zip", n > 0 && !place),
         ("upload-files", at.is_some() && !place),
@@ -249,6 +252,22 @@ async fn save_changes(ui: Rc<Ui>) {
 
 /// Open a folder in the window, a file in its default app, from a copy kept on this device.
 pub fn open(ui: &Rc<Ui>, file: File) {
+    open_in(ui, file, false);
+}
+
+/// Open the selected files, each in its default app (a folder only when it is the one thing).
+fn open_selected(ui: &Rc<Ui>) {
+    match selected(ui).as_slice() {
+        [one] => open(ui, one.clone()),
+        many => many
+            .iter()
+            .filter(|f| !f.folder)
+            .for_each(|f| open(ui, f.clone())),
+    }
+}
+
+/// As `open`; with `ask`, the user picks the app (Open With…).
+fn open_in(ui: &Rc<Ui>, file: File, ask: bool) {
     let Some((id, _)) = ui.at.borrow().clone() else {
         return;
     };
@@ -260,7 +279,7 @@ pub fn open(ui: &Rc<Ui>, file: File) {
         let title = gettext("Opening “{name}”").replace("{name}", &file.name);
         let r = transfers::run(&ui, &title, true, move |c, p| c.open_file(id, &file, p)).await;
         match r {
-            Some(Ok(copy)) => launch(&ui, &copy),
+            Some(Ok(copy)) => launch(&ui, &copy, ask),
             Some(Err(Error::Cancelled)) => {}
             Some(Err(e)) => ui.toasts.add_toast(note(&error_text(&e))),
             None => ui.toasts.add_toast(note(&gettext("The operation failed"))),
@@ -268,18 +287,16 @@ pub fn open(ui: &Rc<Ui>, file: File) {
     });
 }
 
-pub(super) fn launch(ui: &Ui, path: &Path) {
-    gtk::FileLauncher::new(Some(&gio::File::for_path(path))).launch(
-        Some(&ui.window),
-        gio::Cancellable::NONE,
-        |r| {
-            if let Err(e) = r
-                && !e.matches(gtk::DialogError::Dismissed)
-            {
-                toast(&gettext("Cannot open the file: {error}").replace("{error}", e.message()));
-            }
-        },
-    );
+pub(super) fn launch(ui: &Ui, path: &Path, ask: bool) {
+    let launcher = gtk::FileLauncher::new(Some(&gio::File::for_path(path)));
+    launcher.set_always_ask(ask);
+    launcher.launch(Some(&ui.window), gio::Cancellable::NONE, |r| {
+        if let Err(e) = r
+            && !e.matches(gtk::DialogError::Dismissed)
+        {
+            toast(&gettext("Cannot open the file: {error}").replace("{error}", e.message()));
+        }
+    });
 }
 
 /// Save the selected files and folders into a folder the user picks; with `zip`, as one ZIP
@@ -439,16 +456,43 @@ fn paste(ui: &Rc<Ui>) {
 }
 
 /// Move (`cut`) or copy the files of `paths` into folder `dest`, all of account `id`.
+/// What is already there under the same name is asked about first (what is copied into its own
+/// folder is simply named "a (copy)").
 pub fn put(ui: &Rc<Ui>, id: i64, paths: Vec<String>, dest: String, cut: bool) {
-    if cut {
-        run(ui, gettext("Moving"), gettext("Moved"), move |c| {
-            c.move_to(id, &paths, &dest)
+    let ui = ui.clone();
+    glib::spawn_future_local(async move {
+        let names: Vec<String> = paths
+            .iter()
+            .filter(|p| nav::parent(p) != dest)
+            .map(|p| p.rsplit('/').next().unwrap_or(p).to_string())
+            .collect();
+        let d = dest.clone();
+        let taken = if names.is_empty() {
+            Vec::new()
+        } else {
+            match gio::spawn_blocking(move || core().taken(id, &d, &names)).await {
+                Ok(Ok(t)) => t,
+                Ok(Err(e)) => return ui.toasts.add_toast(note(&error_text(&e))),
+                Err(_) => return,
+            }
+        };
+        let policy = if taken.is_empty() {
+            Taken::KeepBoth
+        } else {
+            let Some(policy) = ask_taken(&ui, &taken).await else {
+                return;
+            };
+            policy
+        };
+        let (busy, done) = if cut {
+            (gettext("Moving"), gettext("Moved"))
+        } else {
+            (gettext("Copying"), String::new())
+        };
+        run(&ui, busy, done, move |c| {
+            c.paste_into(id, &paths, &dest, cut, policy)
         });
-    } else {
-        run(ui, gettext("Copying"), String::new(), move |c| {
-            c.copy_to(id, &paths, &dest).map(|()| None)
-        });
-    }
+    });
 }
 
 // --- uploads -----------------------------------------------------------------

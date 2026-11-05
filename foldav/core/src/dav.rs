@@ -604,21 +604,34 @@ impl Dav {
     /// MOVE `from` to `to` without overwriting: `Conflict` when `to` exists, `NotFound` when
     /// `from` is gone or `to`'s folder does not exist.
     pub fn mv(&self, from: &str, to: &str) -> Result<()> {
-        self.copy_or_move("MOVE", from, to)
+        self.copy_or_move("MOVE", from, to, false)
     }
 
     /// COPY `from` to `to` (a folder with all it holds, in one request) without overwriting;
     /// errors as `mv`.
     pub fn copy(&self, from: &str, to: &str) -> Result<()> {
-        self.copy_or_move("COPY", from, to)
+        self.copy_or_move("COPY", from, to, false)
     }
 
-    fn copy_or_move(&self, method: &str, from: &str, to: &str) -> Result<()> {
+    /// MOVE `from` to `to`, replacing what is there.
+    pub fn mv_over(&self, from: &str, to: &str) -> Result<()> {
+        self.copy_or_move("MOVE", from, to, true)
+    }
+
+    /// COPY `from` to `to`, replacing what is there.
+    pub fn copy_over(&self, from: &str, to: &str) -> Result<()> {
+        self.copy_or_move("COPY", from, to, true)
+    }
+
+    fn copy_or_move(&self, method: &str, from: &str, to: &str, replace: bool) -> Result<()> {
         let dest = self.url(to);
         let r = self.request(
             method,
             from,
-            &[("Destination", &dest), ("Overwrite", "F")],
+            &[
+                ("Destination", &dest),
+                ("Overwrite", if replace { "T" } else { "F" }),
+            ],
             "",
         )?;
         match r.status {

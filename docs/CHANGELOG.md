@@ -49,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server has it): Recent, Starred (all that is starred, files too), Shared with You, Shared
   with Others, Shared by Link, Tags (each tag opens the files that have it) and Deleted
   Files, and the storage used at the foot
+- Open With… (right-click menu) picks the app for a file; Enter opens all the files selected
+- Pasting or dropping files where a name is taken asks what to do: Replace, Keep Both or
+  Skip (a copy into its own folder is still "a (copy)")
 - Download as ZIP… (right-click menu): a folder or several files as one ZIP the server makes,
   in one request however many files
 - Files dragged onto another account in the sidebar are copied to its root (by way of this

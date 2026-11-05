@@ -319,6 +319,12 @@ menu file_menu {
     }
 
     item {
+      label: _("Open With…");
+      action: "win.open-with";
+      hidden-when: "action-disabled";
+    }
+
+    item {
       label: _("Download…");
       action: "win.download";
       hidden-when: "action-disabled";

@@ -80,12 +80,12 @@ Once a third app copies the same code, a shared crate in its own repository beco
    restore); *Files settings* (Preferences: sorting, hidden files, the web app's own settings
    in the browser). The places' files come in the server's order, whatever the view sorts by.
 3. **Operations on the server**, what is left of them (new folder, rename, copy, move, delete,
-   Ctrl+Z and dragging files inside the window are done): a
+   Ctrl+Z, dragging files inside the window and the choice between replacing, keeping both
+   and skipping when a name is taken are done): a
    deletion asks nothing and offers Undo, but undoing needs the trash bin, so check the
-   server's capabilities (`Features`, as in Notav) and ask first where it has none; a
-   choice between replacing and keeping both when
-   a name is taken in a move or copy (now a move refuses and a copy takes a free name); moving
-   (not only copying) between accounts, and pasting between them.
+   server's capabilities (`Features`, as in Notav) and ask first where it has none (`Features`
+   is there now); undoing a move that replaced a file does not bring the replaced file back;
+   moving (not only copying) between accounts, and pasting between them.
 4. **Transfers**, what is left of them (downloads, a folder or several files as one ZIP,
    uploads in one request, in chunks or many small files in one bulk request, drag and drop
    inside the window and to and from other apps, copies between accounts, and the sidebar's
@@ -98,8 +98,8 @@ Once a third app copies the same code, a shared crate in its own repository beco
 5. **Opening files**, what is left of it (a file opens in its default app from a copy kept in
    the cache folder, checked against the server's ETag, deleted after a month unused; a
    change saved to the copy is uploaded back, with the ETag checked first and a conflict
-   kept beside the file): Open With…; several files opened at once; a limit to the copies'
-   total size; a copy of a file renamed or moved on the server meanwhile is sent to its old
+   kept beside the file; Open With…, and several files opened at once): a limit to the
+   copies' total size; a copy of a file renamed or moved on the server meanwhile is sent to its old
    path (as a conflicted copy, the ETag check fails there).
 6. **Nextcloud's features** on files, what is left of them (the places that list them are
    above; the trash bin, versions, sharing by link and with users and groups, tags on a file,
