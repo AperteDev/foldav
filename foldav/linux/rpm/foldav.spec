@@ -4,7 +4,7 @@
 %bcond check 1
 
 Name:           foldav
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        A file manager for the files in your Nextcloud
 
@@ -71,5 +71,8 @@ appstreamcli validate --no-net %{buildroot}%{_metainfodir}/dev.aperte.Foldav.met
 %{_datadir}/icons/hicolor/symbolic/apps/dev.aperte.Foldav-symbolic.svg
 
 %changelog
+* Fri Nov 06 2026 SelfRef <git@selfref.dev> - 0.2.0-1
+- See CHANGELOG.md
+
 * Thu Nov 05 2026 SelfRef <git@selfref.dev> - 0.1.0-1
 - See CHANGELOG.md

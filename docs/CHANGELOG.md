@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
 ### Added
 
 - Open a file (double click, Enter or Ctrl+O) in its default app, from a copy kept on this
@@ -131,5 +133,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nextcloud Files, opened by a click, with Alt+Up to the parent folder; Preferences (style,
   accounts, settings synced between devices); a Polish translation
 
-[Unreleased]: https://github.com/AperteDev/foldav/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/AperteDev/foldav/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/AperteDev/foldav/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/AperteDev/foldav/releases/tag/v0.1.0
